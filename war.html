@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중세 전략 전쟁 (Strategy War)</title>
+    <style>
+        /* 중세풍 테마 디자인 */
+        :root {
+            --bg-color: #1a1612;
+            --card-bg: #2d241e;
+            --border-color: #8c7355;
+            --text-color: #e6dfd3;
+            --accent-color: #d4af37;
+            --danger-color: #a63a2b;
+            --success-color: #4a7c59;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Georgia', 'Malgun Gothic', serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: #0d0b09;
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 3px double var(--border-color);
+        }
+
+        header h1 {
+            color: var(--accent-color);
+            margin: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px #000;
+            letter-spacing: 3px;
+        }
+
+        /* 내비게이션 탭 */
+        nav {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+        }
+
+        nav button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        nav button:hover, nav button.active {
+            background-color: var(--accent-color);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        /* 콘텐트 영역 설정 */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 50px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 1. 홈 화면 스타일 */
+        #home {
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=1200&q=80') no-repeat center/cover;
+            padding: 60px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: inset 0 0 40px #000;
+        }
+
+        #home h2 {
+            font-size: 2.2rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        #home p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+        }
+
+        .start-btn {
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            border: 2px solid var(--accent-color);
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            background-color: #c94a36;
+        }
+
+        /* 2. 도감 파트 스타일 */
+        .section-title {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .dict-card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+        }
+
+        .dict-card h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dict-card .badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background-color: #44352a;
+        }
+
+        .dict-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 10px 0 0 0;
+        }
+
+        /* 3. 본 게임 화면 스타일 */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
+        }
+
+        .battlefields {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .field {
+            background-color: #231c16;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .field h3 {
+            color: var(--accent-color);
+            margin-top: 0;
+            background-color: #0d0b09;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .hp-bar {
+            background-color: #441111;
+            border: 1px solid var(--danger-color);
+            padding: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .slot-container {
+            background-color: #15110e;
+            border: 1px inset var(--border-color);
+            padding: 10px;
+            min-height: 180px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .combat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .combat-card.hidden-card {
+            background-color: #3a3a3a;
+            color: #777;
+            border-color: #555;
+        }
+
+        .installed-items {
+            font-size: 0.8rem;
+            color: #a8947d;
+            background-color: #1d1712;
+            padding: 5px;
+            border-radius: 4px;
+            min-height: 35px;
+        }
+
+        /* 사이드바 및 패(Hand) */
+        .sidebar {
+            background-color: #13100d;
+            border: 2px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .log-box {
+            background-color: #0a0807;
+            border: 1px solid #44352a;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-family: monospace;
+            color: #bcab96;
+            margin-bottom: 15px;
+        }
+
+        .hand-area {
+            background-color: #1c1712;
+            border: 2px dashed var(--border-color);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hand-title {
+            color: var(--accent-color);
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+
+        .cards-in-hand {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .game-btn {
+            background-color: var(--border-color);
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .game-btn:hover { background-color: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>전략 전쟁 (STRATEGY WAR)</h1>
+    </header>
+
+    <nav>
+        <button id="btn-home" class="active" onclick="switchPage('home')">영지 성채 (HOME)</button>
+        <button id="btn-dict" onclick="switchPage('dict')">병과 및 군수도감 (ENCYCLOPEDIA)</button>
+        <button id="btn-game" onclick="switchPage('game')">전장 진입 (BATTLE)</button>
+    </nav>
+
+    <div class="container">
+
+        <div id="home" class="page active">
+            <h2>영주 전장의 군주여, 환영합니다</h2>
+            <p>
+                [전략 전쟁]은 중세의 세 접전지(A, B, C)를 두고 펼쳐지는 치열한 카드 전략 대전입니다.<br>
+                아군의 성벽을 방어하는 동시에, 상성을 파악하여 적의 빈틈을 무자비하게 공격하십시오.<br>
+                특급 사령관의 진격과 폭파병의 기습, 그리고 보이지 않는 위장 장막이 승패를 가를 것입니다.
+            </p>
+            <button class="start-btn" onclick="switchPage('game')">전쟁 시작하기</button>
+        </div>
+
+        <div id="dict" class="page">
+            <h2 class="section-title">⚔️ 군수 병과 도감 (상성 공용)</h2>
+            <p style="font-style: italic; color: #a8947d;">※ 공격 카드는 승패와 상관없이 공격 1회 후 소모되며, 수비 병과는 승리 시 생존합니다.</p>
+            <div class="grid-container">
+                <div class="dict-card">
+                    <h3>보병 <span class="badge">강철의 방패선</span></h3>
+                    <p><strong>우세 상성:</strong> 창병</p>
+                    <p><strong>특수 능력:</strong> 수비 시 일반 전투에서 패배하더라도 <strong>50% 확률로 전장에서 생존</strong>하여 성벽 체력을 완벽히 보존합니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>창兵 (창병) <span class="badge">기병의 재앙</span></h3>
+                    <p><strong>우세 상성:</strong> 기병</p>
+                    <p><strong>특수 능력:</strong> 공격 시 일반 전투에서 승리할 경우, <strong>60% 확률로 돌파력</strong>이 발동하여 상대 성벽에 <strong>-2의 치명타</strong>를 입힙니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>기병 <span class="badge">전장 횡단자</span></h3>
+                    <p><strong>우세 상성:</strong> 방패병</p>
+                    <p><strong>특수 능력:</strong> 공격 시 적 진영에 깔린 <strong>[함정]을 가뿐히 뛰어넘어 제거</strong>하고, 그 기세로 대기 중인 1선발 군수 카드와 곧바로 전투를 치릅니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>방패병 <span class="badge">난공불락</span></h3>
+                    <p><strong>우세 상성:</strong> 궁병</p>
+                    <p><strong>특수 능력:</strong> 상대의 강력한 공성 아이템인 <strong>[폭파병]의 폭격을 1회 완벽하게 방어</strong>해 내며 필드(선발)에 그대로 생존합니다. (2회째는 파괴)</p>
+                </div>
+                <div class="dict-card">
+                    <h3>궁병 <span class="badge">원거리 저격</span></h3>
+                    <p><strong>우세 상성:</strong> 보병</p>
+                    <p><strong>특수 능력:</strong> (용병 및 상성 관계 제외) 수비/공격 상관없이 일반 전투가 치러질 때 기본 <strong>전투 승률이 55%로 상향 보정</strong>됩니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>용병 <span class="badge">자유 계약 검사</span></h3>
+                    <p><strong>우세 상성:</strong> 없음 (상성 면역)</p>
+                    <p><strong>특수 능력:</strong> 상성이 존재하지 않아 모든 전투가 일반 전투로 처리되지만, 압도적인 무력으로 <strong>기본 승률이 60%로 보정</strong>됩니다.<br><strong>⚠️ 단, 용병끼리 맞붙을 경우 공격해 들어간 용병이 100% 패배합니다.</strong></p>
+                </div>
+            </div>
+
+            <h2 class="section-title">🎒 군수 아이템 도감 (최대 2개 중첩 설치 가능)</h2>
+            <div class="grid-container">
+                <div class="dict-card">
+                    <h3>특급 사령관 <span class="badge">공격형</span></h3>
+                    <p>이 아이템 사용 후 군수 카드로 공격 시, 상성과 확률 및 <strong>상대의 [함정]을 완벽히 무시하고 100% 확률로 승리</strong>합니다. (적 함정카드는 파괴되지 않고 유지됨)</p>
+                </div>
+                <div class="dict-card">
+                    <h3>폭파병 <span class="badge">공격형</span></h3>
+                    <p>상대의 1선발 카드를 <strong>75% 확률로 즉시 폭파 제거</strong>합니다. 성벽 대미지는 주지 못합니다.<br>※ 단, 상대 진영에 [함정]이 있다면 폭파는 무효화되고 함정 카드만 제거됩니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>함정 <span class="badge">수비형</span></h3>
+                    <p>상대의 공격을 1회 안전하게 막아냅니다. 추가로 <strong>1%의 기적적인 확률로 반격에 성공</strong>하면, 공격해 온 상대방 성벽의 체력을 -1 시킵니다. (기병 공격 시 파괴)</p>
+                </div>
+                <div class="dict-card">
+                    <h3>위장 장막 <span class="badge">수비형</span></h3>
+                    <p>수비 2선발 병과에 미리 적용해 두며, 앞선 카드가 사라져 1선발로 승격되었을 때 적에게 정체를 가려 보이지 않게 만듭니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>첩보서 <span class="badge">사용형</span></h3>
+                    <p>적의 숨겨진 정보([위장 장막 1선] ➡️ [2선발] ➡️ [3선발] 순)를 간파하여 확인합니다. 함정이 설치되어 있다면 함께 발견합니다.</p>
+                </div>
+                <div class="dict-card">
+                    <h3>군수 보급 <span class="badge">사용형</span></h3>
+                    <p>무작위 전술 카드 2장을 즉시 획득합니다. 아무리 카드가 많아도 <strong>한 턴에 단 1장만 사용 가능</strong>합니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="game" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="color: var(--accent-color); margin: 0;">🏰 전선 대치 상황</h2>
+                <div>
+                    <span style="font-weight: bold; color: var(--accent-color);">현재 차례: </span> 
+                    <span id="turn-display" style="background-color: #000; padding: 5px 15px; border-radius: 4px; border: 1px solid var(--border-color);">플레이어의 턴 (Turn 1)</span>
+                </div>
+            </div>
+            
+            <div class="game-layout">
+                <div class="battlefields">
+                    <div class="field">
+                        <h3>A 지역</h3>
+                        <div class="hp-bar" style="color: #ff9999;">적 성벽 HP: <span id="ai-hp-a">6</span></div>
+                        <div class="hp-bar" style="color: #99ff99;">아군 성벽 HP: <span id="p-hp-a">6</span></div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[적 수비 대형]</h4>
+                        <div class="slot-container" id="ai-slots-a">
+                            <div class="combat-card">1선발: 보병</div>
+                            <div class="combat-card hidden-card">2선발: (대기중)</div>
+                        </div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[아군 수비 대형]</h4>
+                        <div class="slot-container" id="p-slots-a">
+                            <div class="combat-card">1선발: 기병</div>
+                        </div>
+                        <div class="installed-items">설치된 아이템: 없음</div>
+                        <div style="margin-top: 10px;">
+                            <button class="game-btn">⚔️ 공격</button>
+                            <button class="game-btn">🛡️ 파견</button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <h3>B 지역</h3>
+                        <div class="hp-bar" style="color: #ff9999;">적 성벽 HP: <span id="ai-hp-b">8</span></div>
+                        <div class="hp-bar" style="color: #99ff99;">아군 성벽 HP: <span id="p-hp-b">8</span></div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[적 수비 대형]</h4>
+                        <div class="slot-container" id="ai-slots-b">
+                            <div class="combat-card">1선발: 창병</div>
+                        </div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[아군 수비 대형]</h4>
+                        <div class="slot-container" id="p-slots-b">
+                            <div class="combat-card">1선발: 방패병</div>
+                        </div>
+                        <div class="installed-items">설치된 아이템: 함정[1]</div>
+                        <div style="margin-top: 10px;">
+                            <button class="game-btn">⚔️ 공격</button>
+                            <button class="game-btn">🛡️ 파견</button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <h3>C 지역</h3>
+                        <div class="hp-bar" style="color: #ff9999;">적 성벽 HP: <span id="ai-hp-c">4</span></div>
+                        <div class="hp-bar" style="color: #99ff99;">아군 성벽 HP: <span id="p-hp-c">4</span></div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[적 수비 대형]</h4>
+                        <div class="slot-container" id="ai-slots-c">
+                            <div class="combat-card">1선발: 궁병</div>
+                        </div>
+                        
+                        <h4 style="margin: 5px 0; font-size: 0.85rem; color:#8c7355;">[아군 수비 대형]</h4>
+                        <div class="slot-container" id="p-slots-c">
+                            <div class="combat-card" style="color: var(--accent-color);">비어있음 (빈집!)</div>
+                        </div>
+                        <div class="installed-items">설치된 아이템: 없음</div>
+                        <div style="margin-top: 10px;">
+                            <button class="game-btn">⚔️ 공격</button>
+                            <button class="game-btn">🛡️ 파견</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3 style="color: var(--accent-color); margin-top:0;">📜 전령 보고문</h3>
+                    <div class="log-box" id="game-log">
+                        [시스템] 중세 전략 전장의 서막이 올랐습니다.<br>
+                        [보고] 양측 진영 성벽 배치 완료.<br>
+                        [보급] 덱에서 군수 카드 5장을 지급받았습니다.<br>
+                        [명령] 아군 차례입니다. 행동을 개시하십시오.
+                    </div>
+                    <button class="start-btn" style="width:100%; font-size:1.1rem; padding:10px;" onclick="appendLog('턴을 종료하고 방어 태세로 전환합니다.')">턴 종료 (대기)</button>
+                </div>
+            </div>
+
+            <div class="hand-area">
+                <h3 class="hand-title">🎒 영주의 손패 (Hand) - <span id="hand-count">5</span>장 보유 중</h3>
+                <div class="cards-in-hand" id="player-hand">
+                    <div class="dict-card" style="min-width: 130px; text-align: center; padding: 10px;">
+                        <strong>보병</strong><br><span style="font-size:0.8rem; color:var(--accent-color);">군수 카드</span>
+                    </div>
+                    <div class="dict-card" style="min-width: 130px; text-align: center; padding: 10px;">
+                        <strong>기병</strong><br><span style="font-size:0.8rem; color:var(--accent-color);">군수 카드</span>
+                    </div>
+                    <div class="dict-card" style="min-width: 130px; text-align: center; padding: 10px;">
+                        <strong>특급 사령관</strong><br><span style="font-size:0.8rem; color:var(--danger-color);">공격 아이템</span>
+                    </div>
+                    <div class="dict-card" style="min-width: 130px; text-align: center; padding: 10px;">
+                        <strong>함정</strong><br><span style="font-size:0.8rem; color:var(--success-color);">수비 아이템</span>
+                    </div>
+                    <div class="dict-card" style="min-width: 130px; text-align: center; padding: 10px;">
+                        <strong>군수 보급</strong><br><span style="font-size:0.8rem; color:#8c7355;">사용 아이템</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // SPA 페이지 전환 함수
+        function switchPage(pageId) {
+            // 모든 페이지 비활성화
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // 모든 내비게이션 버튼 비활성화
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 선택한 페이지 및 버튼 활성화
+            document.getElementById(pageId).classList.add('active');
+            if(pageId === 'home') document.getElementById('btn-home').classList.add('active');
+            if(pageId === 'dict') document.getElementById('btn-dict').classList.add('active');
+            if(pageId === 'game') document.getElementById('btn-game').classList.add('active');
+        }
+
+        // 전령 보고문 로그 추가 함수
+        function appendLog(text) {
+            const logBox = document.getElementById('game-log');
+            logBox.innerHTML += `<br>[명령] ${text}`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
