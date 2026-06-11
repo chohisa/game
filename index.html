@@ -3,541 +3,868 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전략 전쟁: 중세의 서막 (Strategy War)</title>
+    <title>전략 전쟁: 중세의 서막</title>
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --panel-bg: #2d2d2d;
-            --border-color: #4a3f35;
-            --text-color: #e0d9cb;
-            --accent-color: #c9a054;
-            --danger-color: #a94442;
-            --success-color: #3c763d;
+            /* 중세 양피지 지도 스타일 테마 */
+            --bg-color: #1e1610;
+            --map-bg: #e6d5b8;
+            --map-dark: #3e2a14;
+            --map-border: #8c6d4f;
+            --text-dark: #2b1f13;
+            --text-light: #f4eae1;
+            --accent-red: #8a1c14;
+            --accent-blue: #1d4ed8;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Georgia', serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-light);
             margin: 0;
             padding: 0;
-            line-height: 1.5;
+            user-select: none;
         }
 
-        /* 내비게이션 바 */
+        /* 내비게이션 바 (지도의 상단 테두리 느낌) */
         nav {
-            background-color: #111;
-            border-bottom: 3px solid var(--border-color);
+            background-color: var(--map-dark);
+            border-bottom: 4px double var(--map-border);
             display: flex;
             justify-content: center;
             padding: 10px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
 
         nav button {
             background: none;
             border: 1px solid transparent;
-            color: var(--text-color);
-            font-size: 1rem;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-family: 'Georgia', serif;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 10px 25px;
             margin: 0 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         nav button:hover, nav button.active {
-            color: var(--accent-color);
-            border-bottom: 2px solid var(--accent-color);
+            color: var(--map-bg);
+            border-bottom: 3px solid var(--map-border);
         }
 
-        /* 메인 컨테이너 */
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 20px;
         }
 
-        .screen {
-            display: none;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
-        .screen.active {
-            display: block;
-        }
-
-        h1, h2, h3 {
-            color: var(--accent-color);
+        /* --- 1. 홈 화면 (양피지 지도 대문) --- */
+        .map-banner {
+            background-color: var(--map-bg);
+            color: var(--text-dark);
+            border: 8px double var(--map-dark);
+            border-radius: 4px;
+            padding: 60px 20px;
             text-align: center;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.5);
+            margin-top: 40px;
         }
 
-        /* 1. 홈 화면 스타일 */
-        .home-banner {
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1599733589046-9b8308b5b50d?q=80&w=1000') center/cover;
-            height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            margin-bottom: 30px;
+        .map-banner h1 {
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            color: var(--accent-red);
         }
 
-        .btn-start {
-            background-color: var(--accent-color);
-            color: #111;
-            font-size: 1.3rem;
+        .btn-scroll {
+            background-color: var(--accent-red);
+            color: var(--text-light);
+            font-size: 1.5rem;
+            font-family: 'Georgia', serif;
             font-weight: bold;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 5px;
+            border: 2px solid var(--map-dark);
+            padding: 15px 50px;
+            border-radius: 4px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(201, 160, 84, 0.4);
-            transition: transform 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            margin-top: 30px;
         }
 
-        .btn-start:hover {
-            transform: scale(1.05);
+        .btn-scroll:hover {
+            background-color: #b0231a;
+            transform: translateY(-2px);
         }
 
-        /* 2. 도감 화면 스타일 */
-        .dictionary-section {
-            margin-bottom: 40px;
+        /* --- 2. 도감 화면 스타일 --- */
+        .paper-sheet {
+            background-color: var(--map-bg);
+            color: var(--text-dark);
+            padding: 30px;
+            border: 4px double var(--map-border);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            margin-bottom: 30px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            background-color: var(--panel-bg);
+            background: rgba(255,255,255,0.4);
         }
 
         th, td {
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--map-border);
             padding: 12px;
             text-align: left;
         }
 
-        th {
-            background-color: #222;
-            color: var(--accent-color);
-            font-weight: bold;
-        }
+        th { background-color: var(--map-dark); color: var(--text-light); }
 
-        tr:nth-child(even) {
-            background-color: #252525;
-        }
-
-        /* 3. 게임 화면 스타일 */
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            background-color: #222;
-            padding: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .battlefields {
+        /* --- 3. 게임 화면 (인게임 전략 지도) --- */
+        .battlefield-map {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
-        .field-card {
-            background-color: var(--panel-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
+        .region-scroll {
+            background-color: var(--map-bg);
+            color: var(--text-dark);
+            border: 3px solid var(--map-border);
+            border-radius: 4px;
             padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .field-card.target {
-            border-color: var(--danger-color);
-            box-shadow: 0 0 10px rgba(169, 68, 66, 0.5);
-        }
-
-        .hp-bar {
-            background-color: #444;
-            height: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
             position: relative;
         }
 
-        .hp-fill {
-            background-color: var(--danger-color);
-            height: 100%;
-            width: 100%;
-            transition: width 0.3s;
-        }
-
-        .hp-text {
-            position: absolute;
-            width: 100%;
+        .region-scroll h3 {
+            margin: 5px 0;
             text-align: center;
-            font-size: 0.85rem;
-            font-weight: bold;
-            top: 0;
-            left: 0;
-            line-height: 20px;
+            color: var(--map-dark);
+            border-bottom: 2px dashed var(--map-border);
+            padding-bottom: 5px;
         }
 
-        .queue-box {
-            background-color: #222;
-            border: 1px dashed var(--border-color);
-            padding: 10px;
-            margin: 10px 0;
+        .hp-zone {
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .hp-bar {
+            background-color: #c2b296;
+            height: 15px;
+            border: 1px solid var(--map-border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .hp-fill { height: 100%; background-color: var(--accent-red); transition: width 0.4s; }
+        .hp-fill.ply { background-color: #2563eb; }
+
+        .lineup-box {
+            background: rgba(255, 248, 230, 0.6);
+            border: 1px dashed var(--map-border);
+            border-radius: 4px;
+            padding: 8px;
+            margin: 8px 0;
+            font-size: 0.85rem;
+            min-height: 75px;
+        }
+
+        .lineup-title { font-weight: bold; color: var(--map-dark); border-bottom: 1px solid #d0c0a0; padding-bottom: 2px; margin-bottom: 4px;}
+
+        .btn-attack {
+            width: 100%;
+            background-color: var(--accent-red);
+            color: white;
+            border: 1px solid var(--map-dark);
+            padding: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+        }
+        .btn-attack:hover { background-color: #b0231a; }
+
+        /* 플레이어 손패 구역 */
+        .hand-deck-zone {
+            background-color: var(--map-dark);
+            border: 3px double var(--map-border);
+            padding: 15px;
             border-radius: 4px;
         }
 
-        .slot {
-            font-size: 0.9rem;
-            padding: 5px;
-            margin-bottom: 4px;
-            border-bottom: 1px solid #333;
-        }
-        .slot:last-child { border-bottom: none; }
-
-        /* 플레이어 손패 UI */
-        .player-hand-section {
-            background-color: #222;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .hand-container {
+        .hand-slots {
             display: flex;
-            gap: 15px;
+            gap: 12px;
+            min-height: 160px;
             overflow-x: auto;
             padding: 10px 0;
         }
 
-        .card {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--accent-color);
-            border-radius: 6px;
-            min-width: 130px;
-            height: 180px;
-            padding: 10px;
+        .medieval-card {
+            background-color: var(--map-bg);
+            color: var(--text-dark);
+            border: 2px solid var(--map-border);
+            border-radius: 4px;
+            width: 120px;
+            height: 150px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             cursor: pointer;
-            transition: transform 0.2s;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.4);
+            transition: all 0.2s;
         }
 
-        .card:hover {
-            transform: translateY(-10px);
-            background-color: #353535;
+        .medieval-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 2px 12px 16px rgba(0,0,0,0.6);
+            border-color: var(--accent-red);
+        }
+        
+        .medieval-card.selected {
+            border: 3px solid var(--accent-red);
+            background-color: #fff4dd;
         }
 
-        .card-title {
-            font-weight: bold;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-            text-align: center;
-        }
+        .c-name { font-weight: bold; text-align: center; border-bottom: 1px solid var(--map-border); font-size: 0.9rem;}
+        .c-type { font-size: 0.7rem; text-align: center; color: #666; font-style: italic;}
+        .c-desc { font-size: 0.75rem; line-height: 1.2; margin-top: 5px; flex-grow: 1;}
 
-        .card-type {
-            font-size: 0.75rem;
-            color: #aaa;
-            text-align: center;
-        }
-
-        .card-desc {
-            font-size: 0.8rem;
-            flex-grow: 1;
-            margin-top: 10px;
-        }
-
-        .log-box {
-            background-color: #111;
-            border: 1px solid var(--border-color);
-            height: 120px;
+        /* 전황 보고 잉크 로그 */
+        .parchment-log {
+            background-color: #1a1510;
+            border: 2px solid var(--map-border);
+            color: #d8c8b0;
+            height: 130px;
             overflow-y: auto;
             padding: 10px;
             font-family: monospace;
-            font-size: 0.9rem;
-            margin-top: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
             border-radius: 4px;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
     <nav>
-        <button id="tab-home" class="active" onclick="switchScreen('home')">메인 홈</button>
-        <button id="tab-dict" onclick="switchScreen('dict')">전장 도감</button>
-        <button id="tab-game" onclick="switchScreen('game')">전쟁 수행</button>
+        <button id="nav-home" class="active" onclick="switchScreen('home')">영지 사령부</button>
+        <button id="nav-dict" onclick="switchScreen('dict')">전술 도감</button>
+        <button id="nav-game" onclick="switchScreen('game')">전쟁 지도</button>
     </nav>
 
     <div class="container">
         
         <div id="screen-home" class="screen active">
-            <div class="home-banner">
-                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">전략 전쟁 (Strategy War)</h1>
-                <p style="color: #bbb; margin-bottom: 30px;">삼개 전장을 호령할 중세의 전술 군주가 되어라</p>
-                <button class="btn-start" onclick="switchScreen('game')">전쟁 시작</button>
-            </div>
-            <div style="background-color: var(--panel-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <h3>🏰 게 전술 개요</h3>
-                <p>본 게임은 A, B, C 세 곳의 접전지에서 적 AI와 치열한 수 싸움을 벌이는 전략 카드 보드게임입니다.</p>
-                <p>매 턴 카드를 드로우하고, 아군 전선에 군수 카드를 3선발까지 배치하거나 강력한 수비/공격 아이템을 활용하여 상대의 성벽을 무너뜨려야 합니다. 상성을 확인하고 적재적소에 군대를 파견하십시오.</p>
+            <div class="map-banner">
+                <h1>전략 전쟁: 중세의 서막</h1>
+                <p style="font-size: 1.2rem; font-style: italic; color: #55402b;">- 세 곳의 전선을 지배하여 영지를 수호하라 -</p>
+                <button class="btn-scroll" onclick="startGameSession()">전쟁 시작 (진격)</button>
             </div>
         </div>
 
         <div id="screen-dict" class="screen">
-            <h2>⚔️ 중세 군수 및 군장 도감</h2>
-            
-            <div class="dictionary-section">
-                <h3>[군수 카드]</h3>
-                <p style="font-size:0.9rem; color:#aaa;">※ 공수 공용 사용 가능. 상성이 없을 시 기본 50% 확률 전투 승리.</p>
+            <div class="paper-sheet">
+                <h2 style="margin-top:0; color:var(--accent-red);">📜 중세 군수 및 아이템 백과</h2>
                 <table>
                     <thead>
-                        <tr>
-                            <th>카드명</th>
-                            <th>우세 상성</th>
-                            <th>특수 전술 (패시브 효과)</th>
-                        </tr>
+                        <tr><th>카드명</th><th>구분</th><th>상성 및 전술적 효과</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">보병</td>
-                            <td>창병</td>
-                            <td>수비 중 전투 패배 시, 50% 확률로 생존하여 성벽 피해를 무화하고 전선에 유지됨. (공격 카드는 소멸)</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">창병</td>
-                            <td>기병</td>
-                            <td>공격 진격 성공 시, 60% 치명타 확률로 상대 성벽에 큰 피해(-2)를 입힘.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">기병</td>
-                            <td>방패병</td>
-                            <td>공격 시 적지에 매설된 [함정]을 우회하여 무조건 제거한 후, 1선발 부대와 즉시 전투를 지속함.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">방패병</td>
-                            <td>궁병</td>
-                            <td>적의 공격형 아이템 [폭파병]의 폭격을 1회 완벽하게 방어하고 진형을 유지함. (2회째부턴 방어 불가)</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">궁병</td>
-                            <td>보병</td>
-                            <td>(용병/상성 제외) 공수 무관 모든 일반 전투에서 기본 승률이 55%로 상향 보정됨.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold; color:var(--accent-color);">용병</td>
-                            <td>없음</td>
-                            <td>상성이 존재하지 않으며 기본 승률 60% 보정. 단, 용병끼리 맞붙을 시 [공격한 용병]이 100% 패배함.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="dictionary-section">
-                <h3>[아이템 카드]</h3>
-                <p style="font-size:0.9rem; color:#aaa;">※ 한 접전지당 아이템 장착 및 적용은 최대 2개까지 중첩 가능.</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>분류</th>
-                            <th>아이템명</th>
-                            <th>효과 및 제약 사양</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td rowspan="2" style="text-align:center; font-weight:bold; color:var(--danger-color);">공격형</td>
-                            <td style="font-weight:bold;">특급 사령관</td>
-                            <td>최상위 지휘관. 진격 시 상성 및 확률을 무시하고 100% 성벽 타격 성공. 수비 측의 함정마저 무시함(함정 소모 안됨).</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold;">폭파병</td>
-                            <td>75% 확률로 상대 1선발 카드를 폭파 처단함. 성벽 대미지는 없음. 단, 상대 진형에 [함정]이 있다면 함정만 제거됨.</td>
-                        </tr>
-                        <tr>
-                            <td rowspan="2" style="text-align:center; font-weight:bold; color:var(--success-color);">수비형</td>
-                            <td style="font-weight:bold;">함정</td>
-                            <td>공격을 1회 안전하게 방어 소멸시킴. 1% 극악의 확률로 반격 대미지(-1)를 가함. (특급 사령관/기병 공격에는 무력)</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold;">위장 장막</td>
-                            <td>수비 2선발에 장착하여 1선발로 승격 시 적에게 정체를 숨김(비공개 처리).</td>
-                        </tr>
-                        <tr>
-                            <td rowspan="2" style="text-align:center; font-weight:bold; color:#5bc0de;">사용형</td>
-                            <td style="font-weight:bold;">첩보서</td>
-                            <td>위장 1선발 ➔ 2선발 ➔ 3선발 순서대로 확인하며 배치된 [함정] 유무도 함께 정찰해 냄.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:bold;">군수 보급</td>
-                            <td>무작위 카드 2장을 즉시 획득. 패에 아무리 많아도 한 턴에 최대 1장만 사용 가능.</td>
-                        </tr>
+                        <tr><td><b>보병</b></td><td>군수</td><td>창병에 우세. 수비전 패배 시 50% 확률로 생존(성벽 피해 무효 및 유지).</td></tr>
+                        <tr><td><b>창병</b></td><td>군수</td><td>기병에 우세. 공격 성공 시 60% 확률로 적 성벽에 강력한 피해(-2) 부여.</td></tr>
+                        <tr><td><b>기병</b></td><td>군수</td><td>방패병에 우세. 공격 시 적의 [함정]을 즉시 파괴·우회하여 1선발과 전투 실행.</td></tr>
+                        <tr><td><b>방패병</b></td><td>군수</td><td>궁병에 우세. 상대의 [폭파병] 투하 공습을 1회 완벽하게 방어(파괴 안됨).</td></tr>
+                        <tr><td><b>궁병</b></td><td>군수</td><td>보병에 우세. 일반 전투(용병/상성 제외) 시 공수 불문 승률 55%로 고정 보정.</td></tr>
+                        <tr><td><b>용병</b></td><td>군수</td><td>상성 없음. 모든 전투에서 승률 60% 보정. 단, 용병끼리 싸우면 [공격측] 100% 패배.</td></tr>
+                        <tr><td><b>특급 사령관</b></td><td>공격 템</td><td>공격 시 상성·확률 무시 100% 확정 승리. 적 함정도 무시하고 성벽 타격.</td></tr>
+                        <tr><td><b>폭파병</b></td><td>공격 템</td><td>75% 확률로 적 1선발을 즉시 처단(성벽 딜 없음). 단, 적 함정 존재 시 함정만 폭파.</td></tr>
+                        <tr><td><b>함정</b></td><td>수비 템</td><td>적의 공격을 1회 완전 방어. 1% 극악의 확률로 적 성벽에 반격 대미지(-1) 부여.</td></tr>
+                        <tr><td><b>위장 장막</b></td><td>수비 템</td><td>2선발에 미리 적용해두면, 1선발로 승격 시 정체를 감춰 비공개 처리됨.</td></tr>
+                        <tr><td><b>첩보서</b></td><td>사용 템</td><td>가려진 1선발 ➔ 2선발 ➔ 3선발 순서로 정찰 및 매설된 함정 유무 파악.</td></tr>
+                        <tr><td><b>군수 보급</b></td><td>사용 템</td><td>무작위 카드 2장 드로우. 패에 많아도 한 턴에 단 1장만 사용 가능.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <div id="screen-game" class="screen">
-            <div class="game-header">
-                <div><strong>👑 플레이어 전장군주</strong></div>
-                <div id="turn-display" style="color:var(--accent-color); font-size:1.2rem; font-weight:bold;">제 1 턴 (아군 행동 단계)</div>
-                <div><strong>🤖 AI 상대 영주</strong></div>
+            <h2 style="text-align:center; margin: 5px 0; font-size:1.6rem;">🗺️ 작전 지도 상황판</h2>
+            <div style="text-align:center; margin-bottom:15px; font-weight:bold; color:var(--map-bg);" id="turn-info">
+                제 1 턴 | 아군의 작전 행동 단계
             </div>
 
-            <div class="battlefields">
-                <div class="field-card" id="field-A">
-                    <h3>A 지역</h3>
-                    <div>적 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-A" style="width: 100%;"></div><div class="hp-text" id="hp-text-ai-A">6 / 6</div></div>
+            <div class="battlefield-map">
+                <div class="region-scroll" id="reg-A">
+                    <h3>A 전선</h3>
+                    <div class="hp-zone"><span>적 성벽 체력:</span><span id="hp-ai-A-text">6/6</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-A-bar" style="width:100%"></div></div>
                     
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">🤖 AI 진형</div>
-                        <div class="slot" id="ai-A-1">1선발: [공개] 보병</div>
-                        <div class="slot" id="ai-A-items">장착 아이템: 없음</div>
+                    <div class="lineup-box">
+                        <div class="lineup-title">🤖 AI 수비대</div>
+                        <div id="ai-A-line">1선발: 로딩중...</div>
+                        <div id="ai-A-items" style="color:var(--accent-red); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
                     
-                    <hr style="border-color:#333;">
-                    
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">👑 아군 진형</div>
-                        <div class="slot" id="ply-A-1">1선발: 창병</div>
-                        <div class="slot" id="ply-A-2">2선발: 대기 없음</div>
-                        <div class="slot" id="ply-A-3">3선발: 대기 없음</div>
-                        <div class="slot" id="ply-A-items">설치 아이템: 없음</div>
+                    <div class="lineup-box" style="background: rgba(210,230,255,0.5);">
+                        <div class="lineup-title">👑 아군 배치 상태</div>
+                        <div id="ply-A-1">1선발: 없음</div>
+                        <div id="ply-A-2">2선발: 없음</div>
+                        <div id="ply-A-3">3선발: 없음</div>
+                        <div id="ply-A-items" style="color:var(--accent-blue); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
-                    <div>아군 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ply-A" style="width: 100%;"></div><div class="hp-text" id="hp-text-ply-A">6 / 6</div></div>
-                    <button style="width:100%; padding:5px; background:#a94442; color:#fff; border:none; cursor:pointer;" onclick="attackRegion('A')">A 전장 공격 진격</button>
+                    <div class="hp-zone"><span>아군 성벽 체력:</span><span id="hp-ply-A-text">6/6</span></div>
+                    <div class="hp-bar"><div class="hp-fill ply" id="hp-ply-A-bar" style="width:100%"></div></div>
+                    <button class="btn-attack" onclick="executeAttack('A')">⚔️ A 전선 진격령</button>
                 </div>
 
-                <div class="field-card" id="field-B">
-                    <h3>B 지역</h3>
-                    <div>적 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-B" style="width: 100%;"></div><div class="hp-text" id="hp-text-ai-B">8 / 8</div></div>
+                <div class="region-scroll" id="reg-B">
+                    <h3>B 전선</h3>
+                    <div class="hp-zone"><span>적 성벽 체력:</span><span id="hp-ai-B-text">8/8</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-B-bar" style="width:100%"></div></div>
                     
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">🤖 AI 진형</div>
-                        <div class="slot" id="ai-B-1">1선발: [공개] 기병</div>
-                        <div class="slot" id="ai-B-items">장착 아이템: 없음</div>
+                    <div class="lineup-box">
+                        <div class="lineup-title">🤖 AI 수비대</div>
+                        <div id="ai-B-line">1선발: 로딩중...</div>
+                        <div id="ai-B-items" style="color:var(--accent-red); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
                     
-                    <hr style="border-color:#333;">
-                    
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">👑 아군 진형</div>
-                        <div class="slot" id="ply-B-1">1선발: 방패병</div>
-                        <div class="slot" id="ply-B-2">2선발: 대기 없음</div>
-                        <div class="slot" id="ply-B-3">3선발: 대기 없음</div>
-                        <div class="slot" id="ply-B-items">설치 아이템: 없음</div>
+                    <div class="lineup-box" style="background: rgba(210,230,255,0.5);">
+                        <div class="lineup-title">👑 아군 배치 상태</div>
+                        <div id="ply-B-1">1선발: 없음</div>
+                        <div id="ply-B-2">2선발: 없음</div>
+                        <div id="ply-B-3">3선발: 없음</div>
+                        <div id="ply-B-items" style="color:var(--accent-blue); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
-                    <div>아군 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ply-B" style="width: 100%;"></div><div class="hp-text" id="hp-text-ply-B">8 / 8</div></div>
-                    <button style="width:100%; padding:5px; background:#a94442; color:#fff; border:none; cursor:pointer;" onclick="attackRegion('B')">B 전장 공격 진격</button>
+                    <div class="hp-zone"><span>아군 성벽 체력:</span><span id="hp-ply-B-text">8/8</span></div>
+                    <div class="hp-bar"><div class="hp-fill ply" id="hp-ply-B-bar" style="width:100%"></div></div>
+                    <button class="btn-attack" onclick="executeAttack('B')">⚔️ B 전선 진격령</button>
                 </div>
 
-                <div class="field-card" id="field-C">
-                    <h3>C 지역</h3>
-                    <div>적 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-C" style="width: 100%;"></div><div class="hp-text" id="hp-text-ai-C">4 / 4</div></div>
+                <div class="region-scroll" id="reg-C">
+                    <h3>C 전선</h3>
+                    <div class="hp-zone"><span>적 성벽 체력:</span><span id="hp-ai-C-text">4/4</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="hp-ai-C-bar" style="width:100%"></div></div>
                     
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">🤖 AI 진형</div>
-                        <div class="slot" id="ai-C-1">1선발: [공개] 궁병</div>
-                        <div class="slot" id="ai-C-items">장착 아이템: 없음</div>
+                    <div class="lineup-box">
+                        <div class="lineup-title">🤖 AI 수비대</div>
+                        <div id="ai-C-line">1선발: 로딩중...</div>
+                        <div id="ai-C-items" style="color:var(--accent-red); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
                     
-                    <hr style="border-color:#333;">
-                    
-                    <div class="queue-box">
-                        <div style="font-size:0.8rem; color:#aaa;">👑 아군 진형</div>
-                        <div class="slot" id="ply-C-1">1선발: 용병</div>
-                        <div class="slot" id="ply-C-2">2선발: 대기 없음</div>
-                        <div class="slot" id="ply-C-3">3선발: 대기 없음</div>
-                        <div class="slot" id="ply-C-items">설치 아이템: 없음</div>
+                    <div class="lineup-box" style="background: rgba(210,230,255,0.5);">
+                        <div class="lineup-title">👑 아군 배치 상태</div>
+                        <div id="ply-C-1">1선발: 없음</div>
+                        <div id="ply-C-2">2선발: 없음</div>
+                        <div id="ply-C-3">3선발: 없음</div>
+                        <div id="ply-C-items" style="color:var(--accent-blue); font-size:0.75rem;">설치됨: 없음</div>
                     </div>
-                    <div>아군 성벽 체력</div>
-                    <div class="hp-bar"><div class="hp-fill" id="hp-ply-C" style="width: 100%;"></div><div class="hp-text" id="hp-text-ply-C">4 / 4</div></div>
-                    <button style="width:100%; padding:5px; background:#a94442; color:#fff; border:none; cursor:pointer;" onclick="attackRegion('C')">C 전장 공격 진격</button>
+                    <div class="hp-zone"><span>아군 성벽 체력:</span><span id="hp-ply-C-text">4/4</span></div>
+                    <div class="hp-bar"><div class="hp-fill ply" id="hp-ply-C-bar" style="width:100%"></div></div>
+                    <button class="btn-attack" onclick="executeAttack('C')">⚔️ C 전선 진격령</button>
                 </div>
             </div>
 
-            <div class="player-hand-section">
-                <h3>📜 군주 보유 전술패 (Hand)</h3>
-                <p style="font-size:0.8rem; color:#aaa; margin-top:-10px;">카드를 선택하면 사용하거나 전장에 배치할 수 있습니다. (데모 자동 구성)</p>
-                <div class="hand-container" id="hand-cards">
-                    </div>
+            <div class="hand-deck-zone">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; color:var(--map-bg);">📜 군주의 전술패</span>
+                    <span style="font-size:0.8rem; color:#aaa;">* 카드를 선택한 후 전선(A,B,C)을 클릭하면 배치/아이템 사용이 작동합니다.</span>
+                </div>
+                <div class="hand-slots" id="player-hand-element"></div>
             </div>
 
-            <div class="log-box" id="log-box">
-                [시스템]: 전술 전쟁의 막이 올랐습니다. 사령관님, 행동을 개시하십시오!
-            </div>
+            <div class="parchment-log" id="game-log"></div>
         </div>
 
     </div>
 
     <script>
-        // 화면 전환용 로직
+        // --- 게임 데이터 및 규칙 정의 객체 ---
+        const CARD_POOL = [
+            { name: '보병', type: '군수', desc: '창병에 우세 / 수비 패배시 50% 생존' },
+            { name: '창병', type: '군수', desc: '기병에 우세 / 공격 승리시 60% 확률 댐-2' },
+            { name: '기병', type: '군수', desc: '방패병에 우세 / 적 함정 확정 철거' },
+            { name: '방패병', type: '군수', desc: '궁병에 우세 / 폭파병 공격 1회 면역' },
+            { name: '궁병', type: '군수', desc: '보병에 우세 / 일반전투 기본승률 55%' },
+            { name: '용병', type: '군수', desc: '상성 없음 / 기본승률 60% (용병대결 시 공격측 패배)' },
+            { name: '특급 사령관', type: '공격아이템', desc: '상성 무시 100% 확정 승리 (함정 무시)' },
+            { name: '폭파병', type: '공격아이템', desc: '75% 확률로 적 1선발 제거 (함정 우선 소모)' },
+            { name: '함정', type: '수비아이템', desc: '공격 1회 무효 방어 / 1% 확률 반격(-1)' },
+            { name: '위장 장막', type: '수비아이템', desc: '2선발 장착용 / 1선발 승격 시 비공개' },
+            { name: '첩보서', type: '사용아이템', desc: '상대 비밀 배치 및 함정 순서대로 정찰' },
+            { name: '군수 보급', type: '사용아이템', desc: '무작위 카드 2장 드로우 (턴당 1회)' }
+        ];
+
+        const MATCHUPS = { '보병': '창병', '창병': '기병', '기병': '방패병', '방패병': '궁병', '궁병': '보병' };
+
+        let gameState = {
+            currentTurn: 1,
+            hasUsedSupplyThisTurn: false,
+            selectedHandIndex: null,
+            hp: {
+                ai: { A: 6, B: 8, C: 4 },
+                ply: { A: 6, B: 8, C: 4 }
+            },
+            maxHp: { A: 6, B: 8, C: 4 },
+            // 진형 카드 큐 (최대 3선발)
+            lineup: {
+                ai: { A: [], B: [], C: [] },
+                ply: { A: [], B: [], C: [] }
+            },
+            // 설치된 아이템 배열 (최대 2개 중첩)
+            items: {
+                ai: { A: [], B: [], C: [] },
+                ply: { A: [], B: [], C: [] }
+            },
+            playerHand: []
+        };
+
+        // --- 시스템 핵심 구동 엔진 ---
+
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            
             document.getElementById('screen-' + screenId).classList.add('active');
-            document.getElementById('tab-' + (screenId === 'dict' ? 'dict' : screenId === 'game' ? 'game' : 'home')).classList.add('active');
+            document.getElementById('nav-' + (screenId === 'dict' ? 'dict' : screenId === 'game' ? 'game' : 'home')).classList.add('active');
         }
 
-        // 간단한 전황 기록 로그 함수
-        function addLog(text) {
-            const logBox = document.getElementById('log-box');
-            logBox.innerHTML += `<br>[전황]: ${text}`;
-            logBox.scrollTop = logBox.scrollHeight;
+        function writeLog(msg, color = '#e8d8b8') {
+            const log = document.getElementById('game-log');
+            log.innerHTML += `<div style="color:${color}">[일지]: ${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
         }
 
-        // 데모용 손패 초기 배치 데이터 (5장 시작)
-        const sampleHand = [
-            { name: '보병', type: '군수', desc: '창병에 강함 / 50% 생존' },
-            { name: '기병', type: '군수', desc: '방패병에 강함 / 함정 파괴' },
-            { name: '특급 사령관', type: '공격 아이템', desc: '100% 확정 타격 격파' },
-            { name: '함정', type: '수비 아이템', desc: '1회 방어 / 1% 반격' },
-            { name: '군수 보급', type: '사용 아이템', desc: '카드 2장 드로우' }
-        ];
+        // 게임 완벽 세팅 및 시작 호출
+        function startGameSession() {
+            switchScreen('game');
+            document.getElementById('game-log').innerHTML = '';
+            writeLog("⚔️ 중세 전장에 오신 것을 환영합니다. 초기 군사를 전선에 전개합니다.", "#c9a054");
 
-        function renderHand() {
-            const handContainer = document.getElementById('hand-cards');
-            handContainer.innerHTML = '';
-            sampleHand.forEach((card, idx) => {
-                handContainer.innerHTML += `
-                    <div class="card" onclick="useCard(${idx})">
-                        <div class="card-title">${card.name}</div>
-                        <div class="card-type">${card.type}</div>
-                        <div class="card-desc">${card.desc}</div>
+            // 체력 리셋
+            gameState.hp.ai = { A: 6, B: 8, C: 4 };
+            gameState.hp.ply = { A: 6, B: 8, C: 4 };
+            gameState.currentTurn = 1;
+
+            // 초기 1선발 랜덤 배치
+            ['A', 'B', 'C'].forEach(r => {
+                gameState.lineup.ai[r] = [getRandomCard('군수')];
+                gameState.lineup.ply[r] = [getRandomCard('군수')];
+                gameState.items.ai[r] = [];
+                gameState.items.ply[r] = [];
+            });
+
+            // 플레이어 5장 드로우 시작
+            gameState.playerHand = [];
+            for(let i=0; i<5; i++) gameState.playerHand.push(getRandomCard());
+
+            gameState.hasUsedSupplyThisTurn = false;
+            gameState.selectedHandIndex = null;
+
+            updateVisuals();
+            writeLog("제 1 턴이 개시되었습니다. 전술패를 전선에 전술적으로 활용하거나 즉시 적 전선을 진격 타격하십시오.");
+        }
+
+        function getRandomCard(filterType = null) {
+            let pool = CARD_POOL;
+            if (filterType === '군수') pool = CARD_POOL.filter(c => c.type === '군수');
+            return {...pool[Math.floor(Math.random() * pool.length)]};
+        }
+
+        // 전선 클릭 시 카드 배치 및 아이템 사용 처리 사양
+        function handleRegionClick(region) {
+            if (gameState.selectedHandIndex === null) return;
+            
+            const card = gameState.playerHand[gameState.selectedHandIndex];
+            
+            // 1. 군수 카드 배치 처리
+            if (card.type === '군수') {
+                if (gameState.lineup.ply[region].length >= 3) {
+                    writeLog("❌ 해당 전선에는 이미 3선발(최대치)까지 전술 부대가 꽉 찼습니다.", "#ff4444");
+                    return;
+                }
+                gameState.lineup.ply[region].push(card);
+                writeLog(`👑 [${region} 전선]에 ${gameState.lineup.ply[region].length}선발로 [${card.name}] 부대를 후방 배치했습니다.`);
+                consumeSelectedCard();
+            } 
+            // 2. 아이템 처리
+            else {
+                if (card.name === '군수 보급') {
+                    if (gameState.hasUsedSupplyThisTurn) {
+                        writeLog("❌ [군수 보급]은 군율에 따라 한 턴에 단 1회만 발령할 수 있습니다.", "#ff4444");
+                        return;
+                    }
+                    gameState.playerHand.push(getRandomCard(), getRandomCard());
+                    gameState.hasUsedSupplyThisTurn = true;
+                    writeLog("📦 군수 수송 마차가 도착하여 전술패 2장을 새로 지급받았습니다.", "#5bc0de");
+                    consumeSelectedCard();
+                } 
+                else if (card.name === '첩보서') {
+                    executeIntelligence(region);
+                    consumeSelectedCard();
+                }
+                else if (card.name === '폭파병') {
+                    executeDemolition(region);
+                    consumeSelectedCard();
+                }
+                // 배치형 아이템 (함정, 위장 장막)
+                else if (card.name === '함정' || card.name === '위장 장막') {
+                    if (gameState.items.ply[region].length >= 2) {
+                        writeLog("❌ 한 전선에는 수비 공성 장비(아이템)를 최대 2개까지만 중첩할 수 있습니다.", "#ff4444");
+                        return;
+                    }
+                    if (card.name === '위장 장막' && gameState.lineup.ply[region].length < 2) {
+                        writeLog("⚠️ 위장 장막은 대기 중인 2선발 군조에 사전 적용하는 카드입니다. (현재 2선발이 없음)", "#ffcc00");
+                    }
+                    gameState.items.ply[region].push(card.name);
+                    writeLog(`🛡️ [${region} 전선]에 수비 아이템 [${card.name}]을 은밀히 구축 완료했습니다.`);
+                    consumeSelectedCard();
+                }
+            }
+            updateVisuals();
+        }
+
+        function consumeSelectedCard() {
+            gameState.playerHand.splice(gameState.selectedHandIndex, 1);
+            gameState.selectedHandIndex = null;
+        }
+
+        // [첩보서] 아이템 작동 기능
+        function executeIntelligence(region) {
+            writeLog(`👁️ [${region} 전선]에 첩보원을 급파하여 적진의 배치를 정찰합니다...`, "#5bc0de");
+            let enemyUnits = gameState.lineup.ai[region].map((c, i) => `${i+1}선발:[${c.name}]`).join(', ');
+            let enemyItems = gameState.items.ai[region].length > 0 ? `설치템:[${gameState.items.ai[region].join(', ')}]` : "설치템:없음";
+            if (!enemyUnits) enemyUnits = "배치 군사 없음 (빈집)";
+            writeLog(`📡 [첩보 보고]: 적 ${region} 진형 상황 ➔ ${enemyUnits} | ${enemyItems}`, "#5bc0de");
+        }
+
+        // [폭파병] 아이템 작동 기능
+        function executeDemolition(region) {
+            writeLog(`💥 [${region} 전선]에 폭파병 기습 요원들을 투입합니다!`, "#d9534f");
+            
+            // 함정 체크
+            let trapIndex = gameState.items.ai[region].indexOf('함정');
+            if (trapIndex !== -1) {
+                gameState.items.ai[region].splice(trapIndex, 1);
+                writeLog(`⚠️ 적 전선에 매설된 [함정]이 먼저 걸려 폭파병 요원들이 자폭하며 적 함정 1개만 철거되었습니다.`, "#ffcc00");
+                return;
+            }
+
+            // 방패병 면역 체크
+            let target = gameState.lineup.ai[region][0];
+            if (target && target.name === '방패병') {
+                writeLog(`🛡️ 적 1선발이 철벽의 [방패병]입니다! 폭파 공습을 방패 뒤로 1회 완벽히 받아내며 버텼습니다.`, "#5bc0de");
+                return;
+            }
+
+            if (target) {
+                if (Math.random() <= 0.75) {
+                    writeLog(`🔥 폭파 대성공! 적 1선발 군사 [${target.name}]을 완전히 폭살하여 전멸시켰습니다.`, "#d9534f");
+                    gameState.lineup.ai[region].shift(); // 제거
+                } else {
+                    writeLog(`❌ 아쉬워라! 폭약 불발 및 기습 유출로 적 1선발 폭파에 실패했습니다.`, "#aaaaaa");
+                }
+            } else {
+                writeLog(`⚠️ [${region} 전선]에 폭파할 적 군사 부대가 존재하지 않습니다.`, "#aaaaaa");
+            }
+        }
+
+        // --- 전투 수행 및 공방 알고리즘 ---
+        function executeAttack(region) {
+            let plyUnit = gameState.lineup.ply[region][0];
+            let aiUnit = gameState.lineup.ai[region][0];
+
+            // 특급 사령관 장착 여부 확인 (핸드 선택 중 사용 후 즉시 진격 처리 기능 대안)
+            let isCommanderAttack = false;
+            if (gameState.selectedHandIndex !== null && gameState.playerHand[gameState.selectedHandIndex].name === '특급 사령관') {
+                isCommanderAttack = true;
+                consumeSelectedCard();
+                writeLog(`👑 [특급 사령관] 직접 지휘 발령! 군성 및 함정을 무시하고 철갑 진격을 감행합니다!`, "gold");
+            }
+
+            if (!plyUnit && !isCommanderAttack) {
+                writeLog(`❌ 진격 불가! [${region} 전선]의 선봉(1선발)에 배치된 부대가 없습니다. 카드를 배치해 주십시오.`, "#ff4444");
+                return;
+            }
+
+            writeLog(`⚔️ [${region} 전선]에 총공격 진격 봉화가 올랐습니다!`, varName('--accent-red'));
+
+            // 1. 특급 사령관 무적 진격 처리
+            if (isCommanderAttack) {
+                writeLog(`💥 특급 사령관의 전술로 적 성벽에 확정 타격을 가했습니다!`, "#d9534f");
+                damageWall('ai', region, 1);
+                endPlayerTurn();
+                return;
+            }
+
+            // 아군 공격 카드 소모성 규칙 (공격 즉시 필드에서 이탈)
+            gameState.lineup.ply[region].shift();
+
+            // 2. 기병 함정 무력화 및 함정 체크
+            if (plyUnit.name === '기병') {
+                let trapIdx = gameState.items.ai[region].indexOf('함정');
+                if (trapIdx !== -1) {
+                    gameState.items.ai[region].splice(trapIdx, 1);
+                    writeLog(`🐎 아군 [기병] 부대가 적의 함정 지대를 가볍게 도약 돌파하며 적 함정 1개를 파괴했습니다!`, "#5bc0de");
+                }
+            } else {
+                let trapIdx = gameState.items.ai[region].indexOf('함정');
+                if (trapIdx !== -1) {
+                    gameState.items.ai[region].splice(trapIdx, 1);
+                    writeLog(`🕸️ 어이쿠! 적의 공성 [함정]을 밟았습니다. 공격이 허무하게 막혔습니다.`, "#ffcc00");
+                    if (Math.random() <= 0.01) {
+                        writeLog(`💀 극악의 확률! 함정 반격 발동으로 아군 성벽이 대미지(-1)를 받았습니다!`, "#ff4444");
+                        damageWall('ply', region, 1);
+                    }
+                    endPlayerTurn();
+                    return;
+                }
+            }
+
+            // 3. 빈집 공격 처리 규칙 (대미지 -2)
+            if (!aiUnit) {
+                writeLog(`🏰 적의 수비 대형이 뚫려있습니다! 무방비 상태의 성벽에 대파격 대미지(-2)를 가했습니다!`, "#d9534f");
+                damageWall('ai', region, 2);
+                endPlayerTurn();
+                return;
+            }
+
+            // 4. 일반 전투 상성 판정 규칙 계산
+            writeLog(`🛡️ [아군 1선발: ${plyUnit.name}] VS [적군 1선발: ${aiUnit.name}] 격돌!`);
+            let fightResult = calculateBattle(plyUnit, aiUnit); // true = 아군승리, false = 아군패배
+
+            if (fightResult) {
+                writeLog(`🎉 아군 [${plyUnit.name}] 부대가 승리하여 적 수비선을 파괴했습니다!`, "#5cb85c");
+                
+                // 창병 60% 확률 치명타 대미지 -2 판정
+                if (plyUnit.name === '창병' && Math.random() <= 0.60) {
+                    writeLog(`🔱 창병의 장창 궤멸 타격 작렬 (60% 치명타 발동)! 적 성벽 체력 -2!`, "gold");
+                    damageWall('ai', region, 2);
+                } else {
+                    damageWall('ai', region, 1);
+                }
+                
+                // 패배한 적 유닛 제거 처리
+                executeEnemyDefeat(region, aiUnit);
+            } else {
+                writeLog(`😭 아군 선발대가 적의 견고한 방어벽을 뚫지 못하고 전멸 및 퇴각했습니다.`, "#aaaaaa");
+                // 아군은 패배해도 성벽 대미지는 없음 규칙 준수
+            }
+
+            endPlayerTurn();
+        }
+
+        function calculateBattle(atk, def) {
+            // 용병 예외 특수전
+            if (atk.name === '용병' && def.name === '용병') return false; // 공격한 용병 100% 패배 법칙
+            if (atk.name === '용병') return Math.random() <= 0.60;
+            if (def.name === '용병') return Math.random() > 0.60;
+
+            // 상성 비교 우위 확인
+            if (MATCHUPS[atk.name] === def.name) return true;  // 공격 우세 승리
+            if (MATCHUPS[def.name] === atk.name) return false; // 수비 우세 패배
+
+            // 궁병 55% 보정 룰
+            if (atk.name === '궁병') return Math.random() <= 0.55;
+            if (def.name === '궁병') return Math.random() > 0.55;
+
+            // 상성 없음 반반 확률 싸움
+            return Math.random() <= 0.50;
+        }
+
+        function executeEnemyDefeat(region, enemyUnit) {
+            // 보병 50% 생존 패시브 체크
+            if (enemyUnit.name === '보병' && Math.random() <= 0.50) {
+                writeLog(`🛡️ 적 [보병] 부대가 완강한 생존 패시브(50%)를 발동하여 전멸을 면하고 자리를 유지했습니다!`, "#ffcc00");
+                // 성벽 대미지 들어갔던 것을 무효 취소 복구
+                gameState.hp.ai[region] = Math.min(gameState.maxHp[region], gameState.hp.ai[region] + 1);
+            } else {
+                gameState.lineup.ai[region].shift(); // 적 파괴 확정 탈락
+                checkLineupPromotion('ai', region);
+            }
+        }
+
+        function checkLineupPromotion(side, region) {
+            // 2선발이 1선발로 승격 시 위장 장막 체크용 사양 확장 기능 연계부
+            let nextUnit = gameState.lineup[side][region][0];
+            if (nextUnit && side === 'ai') {
+                // 데모 간략화: 위장 처리는 그냥 콘솔 로그 유지만 표기
+            }
+        }
+
+        function damageWall(side, region, amount) {
+            gameState.hp[side][region] = Math.max(0, gameState.hp[side][region] - amount);
+            if (gameState.hp[side][region] === 0) {
+                writeLog(`👑 경축! [${region} 전선]의 성벽을 완전히 무너뜨리고 깃발을 꽂았습니다!!`, "gold");
+            }
+            checkGameOver();
+        }
+
+        // --- 턴 인계 및 AI 구동부 ---
+        function endPlayerTurn() {
+            gameState.selectedHandIndex = null;
+            updateVisuals();
+            
+            // 승패 결정 안났으면 AI 차례로 전환
+            setTimeout(() => {
+                executeAITurn();
+            }, 1200);
+        }
+
+        function executeAITurn() {
+            document.getElementById('turn-info').innerText = `제 ${gameState.currentTurn} 턴 | AI 상대 영주의 침공 단계`;
+            document.getElementById('turn-info').style.color = 'var(--accent-red)';
+
+            // AI의 초간단 전술: 전선 하나를 무작위로 골라 병력 충원 혹은 공격 진행
+            let regions = ['A', 'B', 'C'];
+            let chosenRegion = regions[Math.floor(Math.random() * regions.length)];
+            
+            writeLog(`🤖 AI 상대 영주가 [${chosenRegion} 전선]에 작전 명령을 투하했습니다.`, "orange");
+
+            // 만약 1선발이 비어있으면 채우고, 채워져 있으면 플레이어 성벽 공습 단행
+            if (gameState.lineup.ai[chosenRegion].length === 0) {
+                gameState.lineup.ai[chosenRegion].push(getRandomCard('군수'));
+                writeLog(`🤖 AI가 [${chosenRegion} 전선]의 전열 보강을 위해 수비 군대를 증원했습니다.`, "orange");
+            } else {
+                // 공격 개시
+                let aiAttacker = gameState.lineup.ai[chosenRegion].shift();
+                writeLog(`🤖 AI의 [${aiAttacker.name}] 부대가 아군 [${chosenRegion} 전선] 성벽을 향해 돌격해옵니다!!`, "orange");
+
+                let plyDefender = gameState.lineup.ply[chosenRegion][0];
+
+                // 아군 함정 소모 처리
+                let trapIdx = gameState.items.ply[chosenRegion].indexOf('함정');
+                if (trapIdx !== -1 && aiAttacker.name !== '기병') {
+                    gameState.items.ply[chosenRegion].splice(trapIdx, 1);
+                    writeLog(`🛡️ 아군 성벽 앞에 배치했던 [함정]이 발동되어 적의 공격을 안전하게 차단 방어했습니다!`, "#2563eb");
+                } 
+                else if (!plyDefender) {
+                    writeLog(`💥 아군 전선이 비어있습니다! AI에게 성벽 전파격 대미지(-2)를 허용했습니다!`, "#ff4444");
+                    damageWall('ply', chosenRegion, 2);
+                } 
+                else {
+                    // 실제 전투 판정 (AI 공격 vs 플레이어 수비)
+                    let aiWin = calculateBattle(aiAttacker, plyDefender);
+                    if (aiWin) {
+                        writeLog(`💥 아군 [${plyDefender.name}] 방어선이 뚫렸습니다. 성벽 피해 체력 -1!`, "#ff4444");
+                        damageWall('ply', chosenRegion, 1);
+                        
+                        // 아군 보병 생존 체크
+                        if (plyDefender.name === '보병' && Math.random() <= 0.50) {
+                            writeLog(`👑 아군 [보병]이 결사 생존 의지(50%)를 뿜어내며 기적적으로 진형에 잔존했습니다!`, "#2563eb");
+                            gameState.hp.ply[chosenRegion] += 1; // 대미지 원상복구
+                        } else {
+                            gameState.lineup.ply[chosenRegion].shift(); // 탈락
+                        }
+                    } else {
+                        writeLog(`🛡️ 아군 [${plyDefender.name}] 수비대가 명장의 전술로 적의 기습을 굳건히 막아냈습니다!`, "#2563eb");
+                    }
+                }
+            }
+
+            // AI 턴 종료 -> 다음 턴 플레이어 드로우 및 복구 단계 진입
+            gameState.currentTurn++;
+            gameState.hasUsedSupplyThisTurn = false;
+            
+            // 카드 보충 규칙 사양 (두번째 턴부터 총 손패가 6장이 될 때까지 누적 보충 드로우)
+            while (gameState.playerHand.length < 6) {
+                gameState.playerHand.push(getRandomCard());
+            }
+
+            setTimeout(() => {
+                document.getElementById('turn-info').innerText = `제 ${gameState.currentTurn} 턴 | 아군의 작전 행동 단계`;
+                document.getElementById('turn-info').style.color = 'var(--map-bg)';
+                writeLog(`✨ 제 ${gameState.currentTurn} 턴 개시. 전술 군수 패가 다시 6장까지 아낌없이 재보급되었습니다.`);
+                updateVisuals();
+            }, 1000);
+        }
+
+        function checkGameOver() {
+            let aiDead = (gameState.hp.ai.A <= 0 || gameState.hp.ai.B <= 0 || gameState.hp.ai.C <= 0);
+            let plyDead = (gameState.hp.ply.A <= 0 || gameState.hp.ply.B <= 0 || gameState.hp.ply.C <= 0);
+
+            if (aiDead || plyDead) {
+                setTimeout(() => {
+                    if (aiDead && !plyDead) alert("🎉 대승리! 적 성벽 한 곳을 완벽히 격파하여 영지를 수호하셨습니다, 군주님!");
+                    else if (plyDead && !aiDead) alert("💀 패배... 아군 요새 방어선 성벽이 먼저 함락되어 영지를 빼앗겼습니다.");
+                    else alert("⚔️ 무승부! 서로의 성벽이 동시에 격파되어 처절한 불바다로 기록되었습니다.");
+                    startGameSession(); // 리셋
+                }, 100);
+            }
+        }
+
+        // --- 화면 데이터 동기화 리렌더링 부 ---
+        function updateVisuals() {
+            // 1. 전선 체력 및 바 갱신
+            ['A', 'B', 'C'].forEach(r => {
+                document.getElementById(`hp-ai-${r}-text`).innerText = `${gameState.hp.ai[r]}/${gameState.maxHp[r]}`;
+                document.getElementById(`hp-ai-${r}-bar`).style.width = `${(gameState.hp.ai[r]/gameState.maxHp[r])*100}%`;
+
+                document.getElementById(`hp-ply-${r}-text`).innerText = `${gameState.hp.ply[r]}/${gameState.maxHp[r]}`;
+                document.getElementById(`hp-ply-${r}-bar`).style.width = `${(gameState.hp.ply[r]/gameState.maxHp[r])*100}%`;
+
+                // AI 진형 표시 (1선발 정보 동기화)
+                let ai1st = gameState.lineup.ai[r][0];
+                document.getElementById(`ai-A-line`).innerText = `1선발: ${gameState.lineup.ai['A'][0] ? '[공개] ' + gameState.lineup.ai['A'][0].name : '없음 (빈집)'}`;
+                document.getElementById(`ai-B-line`).innerText = `1선발: ${gameState.lineup.ai['B'][0] ? '[공개] ' + gameState.lineup.ai['B'][0].name : '없음 (빈집)'}`;
+                document.getElementById(`ai-C-line`).innerText = `1선발: ${gameState.lineup.ai['C'][0] ? '[공개] ' + gameState.lineup.ai['C'][0].name : '없음 (빈집)'}`;
+                
+                document.getElementById(`ai-${r}-items`).innerText = `설치됨: ${gameState.items.ai[r].length > 0 ? gameState.items.ai[r].join(', ') : '없음'}`;
+
+                // 플레이어 진형 라인업 3선발 매핑
+                for (let slot = 1; slot <= 3; slot++) {
+                    let u = gameState.lineup.ply[r][slot-1];
+                    document.getElementById(`ply-${r}-${slot}`).innerText = `${slot}선발: ${u ? u.name : '없음'}`;
+                }
+                document.getElementById(`ply-${r}-items`).innerText = `설치됨: ${gameState.items.ply[r].length > 0 ? gameState.items.ply[r].join(', ') : '없음'}`;
+            });
+
+            // 2. 플레이어 핸드 카드 그리기
+            const handEl = document.getElementById('player-hand-element');
+            handEl.innerHTML = '';
+            gameState.playerHand.forEach((card, idx) => {
+                let isSel = (gameState.selectedHandIndex === idx) ? 'selected' : '';
+                handEl.innerHTML += `
+                    <div class="medieval-card ${isSel}" onclick="selectHandCard(${idx})">
+                        <div class="c-name">${card.name}</div>
+                        <div class="c-type">${card.type}</div>
+                        <div class="c-desc">${card.desc}</div>
                     </div>
                 `;
             });
         }
 
-        function useCard(index) {
-            const card = sampleHand[index];
-            addLog(`${card.name} 카드를 선택 전술 검토 중... (지역 배치 및 활용 코드를 연결 가능)`);
+        function selectHandCard(idx) {
+            // 이미 선택한 카드면 취소, 아니면 선택 지정
+            if (gameState.selectedHandIndex === idx) {
+                gameState.selectedHandIndex = null;
+            } else {
+                gameState.selectedHandIndex = idx;
+                const card = gameState.playerHand[idx];
+                writeLog(`주문/군령 검토: [${card.name}] 발령 준비 완료. 적용할 전선(A,B,C) 구역을 마우스로 클릭하십시오.`, "#ffcc00");
+            }
+            updateVisuals();
         }
 
-        // 공격 명령 수행 함수 (단순 시뮬레이션 샘플)
-        function attackRegion(region) {
-            addLog(`${region} 지역으로 아군 선발대가 진격을 개시했습니다!`);
-            addLog(`전투를 치르고 아군 턴이 자동 종료되며 상대방 AI의 전술 턴으로 양도됩니다.`);
-        }
+        // 각 전선 구역 클릭 이벤트 연결 리스너 바인딩
+        document.getElementById('reg-A').addEventListener('click', () => handleRegionClick('A'));
+        document.getElementById('reg-B').addEventListener('click', () => handleRegionClick('B'));
+        document.getElementById('reg-C').addEventListener('click', () => handleRegionClick('C'));
 
-        // 초기화 수행
-        renderHand();
+        // 보조 함수: CSS 변수 값 텍스트 가져오기
+        function varName(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
     </script>
 </body>
 </html>
