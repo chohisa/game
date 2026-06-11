@@ -2,19 +2,19 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>크로니클 오브 워: 중세 전술 대결</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>크로니클 오브 워: 중세 전술 대결 v2</title>
     <style>
         :root {
-            --bg-color: #120e0a;
-            --table-color: #261d16;
-            --panel-color: #1c1410;
+            --bg-color: #0f0b08;
+            --table-color: #1a130e;
+            --panel-color: #241a13;
             --border-color: #4a3b2c;
             --text-color: #e8e2d5;
-            --player-color: #3b6e42;
-            --ai-color: #943131;
-            --item-color: #244970;
-            --gold-color: #d4af37;
+            --player-color: #2e5935;
+            --ai-color: #822424;
+            --item-color: #1c3b5e;
+            --gold-color: #caa428;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
@@ -22,6 +22,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Georgia', serif;
+            width: 100vw;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -29,210 +30,260 @@
             overflow: hidden;
         }
 
-        /* --- 중세풍 스타일 장식 --- */
+        /* 공통 중세 서판 느낌 스킨 */
         .parchment {
-            background: radial-gradient(circle, #2d2219 0%, #1c1410 100%);
-            border: 4px double var(--border-color);
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, #261b13 0%, #17100b 100%);
+            border: 3px double var(--border-color);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
         }
 
-        /* --- 1단계: 홈 화면 & 군사 도감 --- */
+        /* --- 1단계: 홈 타이틀 화면 --- */
         #start-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0b0806;
+            background-color: #080605;
             z-index: 100;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            gap: 20px;
         }
         .title-banner {
-            font-size: 3.5rem; color: var(--gold-color); text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-            letter-spacing: 6px; margin-bottom: 25px; font-weight: bold; text-align: center;
+            font-size: 3rem; color: var(--gold-color); text-shadow: 0 0 15px rgba(202, 164, 40, 0.3);
+            letter-spacing: 5px; text-align: center; line-height: 1.2;
         }
-        .start-btn {
-            padding: 14px 50px; font-size: 1.3rem; background: #3d2f23;
-            border: 2px solid var(--gold-color); color: var(--gold-color); cursor: pointer; border-radius: 4px;
-            font-weight: bold; transition: all 0.3s; margin-bottom: 30px;
+        .menu-btn-group { display: flex; gap: 15px; }
+        .main-btn {
+            padding: 12px 35px; font-size: 1.1rem; background: #2b1f16;
+            border: 2px solid var(--border-color); color: var(--text-color); cursor: pointer;
+            font-weight: bold; transition: all 0.2s; border-radius: 3px;
         }
-        .start-btn:hover { background: var(--gold-color); color: #0b0806; box-shadow: 0 0 15px var(--gold-color); }
+        .main-btn:hover { border-color: var(--gold-color); color: var(--gold-color); box-shadow: 0 0 10px rgba(202, 164, 40, 0.2); }
+        .btn-gold { border-color: var(--gold-color); color: var(--gold-color); }
+
+        /* --- 📜 독립형 전술 도감 모달 패널 --- */
+        #codex-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .codex-window {
+            width: 100%; max-width: 750px; max-height: 85vh;
+            display: flex; flex-direction: column; border-radius: 6px; padding: 20px;
+        }
+        .codex-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;
+        }
+        .codex-header h2 { color: var(--gold-color); font-size: 1.4rem; }
+        .close-x { font-size: 1.5rem; color: #8c7662; cursor: pointer; }
+        .close-x:hover { color: #fff; }
         
-        .codex-container {
-            width: 85%; max-width: 800px; max-height: 40vh; overflow-y: auto;
-            padding: 15px; border-radius: 6px; border: 1px solid var(--border-color);
-        }
-        .codex-title { color: var(--gold-color); margin-bottom: 10px; font-size: 1.2rem; text-align: center; }
-        .codex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-        .codex-card { background: rgba(0,0,0,0.3); padding: 10px; border: 1px solid #3d2f23; border-radius: 4px; }
-        .codex-name { color: var(--gold-color); font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
-        .codex-desc { font-size: 0.8rem; color: #bdae9e; line-height: 1.3; }
+        .codex-scroll { overflow-y: auto; flex: 1; padding-right: 5px; }
+        .codex-sec-title { color: var(--gold-color); font-size: 1rem; margin: 15px 0 8px 0; border-left: 3px solid var(--gold-color); padding-left: 6px; }
+        .codex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+        .codex-card { background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid #3d2c1e; border-radius: 4px; }
+        .codex-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; color: #dfd5c6; }
+        .codex-desc { font-size: 0.8rem; color: #a89989; line-height: 1.4; }
 
         /* --- 2단계: 코인 토스 애니메이션 --- */
         #coin-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(10, 8, 6, 0.96);
-            z-index: 95;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            background-color: #0b0806; z-index: 95;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
         }
-        .coin-container { width: 120px; height: 120px; perspective: 1000px; margin-bottom: 30px; }
-        .coin { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.1s; }
+        .coin-container { width: 100px; height: 100px; perspective: 1000px; margin-bottom: 20px; }
+        .coin { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         .coin-side {
-            position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 4px solid var(--gold-color);
-            display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.4rem;
-            backface-visibility: hidden; box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+            position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--gold-color);
+            display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; backface-visibility: hidden;
         }
-        .coin-front { background: #8c6a0d; color: #fff; }
-        .coin-back { background: #47360a; color: var(--gold-color); transform: rotateY(180deg); }
-        .coin-text { font-size: 1.4rem; color: var(--gold-color); font-weight: bold; }
-        .coin.spinning { animation: spin-coin 2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
-        @keyframes spin-coin {
-            0% { transform: rotateY(0deg); }
-            100% { transform: rotateY(2880deg); }
-        }
+        .coin-front { background: #73560b; color: #fff; }
+        .coin-back { background: #3b2d08; color: var(--gold-color); transform: rotateY(180deg); }
+        .coin.spinning { animation: spin-coin 1.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
+        @keyframes spin-coin { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(2520deg); } }
 
-        /* --- 3단계: 인게임 레이아웃 (밑둥 잘림 완전 해결) --- */
+        /* --- 3단계: 인게임 레이아웃 (짤림 현상 원천 봉쇄) --- */
         #game-board {
             width: 100vw; height: 100vh;
-            display: grid; grid-template-rows: auto 1fr auto;
-            padding: 10px; gap: 8px; opacity: 0; transition: opacity 0.5s ease;
+            display: grid;
+            grid-template-rows: 50px 1fr 160px; /* 고정 구조 설계로 화면 비율 완벽 보존 */
+            padding: 12px; gap: 10px; opacity: 0; transition: opacity 0.4s ease;
         }
         #game-board.fade-in { opacity: 1; }
 
         .top-status-bar {
-            background: var(--panel-color); border: 1px solid var(--border-color);
-            padding: 8px 15px; border-radius: 6px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 15px;
+            background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 4px;
+            padding: 0 15px; display: flex; justify-content: space-between; align-items: center;
         }
-        .turn-title { font-size: 1.2rem; font-weight: bold; color: var(--gold-color); min-width: 150px; }
-        .combat-log { font-size: 0.85rem; color: #c4b9ad; font-style: italic; text-align: right; }
+        .turn-title { font-size: 1.1rem; font-weight: bold; color: var(--gold-color); }
+        .combat-log { font-size: 0.85rem; color: #b5a99c; font-style: italic; }
 
-        /* 메인 아레나 (화면 비율에 맞춰 유연하게 수축) */
+        /* 메인 아레나 전장 구역 */
         .arena {
-            background: var(--table-color); border: 2px solid var(--border-color); border-radius: 8px;
-            display: grid; grid-template-rows: 1fr 1fr; padding: 10px; gap: 10px; min-height: 0;
-            position: relative;
+            background: var(--table-color); border: 2px solid var(--border-color); border-radius: 6px;
+            display: grid; grid-template-rows: 1fr 1fr; padding: 10px; gap: 12px; min-height: 0; /* 축소 유연성 확보 */
         }
-        
-        /* 📜 꼬리잡기 상성표 가이드 오버레이 */
-        .relation-guide {
-            position: absolute; top: 50%; left: 10px; transform: translateY(-50%);
-            background: rgba(15, 11, 8, 0.9); border: 1px solid var(--border-color);
-            border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; z-index: 10;
-            line-height: 1.4; color: #bdae9e; pointer-events: none;
-        }
-        .relation-guide b { color: var(--gold-color); }
-        .relation-line { margin-bottom: 2px; }
-
         .side-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; min-height: 0; }
         
-        /* 카드 수비 배정 구역 */
+        /* 🏰 거점 전술 카드 박스 */
         .zone-card-box {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(212, 175, 55, 0.1);
-            border-radius: 6px; padding: 8px; display: flex; flex-direction: column;
-            justify-content: space-between; position: relative; min-height: 0; overflow: hidden;
+            background: rgba(0,0,0,0.25); border: 1px solid #3d2f24; border-radius: 4px;
+            padding: 8px; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; min-height: 0;
         }
-        .enemy-side .zone-card-box { flex-direction: column-reverse; }
 
-        /* 🚨 점령된 땅(함락) 시각 표기 스킨 */
+        /* 🔄 [교정 피드백] 상대 수비 상하 반전 구조식 */
+        .enemy-side .zone-card-box {
+            flex-direction: column; /* 메타가 위로, 대기열이 아래로 배치되도록 반전 대칭 구조화 */
+        }
+        .enemy-side .queue-flow {
+            flex-direction: column; /* 1선발이 아래쪽(중앙 전장과 맞닿는 곳)으로 오도록 정렬 */
+        }
+        .player-side .queue-flow {
+            flex-direction: column-reverse; /* 1선발이 위쪽(중앙 전장과 맞닿는 곳)으로 오도록 정렬 */
+        }
+
+        /* 🚨 점령된 땅 시각화 낙인 스킨 */
         .zone-card-box.captured-zone {
-            background: linear-gradient(180deg, #2b0b0b 0%, #140505 100%) !important;
+            background: linear-gradient(180deg, #240a0a 0%, #120404 100%) !important;
             border: 2px dashed var(--ai-color) !important;
         }
         .captured-banner {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center;
-            align-items: center; color: #ff4747; font-weight: bold; font-size: 1.3rem;
-            letter-spacing: 2px; z-index: 5; text-shadow: 0 0 10px #000;
+            background: rgba(0, 0, 0, 0.55); display: flex; justify-content: center; align-items: center;
+            color: #ff4d4d; font-weight: bold; font-size: 1.2rem; letter-spacing: 2px; z-index: 5;
         }
 
-        .zone-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; }
-        .player-side .zone-meta { border-top: 1px solid rgba(212, 175, 55, 0.1); padding-top: 4px; }
-        .enemy-side .zone-meta { border-bottom: 1px solid rgba(212, 175, 55, 0.1); padding-bottom: 4px; }
+        .zone-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; padding: 2px 0; }
+        .enemy-side .zone-meta { border-bottom: 1px solid rgba(212, 175, 55, 0.1); margin-bottom: 4px; }
+        .player-side .zone-meta { border-top: 1px solid rgba(212, 175, 55, 0.1); margin-top: 4px; }
 
         .item-status-line { display: flex; gap: 4px; min-height: 16px; margin: 2px 0; }
         .badge { font-size: 0.6rem; padding: 1px 4px; border-radius: 2px; font-weight: bold; }
         .badge.trap { background: #733910; border: 1px solid #b35919; color: #fff; }
         .badge.veil { background: #3b2854; border: 1px solid #63438c; color: #fff; }
 
-        .queue-flow { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; min-height: 0; justify-content: center; }
-        .enemy-side .queue-flow { flex-direction: column-reverse; }
+        .queue-flow { display: flex; gap: 4px; flex: 1; min-height: 0; justify-content: center; }
 
         .grid-slot {
-            height: 32px; background: rgba(15, 12, 10, 0.8); border: 1px dashed #403226;
-            border-radius: 4px; display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; color: #5e5044;
+            flex: 1; min-height: 26px; background: rgba(15, 12, 10, 0.7); border: 1px dashed #42352a;
+            border-radius: 3px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: #615347;
         }
-        .grid-slot.occupied { border-style: solid; color: var(--text-color); }
-        .player-side .grid-slot.occupied { background: #192b1d; border-color: var(--player-color); }
-        .enemy-side .grid-slot.occupied { background: #361719; border-color: var(--ai-color); }
-        .grid-slot.fog-of-war { background: #171310 !important; border-color: #2e241c !important; color: #6e5f54 !important; font-style: italic; }
-        .grid-slot.spied-war { border-color: var(--gold-color) !important; box-shadow: inset 0 0 4px rgba(212, 175, 55, 0.2); }
+        .grid-slot.occupied { border-style: solid; color: var(--text-color); font-weight: bold; }
+        .player-side .grid-slot.occupied { background: #1a2e1f; border-color: var(--player-color); }
+        .enemy-side .grid-slot.occupied { background: #381a1c; border-color: var(--ai-color); }
+        .grid-slot.fog-of-war { background: #14110f !important; border-color: #2b211a !important; color: #5c5046 !important; font-style: italic; }
+        .grid-slot.spied-war { border-color: var(--gold-color) !important; box-shadow: inset 0 0 3px rgba(212, 175, 55, 0.2); }
 
-        /* 타깃 활성화 점등 효과 */
-        .zone-card-box.glow-deploy { border-color: var(--player-color); box-shadow: 0 0 10px rgba(59, 110, 66, 0.4); cursor: pointer; }
-        .zone-card-box.glow-attack { border-color: #ff4747; box-shadow: 0 0 10px rgba(255, 71, 71, 0.4); cursor: pointer; }
+        /* 타깃 활성화 가이드 지점 점등 */
+        .zone-card-box.glow-deploy { border-color: var(--player-color); box-shadow: 0 0 8px rgba(46, 89, 53, 0.5); cursor: pointer; }
+        .zone-card-box.glow-attack { border-color: #ff3b3b; box-shadow: 0 0 8px rgba(255, 59, 59, 0.5); cursor: pointer; }
 
-        .hp-wrap { display: flex; align-items: center; gap: 4px; }
-        .hp-meter { width: 55px; height: 6px; background: #1a1410; border-radius: 2px; overflow: hidden; }
+        .hp-wrap { display: flex; align-items: center; gap: 5px; }
+        .hp-meter { width: 50px; height: 5px; background: #14100d; border-radius: 1px; overflow: hidden; }
         .hp-core { height: 100%; transition: width 0.2s; }
         .player-side .hp-core { background: var(--player-color); }
         .enemy-side .hp-core { background: var(--ai-color); }
 
-        /* 하단 컨트롤 패널 (짤림 방지 보정) */
+        /* --- 📥 하단 컨트롤 지반 내부 (절대 짤리지 않는 핸드 전용 구조) --- */
         .bottom-hq-deck {
-            display: grid; grid-template-columns: 1fr auto; gap: 15px;
+            display: grid; grid-template-columns: 1fr 220px; gap: 12px;
             background: var(--panel-color); border: 1px solid var(--border-color);
-            padding: 10px; border-radius: 6px; height: 145px;
+            padding: 8px 12px; border-radius: 4px; height: 100%; min-height: 0;
         }
-        .hand-rack { display: flex; gap: 10px; align-items: center; overflow-x: auto; padding-bottom: 4px; }
+        .hand-rack { 
+            display: flex; gap: 8px; align-items: center; 
+            overflow-x: auto; overflow-y: hidden; height: 100%;
+        }
 
-        /* 카드 오브젝트 디자인 고도화 */
+        /* 미니어처화 카드로 높이 폭 최적 맞춤 조정 */
         .war-card {
-            width: 85px; height: 115px; background: #211914; border: 2px solid #3d2f24;
-            border-radius: 4px; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 6px; cursor: pointer; flex-shrink: 0; transition: transform 0.2s, border-color 0.2s;
+            width: 80px; height: 115px; background: #1c1510; border: 2px solid #3b2e24;
+            border-radius: 3px; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 6px; cursor: pointer; flex-shrink: 0; transition: transform 0.15s, border-color 0.15s;
         }
-        .war-card:hover { transform: translateY(-6px); border-color: var(--gold-color); }
-        .war-card.selected { border-color: #ff4747; box-shadow: 0 0 8px #ff4747; transform: translateY(-8px); }
-        .war-card.com-combo { border-color: #b18ec4 !important; box-shadow: 0 0 8px #b18ec4; transform: translateY(-8px); }
+        .war-card:hover { transform: translateY(-4px); border-color: var(--gold-color); }
+        .war-card.selected { border-color: #ff3b3b; box-shadow: 0 0 6px #ff3b3b; transform: translateY(-5px); }
+        .war-card.com-combo { border-color: #9b6bb5 !important; box-shadow: 0 0 6px #9b6bb5; transform: translateY(-5px); }
         .war-card.item-type { border-color: var(--item-color); }
-        .war-card.locked { opacity: 0.3; border-color: #541e1e !important; cursor: not-allowed; }
+        .war-card.locked { opacity: 0.25; border-color: #4f1d1d !important; cursor: not-allowed; }
         .war-card.locked:hover { transform: none; }
 
-        .c-type { font-size: 0.6rem; color: #948070; font-weight: bold; text-transform: uppercase; }
-        .c-name { font-weight: bold; text-align: center; font-size: 0.8rem; }
-        .c-status { font-size: 0.55rem; color: #695b50; text-align: center; }
+        .c-type { font-size: 0.55rem; color: #8f7f71; font-weight: bold; text-transform: uppercase; }
+        .c-name { font-weight: bold; text-align: center; font-size: 0.75rem; color: #e6dfd3; word-break: keep-all; }
+        .c-status { font-size: 0.55rem; color: #5e5247; text-align: center; }
 
-        .btn-hub { display: flex; flex-direction: column; justify-content: center; }
-        .panel-btn {
-            padding: 12px 20px; background: #3d2f24; color: var(--text-color);
-            border: 1px solid var(--border-color); border-radius: 4px;
-            font-weight: bold; cursor: pointer; transition: all 0.2s;
+        /* 우측 다기능 기획 패널 (상성표 매립 및 버튼 정렬) */
+        .control-side-panel {
+            display: grid; grid-template-rows: 1fr 34px; gap: 6px; height: 100%;
         }
-        .panel-btn:hover { background: #4f3d2f; border-color: var(--gold-color); }
+        
+        /* 🎯 [위치 개선] 하단 고정식 내장형 꼬리잡기 상성표 */
+        .embedded-relation-guide {
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            border-radius: 3px; padding: 4px 6px; font-size: 0.7rem; line-height: 1.3;
+            color: #bfae9d; display: flex; flex-direction: column; justify-content: center;
+        }
+        .embedded-relation-guide b { color: var(--gold-color); }
+        .loop-track { color: #caa428; font-weight: bold; text-align: center; margin-top: 1px; font-size: 0.65rem; }
+
+        .action-button-row { display: flex; gap: 6px; }
+        .panel-btn {
+            flex: 1; height: 100%; background: #36291e; color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 3px;
+            font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .panel-btn:hover { background: #4a392a; border-color: var(--gold-color); }
     </style>
 </head>
 <body>
 
-    <!-- 홈 화면 및 백과도감 패널 -->
+    <!-- 1단계: 홈 레이어 화면 -->
     <div id="start-overlay">
-        <h1 class="title-banner">CHRONICLES OF WAR<br><span style="font-size:1.5rem; color:#bdae9e;">중세 카드 전술 아레나</span></h1>
-        <button class="start-btn" onclick="startCoinFlip()">전쟁 출정</button>
-        
-        <div class="codex-container parchment">
-            <div class="codex-title">📜 기구 전술 강습 도감</div>
-            <div class="codex-grid">
-                <div class="codex-card"><div class="codex-name">보병 (Infantry)</div><div class="codex-desc">선봉의 근간. 긴 창을 지닌 창병의 대열을 비집고 들어가 와해시키는 데 능합니다.</div></div>
-                <div class="codex-card"><div class="codex-name">창병 (Spearman)</div><div class="codex-desc">장창 진형 구축. 돌격해오는 적 기병의 속도를 역이용하여 파쇄합니다.</div></div>
-                <div class="codex-card"><div class="codex-name">기병 (Cavalry)</div><div class="codex-desc">기동 전술의 꽃. 굳건히 닫힌 방패병의 측면 장막을 단숨에 우회 타격합니다.</div></div>
-                <div class="codex-card"><div class="codex-name">방패병 (Shield)</div><div class="codex-desc">철벽 수비. 하늘을 뒤덮으며 전선으로 쏟아지는 궁병의 화살 세례를 차단합니다.</div></div>
-                <div class="codex-card"><div class="codex-name">궁병 (Archer)</div><div class="codex-desc">원거리 저격. 무거운 갑옷을 입고 느리게 좁혀오는 보병들의 진격을 무력화합니다.</div></div>
-                <div class="codex-card"><div class="codex-name">용병 (Mercenary)</div><div class="codex-desc">변수 창출마. 꼬리잡기식 상성 체계를 거스르며 오직 고유 확률 연산으로 대결합니다.</div></div>
+        <h1 class="title-banner">CHRONICLES OF WAR<br><span style="font-size:1.3rem; color:#a89989;">중세 카드 전술 아레나</span></h1>
+        <div class="menu-btn-group">
+            <button class="main-btn btn-gold" onclick="startCoinFlip()">전쟁 출정</button>
+            <button class="main-btn" onclick="openCodex()">전술 도감 개방</button>
+        </div>
+    </div>
+
+    <!-- 📜 [분리 고도화] 단독 팝업형 전술 및 아이템 정보 도감 모달 -->
+    <div id="codex-modal" onclick="closeCodex()">
+        <div class="codex-window parchment" onclick="event.stopPropagation()">
+            <div class="codex-header">
+                <h2>📜 제국 전술 정보 지침서</h2>
+                <span class="close-x" onclick="closeCodex()">&times;</span>
+            </div>
+            <div class="codex-scroll">
+                <div class="codex-sec-title">⚔️ 정규 군수 병종 (꼬리잡기 상성 체계)</div>
+                <div class="codex-grid">
+                    <div class="codex-card"><div class="codex-name">보병 (Infantry)</div><div class="codex-desc">방어선의 기초. 장창을 꼬아 쥐고 버티는 창병의 진형을 비집고 들어가 격파합니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">창병 (Spearman)</div><div class="codex-desc">기병 전용 카운터. 돌진해오는 기병들의 기동 관성을 역이용하여 대열을 무너뜨립니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">기병 (Cavalry)</div><div class="codex-desc">우회 기동의 주역. 단단히 닫힌 방패병의 측면 장막을 빠른 속도로 침투해 유린합니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">방패병 (Shield)</div><div class="codex-desc">원거리 방호 진형. 머리 위를 가득 채우며 쏟아지는 궁병의 화살 격사 세례를 완벽히 차단합니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">궁병 (Archer)</div><div class="codex-desc">원거리 저격수. 무거운 장갑을 걸치고 느릿하게 전진해오는 보병들을 사거리 밖에서 사살합니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">용병 (Mercenary)</div><div class="codex-desc"><b>[상성 예외 특수직]</b> 꼬리잡기식 상성 고리를 거부하며, 무조건 60%의 고정 성공 확률 계산으로 싸웁니다.</div></div>
+                </div>
+
+                <div class="codex-sec-title">📦 특수 비정규 계책 (아이템 카드 제원)</div>
+                <div class="codex-grid">
+                    <div class="codex-card"><div class="codex-name">특급 사령관 (Commander)</div><div class="codex-desc">아군 군수 카드와 연계 출격합니다. 적 1선발을 상성 무시 즉시 처단하며, 공성 보정으로 성벽 체력을 무조건 1 추가 감소시킵니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">폭파병 (Sapper)</div><div class="codex-desc">적 전선의 1선발 부대를 75%의 성공률로 즉시 무력화(폭사) 시키는 기밀 공작조입니다. (첫 턴 배치 잠김)</div></div>
+                    <div class="codex-card"><div class="codex-name">함정 (Trap)</div><div class="codex-desc">아군 영토에 잠복 설치합니다. 기병을 제외한 침투 공격조를 즉시 전멸시키는 수비형 덫입니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">위장 장막 (Camouflage)</div><div class="codex-desc">아군 2선발 대기조에 은닉 스킨을 입혀 적이 정체를 스캔하거나 교전 상성을 계산하지 못하도록 가립니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">첩보서 (Intelligence)</div><div class="codex-desc">적의 특정 거점을 영구 도청 정찰하여 안개에 가려진 2, 3선발 대기조의 병종 실체를 투명하게 드러냅니다.</div></div>
+                    <div class="codex-card"><div class="codex-name">군수 보급 (Supply)</div><div class="codex-desc">군수 창고를 즉시 징발하여 예비 전술 가용 카드 2장을 덱에서 추가로 뽑아 핸드를 보강합니다. (턴당 1회 제한)</div></div>
+                    <div class="codex-card"><div class="codex-name">복귀 명령 (Recall)</div><div class="codex-desc">이미 전선 대기열에 배치되어 소모된 아군 전방 병력 1개 조를 안전하게 내 핸드로 다시 회군시켜 복구합니다.</div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -248,29 +299,19 @@
         <div class="coin-text" id="coin-announce">수 정세를 계측하는 중...</div>
     </div>
 
-    <!-- 본 게임 전장 공간 -->
+    <!-- 본 게임 메인 보드 화면 -->
     <div id="game-board">
         <div class="top-status-bar">
-            <div class="turn-title" id="txt-turn-owner">진형 배치 중</div>
-            <div class="combat-log" id="txt-combat-log">결투 서막이 곧 열립니다.</div>
+            <div class="turn-title" id="txt-turn-owner">진형 배치 단계</div>
+            <div class="combat-log" id="txt-combat-log">출정 전선이 형성되었습니다.</div>
         </div>
 
         <div class="arena">
-            <!-- 📜 순환식 상성 가이드 가시화 -->
-            <div class="relation-guide">
-                <div class="relation-title"><b>[⚔️ 상성 순환 구조]</b></div>
-                <div class="relation-line">보병 ➡️ 창병 ➡️ 기병</div>
-                <div class="relation-line">기병 ➡️ 방패병 ➡️ 궁병 ➡️ 보병</div>
-                <div style="border-top: 1px dashed #4a3b2c; margin-top:3px; padding-top:3px;">
-                    <b>용병:</b> 순환 제외 (확률전)
-                </div>
-            </div>
-
-            <!-- [상단] 적 AI 영토 -->
+            <!-- [상단] 🔄 적 AI 영토 (상하 반전 대칭 교정 완료) -->
             <div class="side-container enemy-side">
                 <div class="zone-card-box" id="zone-ai-A" onclick="clickZone('A', 'ai')">
                     <div class="zone-meta">
-                        <span>지역 A (Enemy)</span>
+                        <span>적 초소 A</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-A" style="width:100%;"></div></div>
                             <span id="hp-txt-ai-A">6/6</span>
@@ -286,7 +327,7 @@
 
                 <div class="zone-card-box" id="zone-ai-B" onclick="clickZone('B', 'ai')">
                     <div class="zone-meta">
-                        <span>지역 B (Enemy)</span>
+                        <span>적 초소 B</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-B" style="width:100%;"></div></div>
                             <span id="hp-txt-ai-B">8/8</span>
@@ -302,7 +343,7 @@
 
                 <div class="zone-card-box" id="zone-ai-C" onclick="clickZone('C', 'ai')">
                     <div class="zone-meta">
-                        <span>지역 C (Enemy)</span>
+                        <span>적 초소 C</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-C" style="width:100%;"></div></div>
                             <span id="hp-txt-ai-C">4/4</span>
@@ -317,7 +358,7 @@
                 </div>
             </div>
 
-            <!-- [하단] 플레이어 아군 영토 -->
+            <!-- [하단] 아군 플레이어 영토 -->
             <div class="side-container player-side">
                 <div class="zone-card-box" id="zone-player-A" onclick="clickZone('A', 'player')">
                     <div class="queue-flow">
@@ -327,7 +368,7 @@
                     </div>
                     <div class="item-status-line" id="buff-player-A"></div>
                     <div class="zone-meta">
-                        <span>지역 A (You)</span>
+                        <span>아군 기지 A</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-player-A" style="width:100%;"></div></div>
                             <span id="hp-txt-player-A">6/6</span>
@@ -343,7 +384,7 @@
                     </div>
                     <div class="item-status-line" id="buff-player-B"></div>
                     <div class="zone-meta">
-                        <span>지역 B (You)</span>
+                        <span>아군 기지 B</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-player-B" style="width:100%;"></div></div>
                             <span id="hp-txt-player-B">8/8</span>
@@ -359,7 +400,7 @@
                     </div>
                     <div class="item-status-line" id="buff-player-C"></div>
                     <div class="zone-meta">
-                        <span>지역 C (You)</span>
+                        <span>아군 기지 C</span>
                         <div class="hp-wrap">
                             <div class="hp-meter"><div class="hp-core" id="hp-bar-player-C" style="width:100%;"></div></div>
                             <span id="hp-txt-player-C">4/4</span>
@@ -369,10 +410,21 @@
             </div>
         </div>
 
+        <!-- 📥 하단 통합 지휘 본부 패널 (핸드 절대 잘리지 않음) -->
         <div class="bottom-hq-deck">
+            <!-- 좌측 핸드 목록 카드 저장소 -->
             <div class="hand-rack" id="rack-player-hand"></div>
-            <div class="btn-hub">
-                <button class="panel-btn" onclick="endTurnManual()">턴 정산</button>
+            
+            <!-- 우측 계치 컨트롤 및 🎯 상성 매립 구조 스페이스 -->
+            <div class="control-side-panel">
+                <div class="embedded-relation-guide">
+                    <div>⚔️ <b>꼬리잡기 상성 법칙:</b></div>
+                    <div class="loop-track">보병 ➡️ 창병 ➡️ 기병 ➡️ 방패병 ➡️ 궁병 ➡️ 보병</div>
+                </div>
+                <div class="action-button-row">
+                    <button class="panel-btn" style="background:#262a30;" onclick="openCodex()">도감</button>
+                    <button class="panel-btn" onclick="endTurnManual()">턴 정산</button>
+                </div>
             </div>
         </div>
     </div>
@@ -402,6 +454,9 @@
             hand: { player: [], ai: [] }
         };
 
+        function openCodex() { document.getElementById('codex-modal').style.display = 'flex'; }
+        function closeCodex() { document.getElementById('codex-modal').style.display = 'none'; }
+
         function startCoinFlip() {
             document.getElementById('start-overlay').style.display = 'none';
             const overlay = document.getElementById('coin-overlay');
@@ -416,11 +471,11 @@
                 coin.classList.remove('spinning');
                 if (coinHit) {
                     coin.style.transform = 'rotateY(0deg)';
-                    text.innerText = "👑 유저 선공 획득! 전략 거점을 정비하십시오.";
+                    text.innerText = "👑 유저 선공! 진형 구축을 하달하십시오.";
                     match.isUserTurn = true;
                 } else {
                     coin.style.transform = 'rotateY(180deg)';
-                    text.innerText = "🤖 AI 기습 선공! 방어 대세를 유지하십시오.";
+                    text.innerText = "🤖 AI 기습 선공! 방어 대세를 고수하십시오.";
                     match.isUserTurn = false;
                 }
 
@@ -430,9 +485,9 @@
                         overlay.style.display = 'none';
                         document.getElementById('game-board').classList.add('fade-in');
                         initSession();
-                    }, 400);
-                }, 1400);
-            }, 2000);
+                    }, 300);
+                }, 1200);
+            }, 1800);
         }
 
         function initSession() {
@@ -466,7 +521,6 @@
                     hpBar.style.width = `${(currentHp/maxHp)*100}%`;
                     hpTxt.innerText = `${currentHp}/${maxHp}`;
 
-                    // 🚨 확실한 표현 표기: 영지 파괴 시 점령 낙인 연출
                     if (currentHp <= 0) {
                         box.classList.add('captured-zone');
                         if (!box.querySelector('.captured-banner')) {
@@ -498,7 +552,7 @@
                                 slot.innerText = `${i}선발: ${troopCard.name}${troopCard.camouflage?' [위장]':''}`;
                             } else {
                                 if(i === 1) {
-                                    slot.innerText = troopCard.camouflage ? `1선발: [위장막 은닉]` : `1선발: ${troopCard.name}`;
+                                    slot.innerText = troopCard.camouflage ? `1선발: [위장 은닉]` : `1선발: ${troopCard.name}`;
                                     if(troopCard.camouflage) slot.classList.add('fog-of-war');
                                 } else {
                                     if(troopCard.spied) {
@@ -506,7 +560,7 @@
                                         slot.innerText = `${i}선발: ${troopCard.name} 👁️`;
                                     } else {
                                         slot.classList.add('fog-of-war');
-                                        slot.innerText = `${i}선발: [대기군 부대]`;
+                                        slot.innerText = `${i}선발: [대기부대]`;
                                     }
                                 }
                             }
@@ -535,12 +589,11 @@
                 cardView.innerHTML = `
                     <div class="c-type">${c.type==='military'?'군수':'전술'}</div>
                     <div class="c-name">${c.name}</div>
-                    <div class="c-status">${isFirstTurnLock?'첫 턴 잠김':'출격 준비'}</div>
+                    <div class="c-status">${isFirstTurnLock?'첫 턴 잠김':'대기 중'}</div>
                 `;
                 rack.appendChild(cardView);
             });
 
-            // 글로우 유동 타겟팅 분기
             ['A', 'B', 'C'].forEach(z => {
                 const pSideBox = document.getElementById(`zone-player-${z}`);
                 const eSideBox = document.getElementById(`zone-ai-${z}`);
@@ -560,7 +613,7 @@
                 }
             });
 
-            document.getElementById('txt-turn-owner').innerText = match.isUserTurn ? "내 턴 (작전 지휘)" : "공세 연산 중...";
+            document.getElementById('txt-turn-owner').innerText = match.isUserTurn ? "아군 턴 (지휘 통제)" : "상대 턴 (AI 연산 중)";
         }
 
         function log(m) { document.getElementById('txt-combat-log').innerText = m; }
@@ -584,7 +637,7 @@
 
         function clickZone(z, targetSide) {
             if(match.selectSlot === null || !match.isUserTurn) return;
-            if(match.hp[targetSide][z] <= 0) { alert("이미 점령된 땅입니다."); return; }
+            if(match.hp[targetSide][z] <= 0) { alert("함락 완료된 점령지입니다."); return; }
             
             const card = match.hand.player[match.selectSlot];
 
@@ -592,18 +645,18 @@
                 if(card.type === 'military') {
                     if(match.board.player[z].length < 3) {
                         match.board.player[z].push({ name: card.name, camouflage: false, spied: false });
-                        log(`[🛡️ 전선 방어] ${z}지역에 ${card.name} 부대를 증원 배치했습니다.`);
+                        log(`[🛡️ 증원 배치] 아군 ${z} 요새에 ${card.name} 부대를 입항시켰습니다.`);
                         useHandCard(match.selectSlot);
-                    } else { alert("해당 지역 방어선이 가득 찼습니다."); }
+                    } else { alert("수비대 한도 초과입니다."); }
                 } else {
                     handleItemAction(z, card.name, 'player');
                 }
             } else {
                 if(card.type === 'military') {
-                    if(match.isInitialTurn) { alert("선공의 첫 턴에는 공격 명령을 하달할 수 없습니다."); return; }
+                    if(match.isInitialTurn) { alert("첫 턴에는 침투 타격이 봉쇄됩니다."); return; }
                     invokeAttack(z, card.name);
                 } else if(card.name === '특급 사령관') {
-                    if(match.comboSlot === null) { alert("사령관과 결탁하여 동시 출격할 군사 카드를 지정하십시오."); return; }
+                    if(match.comboSlot === null) { alert("함께 진격할 군사 카드를 선택해주십시오."); return; }
                     invokeCommanderCombo(z);
                 } else {
                     handleItemAction(z, card.name, 'ai');
@@ -620,30 +673,30 @@
 
         function invokeAttack(z, attacker) {
             useHandCard(match.selectSlot);
-            log(`[⚔️ 돌격 구사] 내 수비선 상황과 별개로 적 ${z} 거점에 ${attacker} 대대를 급파했습니다.`);
+            log(`[⚔️ 돌격 개시] 적 ${z} 거점으로 ${attacker} 부대를 진격시켰습니다.`);
 
             setTimeout(() => {
                 const list = match.board.ai[z];
                 if(list.length === 0) {
                     match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 2);
-                    log(`[성벽 직격 완료] 적 ${z} 초소가 텅 비어있어 공성추 타격(-2)을 성공시켰습니다.`);
+                    log(`[성벽 추격] 수비 부대가 없어 성벽 구조물에 공성 큰 피해(-2)를 주었습니다.`);
                     endTurnSequence(); return;
                 }
 
                 let enemyUnit = list[0];
                 if(enemyUnit.camouflage) {
                     enemyUnit.camouflage = false;
-                    log(`[위장 멸각] 격돌 과정에서 은신 중이던 적 1선발 [${enemyUnit.name}]의 정체가 확인되었습니다.`);
+                    log(`[위장 탈착] 격돌로 인해 적 1선발 [${enemyUnit.name}]의 위장막이 찢어졌습니다.`);
                 }
 
                 if(attacker === '기병' && match.perks.ai[z].includes('함정')) {
                     match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[지뢰 무력화] 우수한 기동력의 기병 부대가 매설된 [함정]을 우회해 제거했습니다.`);
+                    log(`[함정 돌파] 기병의 돌파 속도로 매설 지뢰 함정을 기동 파쇄했습니다.`);
                 }
 
                 if(match.perks.ai[z].includes('함정')) {
                     match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[⚠️ 함정 붕괴] 침투조가 함정을 밟아 적진 타격에 실패하고 소멸했습니다.`);
+                    log(`[⚠️ 대함정 작렬] 진격 부대가 매설 함정을 밟아 자멸했습니다.`);
                     endTurnSequence(); return;
                 }
 
@@ -651,21 +704,20 @@
                 if(outcome === 'win') {
                     list.shift();
                     match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 1);
-                    log(`[전선 돌파] 아군 [${attacker}]이 적 [${enemyUnit.name}]을 격파하여 성벽에 피해(-1)를 가했습니다.`);
+                    log(`[공세 돌파] 아군 [${attacker}]이 적 [${enemyUnit.name}]을 완파, 성벽 체력을 1 차감시켰습니다.`);
                 } else {
-                    log(`[공세 저지] 적의 견고한 [${enemyUnit.name}] 방어 대열을 뚫지 못하고 후퇴했습니다.`);
+                    log(`[진격 격퇴] 적 [${enemyUnit.name}]의 견고한 대열에 밀려 후퇴했습니다.`);
                 }
                 endTurnSequence();
-            }, 700);
+            }, 600);
         }
 
-        // 👑 특급 사령관 보정 룰: 전투 승리 시에도 적 성벽 확실히 체력 -1 추가 감소 연동
         function invokeCommanderCombo(z) {
             const comI = match.selectSlot;
             const milI = match.comboSlot;
             const companionUnit = match.hand.player[milI].name;
 
-            log(`[👑 특급 사령관 전격 출진] 사령관이 직접 ${companionUnit} 대대를 통솔해 적 ${z}지역 수비벽을 파쇄합니다!`);
+            log(`[👑 사령관 친정] 사령관이 직접 ${companionUnit} 대대를 앞세워 적 ${z}진형을 유린합니다.`);
 
             const cleanList = [comI, milI].sort((a,b)=>b-a);
             match.hand.player.splice(cleanList[0], 1);
@@ -678,28 +730,24 @@
                 const list = match.board.ai[z];
                 if(list.length === 0) {
                     match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 2);
-                    log(`[성벽 대파쇄] 적의 빈 진영에 사령관의 직접 타격(-2)이 격발되었습니다.`);
+                    log(`[성벽 붕괴] 황막한 빈 기지에 사령관이 가하는 직접 타격(-2)이 발동되었습니다.`);
                     endTurnSequence(); return;
                 }
 
                 let victim = list[0];
-                log(`[상성 초월 처단] 특급 사령관의 권능으로 적 1선발 [${victim.name}] 부대를 상성 무시 즉시 처단했습니다.`);
+                log(`[권능 처단] 특급 사령관의 공성 위력으로 적 1선발 [${victim.name}]을 상성 무시 즉시 격멸했습니다.`);
                 list.shift();
                 
-                // 💡 확실한 피드백 반영: 특급 사령관 성공 시 적 1선발 제거와 함께 성벽 체력도 -1 확정 차감!
                 match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 1);
-                log(`[공성 전과 잔류] 파쇄 돌파 여파가 적 요새 성벽까지 이어져 내구도를 1 감소시켰습니다.`);
+                log(`[공성 후폭풍] 선발 파쇄 여파가 성벽 내부까지 통과되어 내구도가 1 추가 감소했습니다.`);
                 
                 endTurnSequence();
-            }, 700);
+            }, 600);
         }
 
         function evalClash(atk, def) {
-            // 꼬리잡기식 상성 맵 규칙
             const counterMap = { '보병': '창병', '창병': '기병', '기병': '방패병', '방패병': '궁병', '궁병': '보병' };
-            if(atk === '용병' || def === '용병') {
-                return Math.random() < 0.60 ? 'win' : 'lose'; // 용병은 순환 예외 특수 연산
-            }
+            if(atk === '용병' || def === '용병') return Math.random() < 0.60 ? 'win' : 'lose';
             if(counterMap[atk] === def) return 'win';
             if(counterMap[def] === atk) return 'lose';
             return Math.random() < 0.50 ? 'win' : 'lose';
@@ -707,11 +755,11 @@
 
         function handleItemAction(z, name, side) {
             if(name === '군수 보급') {
-                if(match.supplyLocked) { alert("보급 전술은 한 호흡에 1회만 기동됩니다."); return; }
+                if(match.supplyLocked) { alert("보급 전술은 턴당 1회 지침 제한입니다."); return; }
                 useHandCard(match.selectSlot);
                 match.supplyLocked = true;
                 for(let i=0; i<2; i++) { if(match.hand.player.length < 9) match.hand.player.push(dealCard()); }
-                log(`[전술 군수 보급] 예비 보급고를 개방해 전술 카드 2장을 긴급 징집했습니다.`);
+                log(`[예비대 보급] 보급 전술을 통해 새로운 가용 전술 전서 2장을 드로우했습니다.`);
                 refreshScreen(); return;
             }
             if(name === '복귀 명령' && side === 'player') {
@@ -719,18 +767,18 @@
                     const troop = match.board.player[z].shift();
                     useHandCard(match.selectSlot);
                     if(match.hand.player.length < 9) match.hand.player.push({ type:'military', name: troop.name });
-                    log(`[회군 전술] ${z}지역 전선의 병력을 기밀하게 철수시켜 다시 패로 회수했습니다.`);
+                    log(`[전술적 회군] ${z}지역 전선 병력을 예비 패로 안전하게 퇴각 복귀시켰습니다.`);
                     refreshScreen();
-                } else { alert("회군할 병력이 존재하지 않습니다."); }
+                } else { alert("귀환시킬 전방 병력이 부재합니다."); }
                 return;
             }
             if(name === '함정' && side === 'player') {
                 if(match.perks.player[z].length < 2) {
                     match.perks.player[z].push('함정');
                     useHandCard(match.selectSlot);
-                    log(`[매복 전술] ${z}지역 수비로에 적을 몰살할 살상용 [함정]을 배치했습니다.`);
+                    log(`[매복 덫 가동] 아군 ${z} 초소 진입로에 전술 [함정]을 조립 매설했습니다.`);
                     refreshScreen();
-                } else { alert("매설 한도를 초과했습니다."); }
+                } else { alert("함정 설치 한도를 초과했습니다."); }
                 return;
             }
             if(name === '위장 장막' && side === 'player') {
@@ -738,43 +786,43 @@
                     match.board.player[z][1].camouflage = true;
                     match.perks.player[z].push('위장');
                     useHandCard(match.selectSlot);
-                    log(`[은폐 막사] ${z}지역의 2선발 부대에 위장 피복을 씌워 적이 기밀을 보지 못하게 차단했습니다.`);
+                    log(`[위장 피복 소집] ${z} 초소의 2선발 대기조에 기밀 [위장막]을 특수 은폐 적용했습니다.`);
                     refreshScreen();
-                } else { alert("은폐를 적용할 대기 부대(2선발)가 없습니다."); }
+                } else { alert("위장을 부여할 은닉 대기군(2선발)이 없습니다."); }
                 return;
             }
             if(name === '첩보서' && side === 'ai') {
                 useHandCard(match.selectSlot);
                 const list = match.board.ai[z];
                 if(list.length > 0) {
-                    let text = `[👁️ 첩보 영구 연동] 적 ${z} 거점 탈취 성공 -> `;
+                    let text = `[👁️ 첩보 투과 성공] 적 ${z}지역 감청 완료 -> `;
                     list.forEach((u, i) => { u.spied = true; text += `${i+1}선발:[${u.name}] `; });
                     log(text);
-                } else { log(`[첩보 실패] 적 ${z}지역은 현재 주둔군이 부재합니다.`); }
+                } else { log(`[첩보 결과 미달] 적 ${z} 구역엔 관측할 군대가 없습니다.`); }
                 refreshScreen(); return;
             }
             if(name === '폭파병' && side === 'ai') {
-                if(match.board.ai[z].length === 0) { alert("폭파 공작 대상이 부족합니다."); return; }
+                if(match.board.ai[z].length === 0) { alert("폭파 공작을 가할 적군 대열이 비어있습니다."); return; }
                 useHandCard(match.selectSlot);
 
                 if(match.perks.ai[z].includes('함정')) {
                     match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[공작 저지] 침투하던 폭파조가 적의 [함정]에 휘말려 폭사했습니다.`);
+                    log(`[공작 좌절] 침투조가 사전에 적이 깔아둔 역함정에 휘말려 사망했습니다.`);
                     refreshScreen(); return;
                 }
 
                 if(Math.random() < 0.75) {
                     const rip = match.board.ai[z].shift();
-                    log(`[🧨 폭사 공작] 공성 병기 폭파조가 적 1선발 [${rip.name}]의 군막을 완벽히 날려버렸습니다.`);
-                } else { log(`[침투 실패] 밤의 경계병들에게 공작조가 잡혀 임무가 무산되었습니다.`); }
+                    log(`[🧨 막사 폭파] 공작 폭파병이 적 1선발 부대 [${rip.name}]의 주둔지를 날려버렸습니다.`);
+                } else { log(`[공작 발각] 삼엄한 경계를 뚫지 못하고 공작조가 사살되었습니다.`); }
                 refreshScreen(); return;
             }
-            alert("부합되지 않는 행동 지침이거나 불가능한 전장 조건입니다.");
+            alert("유효하지 않은 타깃 영역이거나 전장 규칙 위반입니다.");
         }
 
         function endTurnManual() {
             if(!match.isUserTurn) return;
-            log("[전술 재정비] 부대 지휘권을 잠시 홀딩하고 다음 연산 시점으로 턴을 넘깁니다.");
+            log("[작전권 이양] 전장 정비를 마치고 상대 진영에게 주도권을 넘깁니다.");
             endTurnSequence();
         }
 
@@ -788,11 +836,10 @@
             setTimeout(() => { executeAiStrategy(); }, 1200);
         }
 
-        // 🧠 고지능 인공지능 공성 대전 메커니즘 엔진 (영리하게 영지 킬각 탐색 및 일점사)
+        // 🧠 AI 정밀 타격 탐색 및 정비 엔진
         function executeAiStrategy() {
             if(match.hand.ai.length < 6) { while(match.hand.ai.length < 6) match.hand.ai.push(dealCard()); }
             
-            // 1단계: 킬각(체력이 가장 적고 점령 가능한 지점) 우선 역산 탐색
             let targetZone = 'A';
             let minHpValue = 99;
             ['A', 'B', 'C'].forEach(z => {
@@ -802,14 +849,12 @@
                 }
             });
 
-            // 점령할 후보가 다 무너지면 기본 무작위 교정
             if(match.hp.player[targetZone] <= 0) targetZone = pickRandom(['A', 'B', 'C']);
 
             const aiHand = match.hand.ai;
             const mCards = aiHand.filter(c => c.type === 'military');
             const returnCards = aiHand.filter(c => c.name === '복귀 명령');
 
-            // 지능적 비밀 리셋 연동 (내 정보 유출 시 세탁 기능 작동)
             const leaked = match.board.ai[targetZone].find(u => u.spied === true);
             if(leaked && returnCards.length > 0) {
                 match.board.ai[targetZone] = match.board.ai[targetZone].filter(u => u !== leaked);
@@ -817,13 +862,11 @@
                 leaked.spied = false;
                 leaked.camouflage = false;
                 aiHand.push({ type: 'military', name: leaked.name });
-                log(`[🤖 적의 반격 계책] 정보가 새어나간 주둔 병력을 [복귀 명령]으로 숨겨 다시 백지화 리셋했습니다.`);
+                log(`[🤖 AI의 기만술] 첩보망에 들통난 병력을 수뇌부로 철수 복귀 시켰습니다.`);
                 passControlToUser(); return;
             }
 
-            // 영리한 상성 일점사 공격 알고리즘
             if(mCards.length > 0 && match.hp.player[targetZone] > 0) {
-                // 아군 1선발을 이길 수 있는 상성 카드가 적 핸드에 있는지 지능적 매칭
                 const enemyFirstUnit = match.board.player[targetZone][0];
                 let chosenCard = mCards[0];
                 
@@ -834,17 +877,17 @@
                 }
 
                 aiHand.splice(aiHand.indexOf(chosenCard), 1);
-                log(`[🤖 적의 정밀 일점사] AI가 파괴하기 용이한 ${targetZone}지역에 카운터 [${chosenCard.name}] 부대를 발사했습니다!`);
+                log(`[🤖 AI 약점 집중 타격] 적이 붕괴 직전인 아군 ${targetZone} 기지로 카운터 [${chosenCard.name}] 부대를 파견했습니다!`);
 
                 setTimeout(() => {
                     const myDef = match.board.player[targetZone];
                     if(myDef.length === 0) {
                         match.hp.player[targetZone] = Math.max(0, match.hp.player[targetZone] - 2);
-                        log(`[아군 성벽 타격] ${targetZone} 전선이 함락 도중 공성 피해(-2)를 받았습니다.`);
+                        log(`[성벽 타격 유효] 아군 수비진이 전멸하여 공성 피해(-2)를 입었습니다.`);
                     } else {
                         if(match.perks.player[targetZone].includes('함정') && chosenCard.name !== '기병') {
                             match.perks.player[targetZone] = match.perks.player[targetZone].filter(i => i !== '함정');
-                            log(`[함정 폭파] 매설된 아군 함정이 적의 습격조 [${chosenCard.name}]를 폭멸했습니다.`);
+                            log(`[아군 매복 승리] 미리 깔아둔 함정으로 진격해오던 적 공격조 [${chosenCard.name}]를 폭사시켰습니다.`);
                             passControlToUser(); return;
                         }
 
@@ -852,22 +895,21 @@
                         if(res === 'win') {
                             const dead = myDef.shift();
                             match.hp.player[targetZone] = Math.max(0, match.hp.player[targetZone] - 1);
-                            log(`[전멸 발생] 아군 수비대 [${dead.name}]가 완파당하여 성벽 내구도가 1 깎였습니다.`);
+                            log(`[방어벽 균열] 아군 수비대 [${dead.name}] 부대가 전멸하며 성벽 체력이 1 감소했습니다.`);
                         } else {
-                            log(`[성공적 방어] ${targetZone}의 명장들이 적의 일점사를 굳건하게 제압 성벽을 보존했습니다.`);
+                            log(`[방어 수호 성공] 수비 선발대가 적의 일점사 습격을 노련하게 막아냈습니다.`);
                         }
                     }
                     passControlToUser();
                 }, 900);
             } else {
-                // 전술적 수비 보강
                 if(mCards.length > 0 && match.board.ai[targetZone].length < 3) {
                     const troopItem = mCards[0];
                     match.board.ai[targetZone].push({ name: troopItem.name, camouflage: false, spied: false });
                     aiHand.splice(aiHand.indexOf(troopItem), 1);
-                    log(`[적의 보강] AI가 공성 킬각을 살피기 위해 ${targetZone}지역 대기열에 병력을 채워넣었습니다.`);
+                    log(`[적 전열 정비] AI가 역전 기회를 잡기 위해 ${targetZone} 기지 대기열에 병력을 추가 주둔시켰습니다.`);
                 } else {
-                    log("[적의 대기] 상대 진영이 마땅한 타격 각을 찾지 못해 작전 토큰을 넘겼습니다.");
+                    log("[적의 휴식] AI 진영이 전술 카드를 아끼며 전략 카드를 축적했습니다.");
                 }
                 passControlToUser();
             }
@@ -892,10 +934,10 @@
             });
 
             if(eDestroyed >= 2) {
-                alert("👑 대승리: 적 핵심 전술 기지 2곳을 무너뜨려 전쟁의 마침표를 찍었습니다!");
+                alert("👑 대승리: 적의 핵심 초소 2곳을 무너트리고 요새를 장악했습니다!");
                 location.reload();
             } else if(pDestroyed >= 2) {
-                alert("💀 참패: 우리 왕국의 기지 2곳이 강탈당해 영토가 유린되었습니다.");
+                alert("💀 참패: 아군 기지 2곳이 함락당해 국경 전선이 완전히 붕괴되었습니다.");
                 location.reload();
             }
         }
