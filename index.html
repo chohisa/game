@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>중세 전략 전쟁 (Strategy War)</title>
+    <title>중세 전략 전쟁: 대결 (Strategy War)</title>
     <style>
         :root {
-            --bg-color: #161311;
-            --panel-color: #241e1a;
-            --border-color: #42372e;
-            --text-color: #e6dfd5;
-            --player-color: #3e6b4c;
-            --ai-color: #8c2d3e;
-            --item-color: #3b5985;
+            --bg-color: #120e0c;
+            --table-color: #261d17;
+            --panel-color: #1c1511;
+            --border-color: #4a3b32;
+            --text-color: #e8e2da;
+            --player-color: #2e6930;
+            --ai-color: #8a2b2b;
+            --item-color: #294a6b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
@@ -31,29 +32,29 @@
         #start-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0b0908;
+            background-color: #050404;
             z-index: 100;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 1s ease;
+            transition: opacity 0.8s ease;
         }
         #start-overlay.fade-out { opacity: 0; pointer-events: none; }
         
         .title-banner {
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: #d4af37;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-            letter-spacing: 5px;
-            margin-bottom: 30px;
+            text-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+            letter-spacing: 7px;
+            margin-bottom: 40px;
             opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 1.5s forwards 0.5s;
+            transform: translateY(30px);
+            animation: fadeInUp 1.2s forwards 0.3s;
         }
         .start-btn {
-            padding: 12px 35px;
-            font-size: 1.2rem;
+            padding: 14px 40px;
+            font-size: 1.3rem;
             background: transparent;
             border: 2px solid #d4af37;
             color: #d4af37;
@@ -61,349 +62,373 @@
             border-radius: 4px;
             opacity: 0;
             transition: all 0.3s;
-            animation: fadeIn 1s forwards 1.8s;
+            animation: fadeIn 0.8s forwards 1.2s;
         }
         .start-btn:hover {
             background: #d4af37;
-            color: #0b0908;
-            box-shadow: 0 0 15px #d4af37;
+            color: #050404;
+            box-shadow: 0 0 20px #d4af37;
         }
 
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { to { opacity: 1; } }
 
-        /* --- 메인 게임 보드 레이아웃 --- */
+        /* --- 마주 보는 대결형 전장 레이아웃 --- */
         #game-board {
             width: 100vw;
             height: 100vh;
             display: grid;
             grid-template-rows: auto 1fr auto;
-            padding: 20px;
-            gap: 15px;
+            padding: 15px;
+            gap: 10px;
             opacity: 0;
-            transition: opacity 1s ease;
+            transition: opacity 0.8s ease;
         }
         #game-board.fade-in { opacity: 1; }
 
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* 대치 상황 알림 판 */
+        .top-status-bar {
             background: var(--panel-color);
-            padding: 12px 20px;
             border: 1px solid var(--border-color);
+            padding: 10px 20px;
             border-radius: 6px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            align-items: center;
         }
-        .turn-indicator { font-size: 1.3rem; font-weight: bold; color: #d4af37; }
-        .system-log { font-size: 0.9rem; color: #b5a897; max-width: 60%; text-align: right; line-height: 1.4; }
+        .turn-title { font-size: 1.4rem; font-weight: bold; color: #d4af37; }
+        .combat-log { font-size: 0.9rem; color: #c4b9ad; text-align: right; font-style: italic; }
 
-        .battlefields {
+        /* 대결 아레나 (상대 진영 vs 내 진영 마주보기) */
+        .arena {
+            background: var(--table-color);
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            display: grid;
+            grid-template-rows: 1fr 1fr; /* 상단(적)과 하단(나)의 완벽한 이분할 대결 구도 */
+            padding: 15px;
+            gap: 10px;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        .side-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            gap: 15px;
         }
-        .field-zone {
-            background: var(--panel-color);
-            border: 2px solid var(--border-color);
+
+        /* 각 접전지 카드 슬롯 구역 */
+        .zone-card-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(212, 175, 55, 0.15);
             border-radius: 8px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 15px;
             position: relative;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .field-zone.targetable {
-            border-color: #ff4a4a;
-            box-shadow: 0 0 15px rgba(255, 74, 74, 0.4);
-            cursor: pointer;
-        }
-        
-        /* 구역 상단에 설치된 아이템 표시줄 */
-        .zone-status-bar {
+        .side-container.enemy-side .zone-card-box { flex-direction: column-reverse; } /* 적은 마주 보도록 역배치 */
+
+        .zone-meta {
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
-            min-height: 20px;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .enemy-side .zone-meta { border-bottom: none; border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 4px; }
+
+        /* 아이템 장착 상태 표시줄 */
+        .item-status-line {
+            display: flex;
+            gap: 4px;
+            min-height: 18px;
+            margin: 4px 0;
         }
         .badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
+            font-size: 0.65rem;
+            padding: 1px 5px;
             border-radius: 3px;
             font-weight: bold;
         }
-        .badge.trap { background: #945827; color: #fff; border: 1px solid #d47a37; }
-        .badge.veil { background: #4a3b63; color: #fff; border: 1px solid #7353a1; }
+        .badge.trap { background: #824316; border: 1px solid #c46827; color: #fff; }
+        .badge.veil { background: #402f59; border: 1px solid #6b5094; color: #fff; }
 
-        .zone-header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .defense-lines {
+        /* 배치선 큐 구조 */
+        .queue-flow {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            margin: 12px 0;
+            gap: 5px;
+            margin: 8px 0;
         }
-        .ai-side .defense-lines { flex-direction: column-reverse; }
-        
-        .slot {
-            height: 40px;
-            background: rgba(0,0,0,0.25);
-            border: 1px dashed var(--border-color);
+        .enemy-side .queue-flow { flex-direction: column-reverse; } /* 적 1선발이 중앙(대결선)을 마주 보게 반전 */
+
+        .grid-slot {
+            height: 38px;
+            background: rgba(22, 19, 17, 0.7);
+            border: 1px dashed #544439;
             border-radius: 4px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            font-size: 0.85rem;
-            color: #7a6b5c;
-            transition: all 0.3s;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #706155;
+            transition: all 0.25s;
         }
-        .slot.occupied {
-            border-style: solid;
-            color: var(--text-color);
-        }
-        .player-side .slot.occupied { background: #2a382e; border-color: #3e6b4c; }
-        .ai-side .slot.occupied { background: #3d2528; border-color: #8c2d3e; }
-        .slot.hidden-card {
-            background: linear-gradient(135deg, #2b231d, #1a1512) !important;
-            border-color: #544338 !important;
-            color: #8f7c6e !important;
+        .grid-slot.occupied { border-style: solid; color: var(--text-color); }
+        .player-side .grid-slot.occupied { background: #203324; border-color: var(--player-color); }
+        .enemy-side .grid-slot.occupied { background: #421e22; border-color: var(--ai-color); }
+        
+        /* 안개 상태 카드 (비공개) */
+        .grid-slot.fog-of-war {
+            background: linear-gradient(135deg, #241d19, #14110f) !important;
+            border-color: #42362e !important;
+            color: #8c7b70 !important;
             font-style: italic;
         }
-
-        .hp-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
+        /* 첩보 상태 노출 카드 */
+        .grid-slot.spied-war {
+            border-color: #d4af37 !important;
+            box-shadow: inset 0 0 5px rgba(212, 175, 55, 0.4);
         }
-        .hp-bar {
-            width: 70px; height: 8px;
-            background: #332a24;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .hp-fill { height: 100%; transition: width 0.4s ease; }
-        .player-side .hp-fill { background: var(--player-color); }
-        .ai-side .hp-fill { background: var(--ai-color); }
 
-        /* 하단 제어 바 */
-        .bottom-bar {
+        /* 하이라이트 트리거 */
+        .zone-card-box.target-glow {
+            border-color: #ff3b3b;
+            box-shadow: 0 0 15px rgba(255, 59, 59, 0.35);
+            cursor: pointer;
+        }
+
+        /* 체력 스케일 */
+        .hp-wrap { display: flex; align-items: center; gap: 6px; }
+        .hp-meter { width: 65px; height: 7px; background: #2b211a; border-radius: 3px; overflow: hidden; }
+        .hp-core { height: 100%; transition: width 0.3s; }
+        .player-side .hp-core { background: var(--player-color); }
+        .enemy-side .hp-core { background: var(--ai-color); }
+
+        /* 하단 사령부 컨트롤 타워 */
+        .bottom-hq-deck {
             display: grid;
             grid-template-columns: 1fr auto;
             gap: 20px;
             background: var(--panel-color);
-            padding: 15px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            min-height: 160px;
+            padding: 12px;
+            border-radius: 8px;
+            min-height: 155px;
         }
-        .hand-container {
+        .hand-rack {
             display: flex;
             gap: 12px;
             align-items: center;
             overflow-x: auto;
         }
-        
-        .card {
+
+        /* 카드 오브젝트 */
+        .war-card {
             width: 95px; height: 125px;
-            background: #1f1915;
-            border: 2px solid #544639;
-            border-radius: 6px;
+            background: #1a1411;
+            border: 2px solid #4a3a30;
+            border-radius: 5px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 10px;
+            padding: 8px;
             cursor: pointer;
             transition: transform 0.2s, border-color 0.2s;
         }
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: #d4af37;
-        }
-        .card.selected {
-            border-color: #ff4a4a;
-            box-shadow: 0 0 12px #ff4a4a;
-            transform: translateY(-12px);
-        }
-        .card.item-card { border-color: var(--item-color); }
-        .card.item-card:hover { border-color: #527bb3; }
+        .war-card:hover { transform: translateY(-8px); border-color: #d4af37; }
+        .war-card.selected { border-color: #ff3b3b; box-shadow: 0 0 10px #ff3b3b; transform: translateY(-12px); }
+        .war-card.item-type { border-color: var(--item-color); }
+        .war-card.item-type:hover { border-color: #4371a3; }
         
-        .card-type { font-size: 0.65rem; color: #9c8570; text-transform: uppercase; font-weight: bold; }
-        .card-name { font-weight: bold; text-align: center; font-size: 0.9rem; margin-top: 5px; }
-        .card-tip { font-size: 0.6rem; color: #6e6155; text-align: center; }
-
-        .actions-panel {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 10px;
+        /* 첫 턴 잠금 디스플레이 */
+        .war-card.locked-card {
+            opacity: 0.4;
+            border-color: #522 !important;
+            cursor: not-allowed;
         }
-        .action-btn {
+        .war-card.locked-card:hover { transform: none; }
+
+        .c-type { font-size: 0.65rem; color: #9c8473; font-weight: bold; text-transform: uppercase; }
+        .c-name { font-weight: bold; text-align: center; font-size: 0.85rem; margin-top: 4px; }
+        .c-info { font-size: 0.6rem; color: #695d53; text-align: center; }
+
+        .btn-hub { display: flex; flex-direction: column; justify-content: center; }
+        .panel-btn {
             padding: 15px 25px;
-            background: #473930;
-            color: #e6dfd5;
+            background: #3b3028;
+            color: var(--text-color);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
             font-family: 'Georgia', serif;
-            transition: background 0.2s, border-color 0.2s;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .action-btn:hover { background: #5e4b3f; border-color: #d4af37; }
+        .panel-btn:hover { background: #524237; border-color: #d4af37; }
     </style>
 </head>
 <body>
 
+    <!-- 타이틀 시네마틱 오버레이 -->
     <div id="start-overlay">
         <h1 class="title-banner">STRATEGY WAR</h1>
         <button class="start-btn" onclick="startGame()">전쟁 시작</button>
     </div>
 
+    <!-- 대결형 게임 보드 본판 -->
     <div id="game-board">
-        <div class="top-bar">
-            <div class="turn-indicator" id="turn-display">내 턴 (행동 단계)</div>
-            <div class="system-log" id="log-display">진영을 정비하고 전술 카드를 배치하십시오.</div>
+        <!-- 상단 알림 바 -->
+        <div class="top-status-bar">
+            <div class="turn-title" id="display-turn-owner">내 턴 (작전 수립)</div>
+            <div class="combat-log" id="display-log">전쟁이 선포되었습니다. 적의 배치를 예측하여 승리하십시오.</div>
         </div>
 
-        <div class="battlefields">
-            <!-- 지역 A -->
-            <div class="field-zone" id="zone-A" onclick="handleZoneClick('A')">
-                <div class="ai-side">
-                    <div class="zone-header">
+        <!-- 1:1 대결 테이블 아레나 -->
+        <div class="arena">
+            
+            <!-- [상단] 적(AI) 진영 인터페이스 -->
+            <div class="side-container enemy-side">
+                <!-- 지역 A -->
+                <div class="zone-card-box" id="area-ai-A" onclick="handleZoneEvent('A')">
+                    <div class="zone-meta">
                         <span>지역 A (AI)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-ai-A" style="width: 100%;"></div></div>
-                            <span id="text-ai-A">6/6</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-ai-A" style="width:100%;"></div></div>
+                            <span id="t-hp-ai-A">6/6</span>
                         </div>
                     </div>
-                    <div class="zone-status-bar" id="status-ai-A"></div>
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-ai-A-3">3선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-A-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-A-1">1선발: 비어있음</div>
+                    <div class="item-status-line" id="items-ai-A"></div>
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-ai-A-3">3선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-A-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-A-1">1선발: 비어있음</div>
                     </div>
                 </div>
-                <div class="player-side">
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-player-A-1">1선발: 비어있음</div>
-                        <div class="slot" id="slot-player-A-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-player-A-3">3선발: 비어있음</div>
-                    </div>
-                    <div class="zone-status-bar" id="status-player-A"></div>
-                    <div class="zone-header" style="border-top:1px solid var(--border-color); border-bottom:none; padding-top:5px;">
-                        <span>지역 A (User)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-player-A" style="width: 100%;"></div></div>
-                            <span id="text-player-A">6/6</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 지역 B -->
-            <div class="field-zone" id="zone-B" onclick="handleZoneClick('B')">
-                <div class="ai-side">
-                    <div class="zone-header">
+                <!-- 지역 B -->
+                <div class="zone-card-box" id="area-ai-B" onclick="handleZoneEvent('B')">
+                    <div class="zone-meta">
                         <span>지역 B (AI)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-ai-B" style="width: 100%;"></div></div>
-                            <span id="text-ai-B">8/8</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-ai-B" style="width:100%;"></div></div>
+                            <span id="t-hp-ai-B">8/8</span>
                         </div>
                     </div>
-                    <div class="zone-status-bar" id="status-ai-B"></div>
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-ai-B-3">3선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-B-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-B-1">1선발: 비어있음</div>
+                    <div class="item-status-line" id="items-ai-B"></div>
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-ai-B-3">3선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-B-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-B-1">1선발: 비어있음</div>
                     </div>
                 </div>
-                <div class="player-side">
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-player-B-1">1선발: 비어있음</div>
-                        <div class="slot" id="slot-player-B-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-player-B-3">3선발: 비어있음</div>
+
+                <!-- 지역 C -->
+                <div class="zone-card-box" id="area-ai-C" onclick="handleZoneEvent('C')">
+                    <div class="zone-meta">
+                        <span>지역 C (AI)</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-ai-C" style="width:100%;"></div></div>
+                            <span id="t-hp-ai-C">4/4</span>
+                        </div>
                     </div>
-                    <div class="zone-status-bar" id="status-player-B"></div>
-                    <div class="zone-header" style="border-top:1px solid var(--border-color); border-bottom:none; padding-top:5px;">
+                    <div class="item-status-line" id="items-ai-C"></div>
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-ai-C-3">3선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-C-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-ai-C-1">1선발: 비어있음</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [하단] 플레이어(User) 진영 인터페이스 -->
+            <div class="side-container player-side">
+                <!-- 지역 A -->
+                <div class="zone-card-box" id="area-player-A" onclick="handleZoneEvent('A')">
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-player-A-1">1선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-A-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-A-3">3선발: 비어있음</div>
+                    </div>
+                    <div class="item-status-line" id="items-player-A"></div>
+                    <div class="zone-meta">
+                        <span>지역 A (User)</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-player-A" style="width:100%;"></div></div>
+                            <span id="t-hp-player-A">6/6</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 지역 B -->
+                <div class="zone-card-box" id="area-player-B" onclick="handleZoneEvent('B')">
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-player-B-1">1선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-B-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-B-3">3선발: 비어있음</div>
+                    </div>
+                    <div class="item-status-line" id="items-player-B"></div>
+                    <div class="zone-meta">
                         <span>지역 B (User)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-player-B" style="width: 100%;"></div></div>
-                            <span id="text-player-B">8/8</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-player-B" style="width:100%;"></div></div>
+                            <span id="t-hp-player-B">8/8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 지역 C -->
+                <div class="zone-card-box" id="area-player-C" onclick="handleZoneEvent('C')">
+                    <div class="queue-flow">
+                        <div class="grid-slot" id="slot-player-C-1">1선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-C-2">2선발: 비어있음</div>
+                        <div class="grid-slot" id="slot-player-C-3">3선발: 비어있음</div>
+                    </div>
+                    <div class="item-status-line" id="items-player-C"></div>
+                    <div class="zone-meta">
+                        <span>지역 C (User)</span>
+                        <div class="hp-wrap">
+                            <div class="hp-meter"><div class="hp-core" id="v-hp-player-C" style="width:100%;"></div></div>
+                            <span id="t-hp-player-C">4/4</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 지역 C -->
-            <div class="field-zone" id="zone-C" onclick="handleZoneClick('C')">
-                <div class="ai-side">
-                    <div class="zone-header">
-                        <span>지역 C (AI)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-ai-C" style="width: 100%;"></div></div>
-                            <span id="text-ai-C">4/4</span>
-                        </div>
-                    </div>
-                    <div class="zone-status-bar" id="status-ai-C"></div>
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-ai-C-3">3선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-C-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-ai-C-1">1선발: 비어있음</div>
-                    </div>
-                </div>
-                <div class="player-side">
-                    <div class="defense-lines">
-                        <div class="slot" id="slot-player-C-1">1선발: 비어있음</div>
-                        <div class="slot" id="slot-player-C-2">2선발: 비어있음</div>
-                        <div class="slot" id="slot-player-C-3">3선발: 비어있음</div>
-                    </div>
-                    <div class="zone-status-bar" id="status-player-C"></div>
-                    <div class="zone-header" style="border-top:1px solid var(--border-color); border-bottom:none; padding-top:5px;">
-                        <span>지역 C (User)</span>
-                        <div class="hp-container">
-                            <div class="hp-bar"><div class="hp-fill" id="hp-player-C" style="width: 100%;"></div></div>
-                            <span id="text-player-C">4/4</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="bottom-bar">
-            <div class="hand-container" id="player-hand"></div>
-            <div class="actions-panel">
-                <button class="action-btn" onclick="endTurnManual()">턴 종료</button>
+        <!-- 하단 사령부 덱 핸드 바 -->
+        <div class="bottom-hq-deck">
+            <div class="hand-rack" id="box-player-hand"></div>
+            <div class="btn-hub">
+                <button class="panel-btn" onclick="triggerPassTurn()">턴 종료</button>
             </div>
         </div>
     </div>
 
     <script>
-        const militaryCards = ['보병', '창병', '기병', '방패병', '궁병', '용병'];
-        const itemCards = ['특급 사령관', '폭파병', '함정', '위장 장막', '첩보서', '군수 보급', '복귀 명령'];
+        const poolMilitary = ['보병', '창병', '기병', '방패병', '궁병', '용병'];
+        const poolItems = ['특급 사령관', '폭파병', '함정', '위장 장막', '첩보서', '군수 보급', '복귀 명령'];
 
-        let gameState = {
-            isPlayerTurn: true,
-            isFirstTurn: true,
-            maxHand: 9,
-            selectedCardIndex: null,
-            usedSuppliesThisTurn: false,
+        let game = {
+            playerTurn: true,
+            firstTurn: true,
+            selectedIdx: null,
+            supplyCount: false,
             hp: {
                 player: { A: 6, B: 8, C: 4, maxA: 6, maxB: 8, maxC: 4 },
                 ai: { A: 6, B: 8, C: 4, maxA: 6, maxB: 8, maxC: 4 }
             },
             fields: {
-                player: { A: [], B: [], C: [] }, 
+                player: { A: [], B: [], C: [] },
                 ai: { A: [], B: [], C: [] }
             },
-            itemsInstalled: {
-                player: { A: [], B: [], C: [] }, // 구역에 부착된 함정 등 리스트
+            attachments: {
+                player: { A: [], B: [], C: [] },
                 ai: { A: [], B: [], C: [] }
             },
             hand: { player: [], ai: [] }
@@ -412,426 +437,407 @@
         function startGame() {
             document.getElementById('start-overlay').classList.add('fade-out');
             document.getElementById('game-board').classList.add('fade-in');
-            setTimeout(() => { initGameData(); }, 500);
+            setTimeout(() => { buildMatch(); }, 500);
         }
 
-        function initGameData() {
-            ['A', 'B', 'C'].forEach(zone => {
-                gameState.fields.player[zone].push({ name: getRandomElement(militaryCards), camouflage: false });
-                gameState.fields.ai[zone].push({ name: getRandomElement(militaryCards), camouflage: false });
+        function buildMatch() {
+            ['A', 'B', 'C'].forEach(z => {
+                // 수비선 채우기가 덜 되어있어도 되므로 초기 1장씩만 배치 설정
+                game.fields.player[z].push({ name: getRandom(poolMilitary), camouflage: false, spied: false });
+                game.fields.ai[z].push({ name: getRandom(poolMilitary), camouflage: false, spied: false });
             });
 
-            for(let i=0; i<6; i++) gameState.hand.player.push(drawRandomCard());
-            for(let i=0; i<5; i++) gameState.hand.ai.push(drawRandomCard());
+            // 선공 6장, 후공 5장 드로우 규정
+            for(let i=0; i<6; i++) game.hand.player.push(drawCard());
+            for(let i=0; i<5; i++) game.hand.ai.push(drawCard());
 
-            updateUI();
-            logMessage("⚔️ 선공 턴이 시작되었습니다. 첫 번째 턴률에 의거해 이번 턴에는 [공격] 및 [폭파병] 사용이 봉쇄됩니다. 방어 전선을 구축하십시오.");
+            renderUI();
+            log("⚔️ 선공인 국왕의 첫 번째 턴입니다. 규정에 의해 첫 턴 공격 선언 및 [폭파병] 투입은 불가능합니다.");
         }
 
-        function drawRandomCard() {
-            if(Math.random() < 0.65) {
-                return { type: 'military', name: getRandomElement(militaryCards) };
-            } else {
-                return { type: 'item', name: getRandomElement(itemCards) };
-            }
+        function drawCard() {
+            return Math.random() < 0.65 ? { type: 'military', name: getRandom(poolMilitary) } : { type: 'item', name: getRandom(poolItems) };
         }
+        function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-        function getRandomElement(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-        function updateUI() {
-            // HP 및 전장 슬롯 업데이트
+        function renderUI() {
             ['player', 'ai'].forEach(side => {
-                ['A', 'B', 'C'].forEach(zone => {
-                    const currentHp = gameState.hp[side][zone];
-                    const maxHp = gameState.hp[side][`max${zone}`];
-                    document.getElementById(`hp-${side}-${zone}`).style.width = `${(currentHp / maxHp) * 100}%`;
-                    document.getElementById(`text-${side}-${zone}`).innerText = `${currentHp}/${maxHp}`;
-                    
-                    // 설치형 아이템 명확한 시각화 배지 처리
-                    const statusBar = document.getElementById(`status-${side}-${zone}`);
-                    statusBar.innerHTML = '';
-                    gameState.itemsInstalled[side][zone].forEach(item => {
-                        const badge = document.createElement('span');
-                        badge.className = `badge ${item === '함정' ? 'trap' : 'veil'}`;
-                        badge.innerText = item === '함정' ? '함정 ⚠️' : '위장막 🛡️';
-                        statusBar.appendChild(badge);
+                ['A', 'B', 'C'].forEach(z => {
+                    const hp = game.hp[side][z];
+                    const max = game.hp[side][`max${z}`];
+                    document.getElementById(`v-hp-${side}-${z}`).style.width = `${(hp/max)*100}%`;
+                    document.getElementById(`t-hp-${side}-${z}`).innerText = `${hp}/${max}`;
+
+                    // 부착형 배지 리스트 드로우
+                    const slotStatus = document.getElementById(`items-${side}-${z}`);
+                    slotStatus.innerHTML = '';
+                    game.attachments[side][z].forEach(item => {
+                        const b = document.createElement('span');
+                        b.className = `badge ${item==='함정'?'trap':'veil'}`;
+                        b.innerText = item==='함정'?'함정 ⚠️':'위장막 🛡️';
+                        slotStatus.appendChild(b);
                     });
 
-                    // 1선발 제외 비공개(안개) 시스템 렌더링
+                    // 1선발 제외 비공개 안개 시스템 렌더링
                     for(let i=1; i<=3; i++) {
-                        const slotEl = document.getElementById(`slot-${side}-${zone}-${i}`);
-                        const cardInSlot = gameState.fields[side][zone][i-1];
-                        
-                        if(cardInSlot) {
-                            slotEl.classList.add('occupied');
-                            slotEl.classList.remove('hidden-card');
+                        const slot = document.getElementById(`slot-${side}-${z}-${i}`);
+                        const card = game.fields[side][z][i-1];
+
+                        if(card) {
+                            slot.classList.add('occupied');
+                            slot.classList.remove('fog-of-war', 'spied-war');
 
                             if(i === 1) {
-                                // 1선발 처리
-                                if(cardInSlot.camouflage) {
-                                    slotEl.classList.add('hidden-card');
-                                    slotEl.innerText = `1선발: [위장 장막 적용 중]`;
+                                if(card.camouflage && side === 'ai') {
+                                    slot.classList.add('fog-of-war');
+                                    slot.innerText = `1선발: [위장막 은닉]`;
                                 } else {
-                                    slotEl.innerText = `1선발: ${cardInSlot.name}`;
+                                    slot.innerText = `1선발: ${card.name}`;
                                 }
                             } else {
-                                // 2, 3선발 처리 -> 상대방 기준이든 유저 기준이든 기본 비공개 검열
-                                slotEl.classList.add('hidden-card');
-                                slotEl.innerText = `${i}선발: [대기군 부대]`;
+                                // 2, 3선발은 위장장막 유무 상관없이 무조건 기본 비공개
+                                if(side === 'ai' && !card.spied) {
+                                    slot.classList.add('fog-of-war');
+                                    slot.innerText = `${i}선발: [대기군 부대]`;
+                                } else if(side === 'ai' && card.spied) {
+                                    slot.classList.add('spied-war');
+                                    slot.innerText = `${i}선발: ${card.name} 👁️`;
+                                } else {
+                                    // 내 대기선발 정보 노출
+                                    slot.innerText = `${i}선발: ${card.name}`;
+                                }
                             }
                         } else {
-                            slotEl.classList.remove('occupied', 'hidden-card');
-                            slotEl.innerText = `${i}선발: 비어있음`;
+                            slot.classList.remove('occupied', 'fog-of-war', 'spied-war');
+                            slot.innerText = `${i}선발: 비어있음`;
                         }
                     }
                 });
             });
 
-            // 핸드 렌더링
-            const handContainer = document.getElementById('player-hand');
-            handContainer.innerHTML = '';
-            gameState.hand.player.forEach((card, idx) => {
+            // 내 패 드로우
+            const rack = document.getElementById('box-player-hand');
+            rack.innerHTML = '';
+            game.hand.player.forEach((c, idx) => {
                 const cardEl = document.createElement('div');
-                cardEl.className = `card ${card.type === 'item' ? 'item-card' : ''} ${gameState.selectedCardIndex === idx ? 'selected' : ''}`;
-                cardEl.onclick = (e) => { e.stopPropagation(); selectCard(idx); };
+                const isFirstTurnLock = game.firstTurn && (c.name === '폭파병' || c.type === 'military');
+                
+                cardEl.className = `war-card ${c.type==='item'?'item-type':''} ${game.selectedIdx===idx?'selected':''} ${isFirstTurnLock?'locked-card':''}`;
+                cardEl.onclick = (e) => { e.stopPropagation(); if(!isFirstTurnLock) selectHand(idx); };
                 
                 cardEl.innerHTML = `
-                    <div class="card-type">${card.type === 'military' ? '군수' : '아이템'}</div>
-                    <div class="card-name">${card.name}</div>
-                    <div class="card-tip">선택 후 구역 클릭</div>
+                    <div class="c-type">${c.type==='military'?'군수':'아이템'}</div>
+                    <div class="c-name">${c.name}</div>
+                    <div class="c-info">${isFirstTurnLock?'첫 턴 잠김':'배치/공격 가능'}</div>
                 `;
-                handContainer.appendChild(cardEl);
+                rack.appendChild(cardEl);
             });
 
-            // 공격 가능한 상태 시 타겟 하이라이팅
-            ['A', 'B', 'C'].forEach(zone => {
-                const zoneEl = document.getElementById(`zone-${zone}`);
-                if(gameState.selectedCardIndex !== null && gameState.isPlayerTurn) {
-                    zoneEl.classList.add('targetable');
-                } else {
-                    zoneEl.classList.remove('targetable');
-                }
+            // 구역 하이라이팅 연계
+            ['A', 'B', 'C'].forEach(z => {
+                document.getElementById(`area-player-${z}`).classList.toggle('target-glow', game.selectedIdx !== null && game.playerTurn);
+                document.getElementById(`area-ai-${z}`).classList.toggle('target-glow', game.selectedIdx !== null && game.playerTurn);
             });
 
-            document.getElementById('turn-display').innerText = gameState.isPlayerTurn ? "내 턴 (행동 단계)" : "상대방(AI)의 턴 계산 중...";
+            document.getElementById('display-turn-owner').innerText = game.playerTurn ? "내 턴 (작전 수립)" : "적 사령부 계산 중...";
         }
 
-        function logMessage(msg) { document.getElementById('log-display').innerText = msg; }
+        function log(m) { document.getElementById('display-log').innerText = m; }
 
-        function selectCard(idx) {
-            if(!gameState.isPlayerTurn) return;
-            gameState.selectedCardIndex = (gameState.selectedCardIndex === idx) ? null : idx;
-            updateUI();
+        function selectHand(idx) {
+            if(!game.playerTurn) return;
+            game.selectedIdx = (game.selectedIdx === idx) ? null : idx;
+            renderUI();
         }
 
-        function handleZoneClick(zone) {
-            if(gameState.selectedCardIndex === null || !gameState.isPlayerTurn) return;
-            
-            const card = gameState.hand.player[gameState.selectedCardIndex];
-            
-            if(card.type === 'military') {
-                // 수비 라인이 3장 미만일 때 클릭 시 배치 우선 진행
-                if(gameState.fields.player[zone].length < 3) {
-                    gameState.fields.player[zone].push({ name: card.name, camouflage: false });
-                    logMessage(`[배치] ${zone}지역 수비 진형에 ${card.name} 부대를 추가 파견했습니다.`);
-                    consumeSelectedCard();
+        function handleZoneEvent(z) {
+            if(game.selectedIdx === null || !game.playerTurn) return;
+            const card = game.hand.player[game.selectedIdx];
+
+            // 1. 내 구역을 누른 경우 처리
+            if(event.currentTarget.id.includes('player')) {
+                if(card.type === 'military') {
+                    if(game.fields.player[z].length < 3) {
+                        game.fields.player[z].push({ name: card.name, camouflage: false, spied: false });
+                        log(`[배치] ${z}지역 수비선에 ${card.name} 부대를 증편 배치했습니다.`);
+                        popHand();
+                    } else { alert("수비선이 포화 상태입니다. 공격은 상대 전장을 누르십시오."); }
                 } else {
-                    // 자리가 꽉 찼다면 공격으로 작동 분기
-                    executeAttack(zone, card.name);
+                    useItemOnSide(z, card.name, 'player');
                 }
-            } else if(card.type === 'item') {
-                executeItemEffect(zone, card.name);
+            } 
+            // 2. 적 구역을 누른 경우 처리 (수비선 배치 부족해도 강제 타격 가능하도록 우회 연동)
+            else {
+                if(card.type === 'military') {
+                    executeStrike(z, card.name);
+                } else {
+                    useItemOnSide(z, card.name, 'ai');
+                }
             }
         }
 
-        // 수비선 빈자리 유무와 무관하게 즉각 강제 공성을 가할 수 있도록 유도하는 공격 브릿지 (더블클릭 방지 등 대안)
-        function forceAttack(zone) {
-            if(gameState.selectedCardIndex === null) return;
-            const card = gameState.hand.player[gameState.selectedCardIndex];
-            if(card.type === 'military') executeAttack(zone, card.name);
+        function popHand() {
+            game.hand.player.splice(game.selectedIdx, 1);
+            game.selectedIdx = null;
+            renderUI();
         }
 
-        function consumeSelectedCard() {
-            gameState.hand.player.splice(gameState.selectedCardIndex, 1);
-            gameState.selectedCardIndex = null;
-            updateUI();
-        }
-
-        function executeAttack(zone, attackerName) {
-            if(gameState.isFirstTurn) {
-                alert("선공의 첫 번째 턴에는 공격 명령을 하달할 수 없습니다.");
-                return;
-            }
-
-            consumeSelectedCard();
-            logMessage(`[공격 개시] 핸드에서 ${attackerName} 부대를 출격시켜 상대의 ${zone} 구역을 강습합니다.`);
+        function executeStrike(z, attacker) {
+            if(game.firstTurn) return;
+            popHand();
+            log(`[돌격 선언] 핸드에서 ${attacker} 부대를 출격시켜 적의 ${z} 거점을 급습했습니다.`);
 
             setTimeout(() => {
-                const aiDefenseLine = gameState.fields.ai[zone];
-                
-                // 수비선이 텅 비어있을 때 성벽 직격 룰 정산
-                if(aiDefenseLine.length === 0) {
-                    gameState.hp.ai[zone] = Math.max(0, gameState.hp.ai[zone] - 2);
-                    logMessage(`[성벽 직격] 상대 ${zone}지역에 방어 부대가 없어 성벽 체력에 -2의 파괴적인 피해를 입혔습니다!`);
-                    endTurnSequence();
+                const defLine = game.fields.ai[z];
+
+                if(defLine.length === 0) {
+                    game.hp.ai[z] = Math.max(0, game.hp.ai[z] - 2);
+                    log(`[성벽 직격] 상대 ${z}지역의 수비 부대가 전무하여 다이렉트로 -2의 치명타를 가했습니다!`);
+                    wrapTurn();
                     return;
                 }
 
-                let defender = aiDefenseLine[0];
-                
-                // 위장 장막 피격 시 투명 해제 규칙 연산
-                if(defender.camouflage) {
-                    defender.camouflage = false;
-                    logMessage(`[위장 간파] 공격 직격과 동시에 감춰졌던 적 1선발의 베일이 벗겨졌습니다! 정체는 [${defender.name}]입니다.`);
+                let defUnit = defLine[0];
+
+                if(defUnit.camouflage) {
+                    defUnit.camouflage = false;
+                    log(`[장막 격파] 습격과 연동되어 적 1선발의 위장막이 강제 유실되었습니다. 정체는 [${defUnit.name}]입니다.`);
                 }
 
-                // 기병 vs 함정 상성 제거 프로세스
-                if(attackerName === '기병' && gameState.itemsInstalled.ai[zone].includes('함정')) {
-                    gameState.itemsInstalled.ai[zone] = gameState.itemsInstalled.ai[zone].filter(i => i !== '함정');
-                    logMessage(`[함정 분쇄] 기병 부대의 특수 기동력으로 구역에 가설된 [함정]을 우회 돌파해 파괴했습니다.`);
+                // 기병 vs 함정 상성 즉시 분쇄
+                if(attacker === '기병' && game.attachments.ai[z].includes('함정')) {
+                    game.attachments.ai[z] = game.attachments.ai[z].filter(i => i !== '함정');
+                    log(`[함정 분쇄] 기병 부대의 돌파력력으로 매설된 함정을 무력화 우회 소멸시켰습니다.`);
                 }
 
-                // 함정이 발동해 수비 성공 처리하는 상황 필터링
-                if(gameState.itemsInstalled.ai[zone].includes('함정') && attackerName !== '기병') {
-                    gameState.itemsInstalled.ai[zone] = gameState.itemsInstalled.ai[zone].filter(i => i !== '함정');
-                    logMessage(`[함정 발동] 적의 견고한 함정 방어선에 막혀 아군 공세가 무위로 돌아갔습니다.`);
-                    // 1% 확률 반격 로또 시스템 계산
+                // 일반 병과 함정 정산 처리
+                if(game.attachments.ai[z].includes('함정') && attacker !== '기병') {
+                    game.attachments.ai[z] = game.attachments.ai[z].filter(i => i !== '함정');
+                    log(`[함정 폭발] 적 구역의 함정이 터지며 아군 돌격대가 공중 분쇄되었습니다.`);
                     if(Math.random() < 0.01) {
-                        gameState.hp.player[zone] = Math.max(0, gameState.hp.player[zone] - 1);
-                        logMessage(`[💥 함정 반격 대성공] 1% 확률의 함정 반격이 격발되어 아군 성벽 체력이 1 감소했습니다!`);
+                        game.hp.player[z] = Math.max(0, game.hp.player[z] - 1);
+                        log(`[💥 함정 로또 반격 격발] 1% 확률이 터져 우리 영지의 체력이 1 소모되었습니다.`);
                     }
-                    endTurnSequence();
+                    wrapTurn();
                     return;
                 }
 
-                let battleResult = calculateBattle(attackerName, defender.name);
+                const res = battleCalc(attacker, defUnit.name);
 
-                if(battleResult === 'win') {
-                    aiDefenseLine.shift(); // 격파된 수비수 무덤 이송
-                    gameState.hp.ai[zone] = Math.max(0, gameState.hp.ai[zone] - 1);
-                    logMessage(`[공성 성공] 아군 ${attackerName} 부대가 적 1선발 [${defender.name}]을 무너뜨리고 공성 피해(-1)를 누적시켰습니다.`);
+                if(res === 'win') {
+                    defLine.shift(); // 파괴
+                    game.hp.ai[z] = Math.max(0, game.hp.ai[z] - 1);
+                    log(`[공성 성공] 아군 ${attacker} 부대가 적의 1선발 [${defUnit.name}]을 소멸시키고 영지 파괴 피해(-1)를 입혔습니다.`);
                 } else {
-                    logMessage(`[공격 격퇴] 적의 확고한 방비[${defender.name}]에 가로막혀 돌격 부대가 무력하게 소멸했습니다.`);
+                    log(`[방어벽에 돈좌] 적 수비장수 [${defUnit.name}]의 견고한 역습에 우리 공격 카드만 전멸소멸했습니다.`);
                 }
 
-                endTurnSequence();
+                wrapTurn();
             }, 800);
         }
 
-        function calculateBattle(atk, def) {
-            const counters = { '보병': '창병', '창병': '기병', '기병': '방패병', '방패병': '궁병', '궁병': '보병' };
+        function battleCalc(atk, def) {
+            const chart = { '보병': '창병', '창병': '기병', '기병': '방패병', '방패병': '궁병', '궁병': '보병' };
             if(atk === '용병' && def === '용병') return 'lose';
             if(atk === '용병') return Math.random() < 0.60 ? 'win' : 'lose';
-            if(def === '용bridge') return Math.random() < 0.40 ? 'win' : 'lose';
-            if(counters[atk] === def) return 'win';
-            if(counters[def] === atk) return 'lose';
+            if(def === '용병') return Math.random() < 0.40 ? 'win' : 'lose';
+            if(chart[atk] === def) return 'win';
+            if(chart[def] === atk) return 'lose';
             if(atk === '궁병' || def === '궁병') return Math.random() < 0.55 ? 'win' : 'lose';
             return Math.random() < 0.50 ? 'win' : 'lose';
         }
 
-        function executeItemEffect(zone, itemName) {
-            if(itemName === '폭파병' && gameState.isFirstTurn) {
-                alert("선공의 첫 턴에는 폭파 공작원(폭파병)을 투입할 수 없습니다.");
+        function useItemOnSide(z, name, side) {
+            if(name === '군수 보급') {
+                if(game.supplyCount) { alert("군수 보급은 규정상 한 턴에 오직 1회만 기동할 수 있습니다."); return; }
+                popHand();
+                game.supplyCount = true;
+                for(let i=0; i<2; i++) { if(game.hand.player.length < game.maxHand) game.hand.player.push(drawCard()); }
+                log(`[아이템 가동] 군수 물자가 전선에 당도하여 핸드가 보충되었습니다.`);
+                renderUI(); return;
+            }
+
+            if(name === '복귀 명령' && side === 'player') {
+                if(game.fields.player[z].length > 0) {
+                    const u = game.fields.player[z].shift();
+                    popHand();
+                    // 복귀 명령으로 돌아간 카드는 완벽히 리셋 상태화
+                    if(game.hand.player.length < game.maxHand) game.hand.player.push({ type:'military', name: u.name });
+                    log(`[회군 조치] ${z}지역의 1선발 부대를 안전하게 주둔지 본패로 소환 복귀시켰습니다.`);
+                    renderUI();
+                } else { alert("회군할 군대가 없습니다."); }
                 return;
             }
 
-            if(itemName === '군수 보급') {
-                if(gameState.usedSuppliesThisTurn) { alert("군수 보급은 규정상 한 턴에 1장만 소모할 수 있습니다."); return; }
-                consumeSelectedCard();
-                gameState.usedSuppliesThisTurn = true;
-                for(let i=0; i<2; i++) {
-                    if(gameState.hand.player.length < gameState.maxHand) gameState.hand.player.push(drawRandomCard());
-                }
-                logMessage("[전술 아이템] 군수 전령이 무작위 군수물자 2장을 수송 완료했습니다.");
-                updateUI();
+            if(name === '함정' && side === 'player') {
+                if(game.attachments.player[z].length < 2) {
+                    game.attachments.player[z].push('함정');
+                    popHand();
+                    log(`[방어 설비] ${z}지역 비밀 성문 앞에 함정을 가설했습니다.`);
+                    renderUI();
+                } else { alert("해당 지역의 아이템 가설 허용치가 초과되었습니다."); }
                 return;
             }
 
-            if(itemName === '함정') {
-                if(gameState.itemsInstalled.player[zone].length < 2) {
-                    gameState.itemsInstalled.player[zone].push('함정');
-                    consumeSelectedCard();
-                    logMessage(`[방어 거점] ${zone}지역 관문에 보이지 않는 비밀 함정을 증설했습니다.`);
-                    updateUI();
-                } else { alert("해당 지역의 누적 설치 슬롯(최대 2개)이 포화 상태입니다."); }
+            if(name === '위장 장막' && side === 'player') {
+                if(game.fields.player[z].length >= 2) {
+                    game.fields.player[z][1].camouflage = true;
+                    game.attachments.player[z].push('위장');
+                    popHand();
+                    log(`[방어 설비] ${z}지역의 2선발 대기조 위로 은폐 장막을 피복했습니다.`);
+                    renderUI();
+                } else { alert("위장막을 둘러쳐 둘 2선발 대기부대가 배치되어 있지 않습니다."); }
                 return;
             }
 
-            if(itemName === '위장 장막') {
-                if(gameState.fields.player[zone].length >= 2) {
-                    gameState.fields.player[zone][1].camouflage = true;
-                    gameState.itemsInstalled.player[zone].push('위장');
-                    consumeSelectedCard();
-                    logMessage(`[방어 거점] ${zone}지역의 2선발 대기조 부대에 특수 위장천막을 피복했습니다.`);
-                    updateUI();
-                } else { alert("위장막을 부착할 2선발 대기 부대가 배치되어 있지 않습니다."); }
+            if(name === '첩보서' && side === 'ai') {
+                popHand();
+                const list = game.fields.ai[z];
+                if(list.length > 0) {
+                    let info = `[첩보 폭로] 적의 ${z} 구역 정밀 진단 결과 -> `;
+                    list.forEach((unit, idx) => {
+                        unit.spied = true; // 1선발로 기어 올라올 때까지 내 화면 영구 박제 플래그 활성화
+                        info += `${idx+1}선발:[${unit.name}] `;
+                    });
+                    log(info);
+                } else { log(`[첩보 폭로] 적의 ${z} 구역은 완전히 병력이 부재한 상태입니다.`); }
+                renderUI();
                 return;
             }
 
-            if(itemName === '폭파병') {
-                if(gameState.fields.ai[zone].length === 0) { alert("폭파 공작을 개시할 타겟 수비 전력이 없습니다."); return; }
-                consumeSelectedCard();
-                
-                // 함정이 폭파병을 가로막아 동귀어어진 처리하는 법칙 연동
-                if(gameState.itemsInstalled.ai[zone].includes('함정')) {
-                    gameState.itemsInstalled.ai[zone] = gameState.itemsInstalled.ai[zone].filter(i => i !== '함정');
-                    logMessage(`[공작 실패] 폭파병이 침투하던 도중 적의 [함정]에 걸려 폭파 실패 및 함정만 동반 폭쇄 제거되었습니다.`);
-                    updateUI();
-                    return;
+            if(name === '폭파병' && side === 'ai') {
+                if(game.fields.ai[z].length === 0) { alert("폭파 공작원조를 투입할 가치가 없는 구역입니다."); return; }
+                popHand();
+
+                if(game.attachments.ai[z].includes('함정')) {
+                    game.attachments.ai[z] = game.attachments.ai[z].filter(i => i !== '함정');
+                    log(`[공작 저지] 침투 도중 적의 함정이 감지 폭발하여 공작 부대와 적 함정이 동반 파쇄되었습니다.`);
+                    renderUI(); return;
                 }
 
                 if(Math.random() < 0.75) {
-                    gameState.fields.ai[zone].shift();
-                    logMessage(`[🧨 폭파 대성공] 공작조가 75%의 침투 확률을 뚫고 상대 ${zone}구역의 1선발 부대를 폭사시켰습니다!`);
-                } else {
-                    logMessage(`[공작 불발] 적의 삼엄한 가드에 막혀 폭파 공작이 실패로 무산되었습니다.`);
-                }
-                updateUI();
-                return;
+                    game.fields.ai[z].shift();
+                    log(`[🧨 폭사 대성공] 75% 확률을 관통해 적의 ${z}지역 1선발 요새 수비군을 폭사 제거했습니다!`);
+                } else { log(`[공작 실패] 적의 감시망에 공작 부대가 생포당했습니다.`); }
+                renderUI(); return;
             }
 
-            if(itemName === '복귀 명령') {
-                if(gameState.fields.player[zone].length > 0) {
-                    const recovered = gameState.fields.player[zone].shift();
-                    consumeSelectedCard();
-                    if(gameState.hand.player.length < gameState.maxHand) {
-                        gameState.hand.player.push({ type: 'military', name: recovered.name });
-                    }
-                    logMessage(`[퇴각 조치] ${zone}지역의 1선발 부대를 주둔지 손패(핸드)로 긴급 안전 회군시켰습니다.`);
-                    updateUI();
-                } else { alert("회군시킬 아군 선발 부대가 배치되어 있지 않습니다."); }
-                return;
-            }
-
-            if(itemName === '첩보서') {
-                consumeSelectedCard();
-                const aiZoneList = gameState.fields.ai[zone];
-                if(aiZoneList.length > 0) {
-                    let infoMsg = `[첩보 보고] ${zone}구역 정찰 결과 -> `;
-                    aiZoneList.forEach((unit, idx) => {
-                        infoMsg += `${idx+1}선발: [${unit.name}] `;
-                    });
-                    if(gameState.itemsInstalled.ai[zone].length > 0) {
-                        infoMsg += ` | 설치물 기밀 매설 포착: [${gameState.itemsInstalled.ai[zone].join(', ')}]`;
-                    }
-                    logMessage(infoMsg);
-                } else { logMessage(`[첩보 보고] ${zone}구역은 적의 주둔 부대가 전무한 진공 상태입니다.`); }
-                updateUI();
-                return;
-            }
+            alert("아이템 적용 범위를 다시 확인하십시오.");
         }
 
-        function endTurnManual() {
-            if(!gameState.isPlayerTurn) return;
-            logMessage("[진영 정비] 공격 작전을 다음 기회로 양보하고 군세 유지를 위해 수동 턴 패스를 선언합니다.");
-            endTurnSequence();
+        function triggerPassTurn() {
+            if(!game.playerTurn) return;
+            log("[수동 패스] 공격 카드를 아끼고 전술적 턴 넘김을 지시했습니다.");
+            wrapTurn();
         }
 
-        function endTurnSequence() {
-            gameState.isPlayerTurn = false;
-            gameState.selectedCardIndex = null;
-            gameState.usedSuppliesThisTurn = false;
-            updateUI();
-            setTimeout(() => { executeAITurn(); }, 1200);
+        function wrapTurn() {
+            game.playerTurn = false;
+            game.selectedIdx = null;
+            game.supplyCount = false;
+            renderUI();
+            setTimeout(() => { runAiEngine(); }, 1200);
         }
 
-        function executeAITurn() {
-            if(gameState.hand.ai.length < 6) {
-                while(gameState.hand.ai.length < 6) gameState.hand.ai.push(drawRandomCard());
-            }
+        function runAiEngine() {
+            // 핸드가 6장 미만일 때 핸드 강제 충전 법칙 적용
+            if(game.hand.ai.length < 6) { while(game.hand.ai.length < 6) game.hand.ai.push(drawCard()); }
 
-            logMessage("🏰 상대방(AI) 국왕이 전략 지도를 펼치고 공방 작전 구상을 개시합니다...");
+            log("🏰 적 국왕이 대결용 카드를 정렬하며 전술 주사위를 계산 중입니다...");
 
             setTimeout(() => {
-                const aiHand = gameState.hand.ai;
-                const militaryInHand = aiHand.filter(c => c.type === 'military');
-                const randomZone = getRandomElement(['A', 'B', 'C']);
+                const aiHand = game.hand.ai;
+                const forceUnits = aiHand.filter(c => c.type === 'military');
+                const supportItems = aiHand.filter(c => c.name === '복귀 명령');
+                const targetZ = getRandom(['A', 'B', 'C']);
 
-                // 군수 카드가 있고 수비선 보강이 필요하거나 무작위 도박 공세를 가할 확률 계산
-                if(militaryInHand.length > 0 && Math.random() < 0.6) {
-                    const attackCard = militaryInHand[0];
-                    aiHand.splice(aiHand.indexOf(attackCard), 1);
+                // AI 특수 기동: 정체가 만천하에 드러난(첩보당한) 대기 카드가 있다면 최우선적으로 '복귀 명령'을 써서 리셋 셰이킹 조치
+                const exposedUnit = game.fields.ai[targetZ].find(u => u.spied === true);
+                if(exposedUnit && supportItems.length > 0) {
+                    game.fields.ai[targetZ] = game.fields.ai[targetZ].filter(u => u !== exposedUnit);
+                    aiHand.splice(aiHand.indexOf(supportItems[0]), 1);
+                    // 복귀했으므로 스파이 박제 플래그 지우고 완전 비밀 초기화 리셋 처리하여 핸드 가입
+                    exposedUnit.spied = false;
+                    exposedUnit.camouflage = false;
+                    aiHand.push({ type: 'military', name: exposedUnit.name });
+                    log(`[적의 계책] 정보가 탄로 난 자신의 ${targetZ}구역 대기 부대를 [복귀 명령]으로 불러들여 기밀을 다시 세탁 리셋했습니다!`);
+                    passToPlayer();
+                    return;
+                }
 
-                    logMessage(`[🛡️ 적의 침공] 적진에서 사령관이 ${attackCard.name} 부대를 급파하여 우리의 ${randomZone} 성문을 압박합니다!`);
+                // 60% 확률로 호쾌한 전장 공격 선언
+                if(forceUnits.length > 0 && Math.random() < 0.6) {
+                    const activeUnit = forceUnits[0];
+                    aiHand.splice(aiHand.indexOf(activeUnit), 1);
+
+                    log(`[적의 역습] 상대방이 핸드에서 [${activeUnit.name}] 부대를 밀어내어 우리의 ${targetZ} 전선을 돌파 대결하려 합니다!`);
                     
                     setTimeout(() => {
-                        const playerDefense = gameState.fields.player[randomZone];
+                        const myDef = game.fields.player[targetZ];
                         
-                        if(playerDefense.length === 0) {
-                            gameState.hp.player[randomZone] = Math.max(0, gameState.hp.player[randomZone] - 2);
-                            logMessage(`[수비 진공 파괴] ${randomZone} 전선이 함락되어 성벽이 다이렉트로 강타당했습니다 (-2 Damage).`);
+                        if(myDef.length === 0) {
+                            game.hp.player[targetZ] = Math.max(0, game.hp.player[targetZ] - 2);
+                            log(`[방벽 함락] ${targetZ} 진영에 우리 방어군이 한 명도 없어 성벽에 직격 -2의 중상을 허용했습니다.`);
                         } else {
-                            let playerDefCard = playerDefense[0];
+                            let mySlotUnit = myDef[0];
                             
-                            // 위장 장막 기습 폭로 프로세스
-                            if(playerDefCard.camouflage) {
-                                playerDefCard.camouflage = false;
-                                logMessage(`[피격 기습 폭로] 위장 장막 뒤에 숨겨졌던 우리의 1선발 부대 [${playerDefCard.name}]이 모습을 고하고 전투를 시작합니다.`);
+                            if(game.attachments.player[targetZ].includes('함정') && activeUnit.name !== '기병') {
+                                game.attachments.player[targetZ] = game.attachments.player[targetZ].filter(i => i !== '함정');
+                                log(`[함정 차단] 가설해 둔 우리의 함정이 격발되어 적의 ${activeUnit.name} 선봉 공격을 완벽 분쇄 엄호했습니다.`);
+                                passToPlayer(); return;
                             }
 
-                            // 플레이어 함정 설치 선처리 요격 계산
-                            if(gameState.itemsInstalled.player[randomZone].includes('함정') && attackCard.name !== '기병') {
-                                gameState.itemsInstalled.player[randomZone] = gameState.itemsInstalled.player[randomZone].filter(i => i !== '함정');
-                                logMessage(`[함정 요격] 미리 매설해 둔 아군의 [함정]이 매복 가동되어 적의 ${attackCard.name} 공격을 공중 분해 저지했습니다.`);
-                                returnToPlayerTurn();
-                                return;
-                            }
-
-                            let battleResult = calculateBattle(attackCard.name, playerDefCard.name);
-                            
-                            if(battleResult === 'win') {
-                                playerDefense.shift();
-                                gameState.hp.player[randomZone] = Math.max(0, gameState.hp.player[randomZone] - 1);
-                                logMessage(`[전선 돌파] 우리의 1선발 부대 ${playerDefCard.name}이(가) 패배 전멸했으며 영지 체력이 1 소모되었습니다.`);
+                            let score = battleCalc(activeUnit.name, mySlotUnit.name);
+                            if(score === 'win') {
+                                myDef.shift(); // 파괴
+                                game.hp.player[targetZ] = Math.max(0, game.hp.player[targetZ] - 1);
+                                log(`[수비선 파괴] 적의 노련한 공세에 아군 1선발 ${mySlotUnit.name}이 붕괴되고 성벽 내구도가 1 깎였습니다.`);
                             } else {
-                                logMessage(`[성공적 방어] 아군의 견고한 요새 수비군 ${playerDefCard.name}이(가) 적의 공세를 완전히 돈좌시켰습니다.`);
+                                log(`[명예로운 방어] 우리 요새를 수비하던 ${mySlotUnit.name} 부대가 적의 파도 공격을 온몸으로 막아냈습니다.`);
                             }
                         }
-                        returnToPlayerTurn();
+                        passToPlayer();
                     }, 1000);
 
                 } else {
-                    // 수비 배치 가동
-                    if(militaryInHand.length > 0 && gameState.fields.ai[randomZone].length < 3) {
-                        const defCard = militaryInHand[0];
-                        gameState.fields.ai[randomZone].push({ name: defCard.name, camouflage: false });
-                        aiHand.splice(aiHand.indexOf(defCard), 1);
-                        logMessage(`[적 방어 보강] 적군이 ${randomZone} 영지 대기 라인에 추가 수비 병력을 은밀히 밀어 넣었습니다.`);
+                    // 수비 부대 보강 루틴
+                    if(forceUnits.length > 0 && game.fields.ai[targetZ].length < 3) {
+                        const d = forceUnits[0];
+                        game.fields.ai[targetZ].push({ name: d.name, camouflage: false, spied: false });
+                        aiHand.splice(aiHand.indexOf(d), 1);
+                        log(`[적의 동향] 적들이 내부 전력 노출을 차단하며 ${targetZ} 구역 대기선에 방어군을 조용히 매복시켰습니다.`);
                     } else {
-                        logMessage("[적 전술 간보기] 적 국왕이 수비 태세를 유지하며 전열을 가다듬고 턴을 양보했습니다.");
+                        log("[적의 동향] 적 진영이 행동을 삼가며 가만히 숨을 죽이고 주도권을 패스했습니다.");
                     }
-                    returnToPlayerTurn();
+                    passToPlayer();
                 }
             }, 1000);
         }
 
-        function returnToPlayerTurn() {
-            checkGameOver();
-            gameState.isPlayerTurn = true;
-            gameState.isFirstTurn = false;
+        function passToPlayer() {
+            evalMatchEnd();
+            game.playerTurn = true;
+            game.firstTurn = false;
 
-            if(gameState.hand.player.length < 6) {
-                while(gameState.hand.player.length < 6) {
-                    gameState.hand.player.push(drawRandomCard());
-                }
+            // 내 턴 시작 리필 6장 규칙 작동
+            if(game.hand.player.length < 6) {
+                while(game.hand.player.length < 6) game.hand.player.push(drawCard());
             }
-            updateUI();
+            renderUI();
         }
 
-        function checkGameOver() {
-            let playerDestroyed = 0;
-            let aiDestroyed = 0;
-            
-            ['A', 'B', 'C'].forEach(zone => {
-                if(gameState.hp.player[zone] <= 0) playerDestroyed++;
-                if(gameState.hp.ai[zone] <= 0) aiDestroyed++;
+        function evalMatchEnd() {
+            let pFail = 0; let eFail = 0;
+            ['A', 'B', 'C'].forEach(z => {
+                if(game.hp.player[z] <= 0) pFail++;
+                if(game.hp.ai[z] <= 0) eFail++;
             });
 
-            if(aiDestroyed >= 2) {
-                alert("👑 성전 승리! 적의 성 요새 2곳을 완전 함락하고 대륙 통일을 달성했습니다!");
+            if(eFail >= 2) {
+                alert("🏆 영광스러운 대승리! 적의 거점 2곳을 완전 함락시키고 제국 총독으로 등극하셨습니다!");
                 location.reload();
-            } else if(playerDestroyed >= 2) {
-                alert("💀 방어선 전멸 패배... 왕국이 몰락하고 군세가 흩어졌습니다.");
+            } else if(pFail >= 2) {
+                alert("💀 참담한 전멸 패배... 방어 성문이 열리고 영지가 약탈당했습니다.");
                 location.reload();
             }
         }
