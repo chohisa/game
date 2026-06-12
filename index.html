@@ -435,6 +435,7 @@
         const logistics = ['특급 사령관', '폭파병', '함정', '위장 장막', '첩보서', '군수 보급', '복귀 명령'];
 
         let match = {
+            turnCount: 0,
             isUserTurn: true,
             isInitialTurn: true, 
             selectSlot: null,
@@ -474,10 +475,12 @@
                     coin.style.transform = 'rotateY(0deg)';
                     text.innerText = "👑 유저 선공! 진형 구축을 하달하십시오.";
                     match.isUserTurn = true;
+                    match.turnCount = 1;
                 } else {
                     coin.style.transform = 'rotateY(180deg)';
                     text.innerText = "🤖 AI 기습 선공! 방어 대세를 고수하십시오.";
                     match.isUserTurn = false;
+                    match.turnCount = 2;
                 }
 
                 setTimeout(() => {
@@ -674,8 +677,8 @@
         }
 
         function invokeAttack(z, attacker) {
-            if (match.isInitialTurn) {
-        alert("첫 턴에는 진형 배치만 가능합니다. 공격은 다음 턴부터 가능합니다.");
+    if (match.turnCount < 2) {
+        alert("전시 상황입니다! 선공의 첫 턴에는 배치만 가능하며 공격은 봉쇄됩니다.");
         return;
     }
             
@@ -720,11 +723,6 @@
         }
 
         function invokeCommanderCombo(z) {
-            추가
-    if (match.isInitialTurn) {
-        alert("첫 턴에는 진형 배치만 가능합니다. 공격은 다음 턴부터 가능합니다.");
-        return;
-    }
             const comI = match.selectSlot;
             const milI = match.comboSlot;
             const companionUnit = match.hand.player[milI].name;
@@ -839,8 +837,9 @@
         }
 
         function endTurnSequence() {
+            match.turnCount++;
             evalMatchEnd();
-            match.isUserTurn = false;
+            match.isUserTurn = !match.isUserTurn;
             match.selectSlot = null;
             match.comboSlot = null;
             match.supplyLocked = false;
