@@ -154,7 +154,7 @@
 
         /* 아군 수비 병력 배치 정방향 정렬 (1선발이 위 중앙을 향하도록 설정) */
         .player-side .zone-card-box {
-            flex-direction: column-reverse; /* 메타 정보가 가장 아래에 오도록 설정 */
+            flex-direction: column; /* 메타 정보가 가장 아래에 오도록 설정 */
         }
         .player-side .queue-flow {
             flex-direction: column; /* 1선발(위) -> 2선발(중간) -> 3선발(아래) 구조 */
@@ -324,9 +324,9 @@
                     </div>
                     <div class="item-status-line" id="buff-ai-A"></div>
                     <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-A-3">3선발</div>
+                        <div class="grid-slot" id="slot-ai-A-1">1선발</div>
                         <div class="grid-slot" id="slot-ai-A-2">2선발</div>
-                        <div class="grid-slot" id="slot-ai-A-1">1선발</div> </div>
+                        <div class="grid-slot" id="slot-ai-A-3">3선발</div> </div>
                 </div>
 
                 <div class="zone-card-box" id="zone-ai-B" onclick="clickZone('B', 'ai')">
@@ -339,9 +339,9 @@
                     </div>
                     <div class="item-status-line" id="buff-ai-B"></div>
                     <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-B-3">3선발</div>
-                        <div class="grid-slot" id="slot-ai-B-2">2선발</div>
                         <div class="grid-slot" id="slot-ai-B-1">1선발</div>
+                        <div class="grid-slot" id="slot-ai-B-2">2선발</div>
+                        <div class="grid-slot" id="slot-ai-B-3">3선발</div>
                     </div>
                 </div>
 
@@ -355,9 +355,9 @@
                     </div>
                     <div class="item-status-line" id="buff-ai-C"></div>
                     <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-C-3">3선발</div>
-                        <div class="grid-slot" id="slot-ai-C-2">2선발</div>
                         <div class="grid-slot" id="slot-ai-C-1">1선발</div>
+                        <div class="grid-slot" id="slot-ai-C-2">2선발</div>
+                        <div class="grid-slot" id="slot-ai-C-3">3선발</div>
                     </div>
                 </div>
             </div>
@@ -365,7 +365,8 @@
             <div class="side-container player-side">
                 <div class="zone-card-box" id="zone-player-A" onclick="clickZone('A', 'player')">
                     <div class="queue-flow">
-                        <div class="grid-slot" id="slot-player-A-1">1선발</div> <div class="grid-slot" id="slot-player-A-2">2선발</div>
+                        <div class="grid-slot" id="slot-player-A-1">1선발</div> 
+                        <div class="grid-slot" id="slot-player-A-2">2선발</div>
                         <div class="grid-slot" id="slot-player-A-3">3선발</div>
                     </div>
                     <div class="item-status-line" id="buff-player-A"></div>
