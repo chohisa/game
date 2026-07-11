@@ -2,955 +2,1425 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>크로니클 오브 워: 중세 전술 대결 v2.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCT 가상 주식 거래소 (VCT Stock Exchange)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg-color: #0f0b08;
-            --table-color: #1a130e;
-            --panel-color: #241a13;
-            --border-color: #4a3b2c;
-            --text-color: #e8e2d5;
-            --player-color: #2e5935;
-            --ai-color: #822424;
-            --item-color: #1c3b5e;
-            --gold-color: #caa428;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Georgia', serif;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .parchment {
-            background: linear-gradient(135deg, #261b13 0%, #17100b 100%);
-            border: 3px double var(--border-color);
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
-        }
-
-        /* --- 1단계: 홈 타이틀 화면 --- */
-        #start-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #080605;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        .title-banner {
-            font-size: 3rem; color: var(--gold-color); text-shadow: 0 0 15px rgba(202, 164, 40, 0.3);
-            letter-spacing: 5px; text-align: center; line-height: 1.2;
-        }
-        .menu-btn-group { display: flex; gap: 15px; }
-        .main-btn {
-            padding: 12px 35px; font-size: 1.1rem; background: #2b1f16;
-            border: 2px solid var(--border-color); color: var(--text-color); cursor: pointer;
-            font-weight: bold; transition: all 0.2s; border-radius: 3px;
-        }
-        .main-btn:hover { border-color: var(--gold-color); color: var(--gold-color); box-shadow: 0 0 10px rgba(202, 164, 40, 0.2); }
-        .btn-gold { border-color: var(--gold-color); color: var(--gold-color); }
-
-        /* --- 📜 독립형 전술 도감 모달 패널 --- */
-        #codex-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 200;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .codex-window {
-            width: 100%; max-width: 750px; max-height: 85vh;
-            display: flex; flex-direction: column; border-radius: 6px; padding: 20px;
-        }
-        .codex-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;
-        }
-        .codex-header h2 { color: var(--gold-color); font-size: 1.4rem; }
-        .close-x { font-size: 1.5rem; color: #8c7662; cursor: pointer; }
-        .close-x:hover { color: #fff; }
-        
-        .codex-scroll { overflow-y: auto; flex: 1; padding-right: 5px; }
-        .codex-sec-title { color: var(--gold-color); font-size: 1rem; margin: 15px 0 8px 0; border-left: 3px solid var(--gold-color); padding-left: 6px; }
-        .codex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-        .codex-card { background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid #3d2c1e; border-radius: 4px; }
-        .codex-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; color: #dfd5c6; }
-        .codex-desc { font-size: 0.8rem; color: #a89989; line-height: 1.4; }
-
-        /* --- 2단계: 코인 토스 애니메이션 --- */
-        #coin-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0b0806; z-index: 95;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .coin-container { width: 100px; height: 100px; perspective: 1000px; margin-bottom: 20px; }
-        .coin { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .coin-side {
-            position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--gold-color);
-            display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; backface-visibility: hidden;
-        }
-        .coin-front { background: #73560b; color: #fff; }
-        .coin-back { background: #3b2d08; color: var(--gold-color); transform: rotateY(180deg); }
-        .coin.spinning { animation: spin-coin 1.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
-        @keyframes spin-coin { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(2520deg); } }
-
-        /* --- 3단계: 인게임 레이아웃 (높이 분할 고정으로 짤림 방지 보강) --- */
-        #game-board {
-            width: 100vw;
-            height: 100vh;
-            max-height: 100vh;
-            display: grid;
-            grid-template-rows: 45px 1fr 145px; /* 전체 뷰포트를 효율적으로 분배 */
-            padding: 8px;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            box-sizing: border-box;
-        }
-        #game-board.fade-in { opacity: 1; }
-
-        .top-status-bar {
-            background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 4px;
-            padding: 0 15px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .turn-title { font-size: 1.05rem; font-weight: bold; color: var(--gold-color); }
-        .combat-log { font-size: 0.8rem; color: #b5a99c; font-style: italic; }
-
-        /* 메인 아레나 전장 구역 */
-        .arena {
-            background: var(--table-color); border: 2px solid var(--border-color); border-radius: 6px;
-            display: grid; grid-template-rows: 1fr 1fr; padding: 8px; gap: 8px; min-height: 0;
-        }
-        .side-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; min-height: 0; }
-        
-        /* 🏰 거점 전술 카드 박스 */
-        .zone-card-box {
-            background: rgba(0,0,0,0.25); border: 1px solid #3d2f24; border-radius: 4px;
-            padding: 6px; display: flex; position: relative; min-height: 0;
-        }
-
-        /* 🔄 [핵심 개선] 적군 수비 병력 배치 상하 역정렬 (1선발이 아래 중앙을 향하도록 설정) */
-        .enemy-side .zone-card-box {
-            flex-direction: column; /* 메타 정보가 가장 위에 오도록 설정 */
-        }
-        .enemy-side .queue-flow {
-            flex-direction: column-reverse; /* 3선발(위) -> 2선발(중간) -> 1선발(아래) 구조로 역전 */
-        }
-
-        /* 아군 수비 병력 배치 정방향 정렬 (1선발이 위 중앙을 향하도록 설정) */
-        .player-side .zone-card-box {
-            flex-direction: column; /* 메타 정보가 가장 아래에 오도록 설정 */
-        }
-        .player-side .queue-flow {
-            flex-direction: column; /* 1선발(위) -> 2선발(중간) -> 3선발(아래) 구조 */
-        }
-
-        /* 🚨 점령된 땅 시각화 낙인 스킨 */
-        .zone-card-box.captured-zone {
-            background: linear-gradient(180deg, #240a0a 0%, #120404 100%) !important;
-            border: 2px dashed var(--ai-color) !important;
-        }
-        .captured-banner {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.55); display: flex; justify-content: center; align-items: center;
-            color: #ff4d4d; font-weight: bold; font-size: 1.1rem; letter-spacing: 2px; z-index: 5;
-        }
-
-        .zone-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; padding: 2px 0; width: 100%; }
-        .enemy-side .zone-meta { border-bottom: 1px solid rgba(212, 175, 55, 0.1); margin-bottom: 4px; }
-        .player-side .zone-meta { border-top: 1px solid rgba(212, 175, 55, 0.1); margin-top: 4px; }
-
-        .item-status-line { display: flex; gap: 4px; min-height: 14px; margin: 2px 0; }
-        .badge { font-size: 0.6rem; padding: 1px 4px; border-radius: 2px; font-weight: bold; }
-        .badge.trap { background: #733910; border: 1px solid #b35919; color: #fff; }
-        .badge.veil { background: #3b2854; border: 1px solid #63438c; color: #fff; }
-
-        .queue-flow { display: flex; gap: 4px; flex: 1; min-height: 0; justify-content: center; width: 100%; }
-
-        .grid-slot {
-            flex: 1; min-height: 22px; background: rgba(15, 12, 10, 0.7); border: 1px dashed #42352a;
-            border-radius: 3px; display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; color: #615347; text-align: center;
-        }
-        .grid-slot.occupied { border-style: solid; color: var(--text-color); font-weight: bold; }
-        .player-side .grid-slot.occupied { background: #1a2e1f; border-color: var(--player-color); }
-        .enemy-side .grid-slot.occupied { background: #381a1c; border-color: var(--ai-color); }
-        .grid-slot.fog-of-war { background: #14110f !important; border-color: #2b211a !important; color: #5c5046 !important; font-style: italic; }
-        .grid-slot.spied-war { border-color: var(--gold-color) !important; box-shadow: inset 0 0 3px rgba(212, 175, 55, 0.2); }
-
-        /* 타깃 활성화 가이드 지점 점등 */
-        .zone-card-box.glow-deploy { border-color: var(--player-color); box-shadow: 0 0 8px rgba(46, 89, 53, 0.5); cursor: pointer; }
-        .zone-card-box.glow-attack { border-color: #ff3b3b; box-shadow: 0 0 8px rgba(255, 59, 59, 0.5); cursor: pointer; }
-
-        .hp-wrap { display: flex; align-items: center; gap: 5px; }
-        .hp-meter { width: 45px; height: 5px; background: #14100d; border-radius: 1px; overflow: hidden; }
-        .hp-core { height: 100%; transition: width 0.2s; }
-        .player-side .hp-core { background: var(--player-color); }
-        .enemy-side .hp-core { background: var(--ai-color); }
-
-        /* --- 📥 하단 컨트롤 지반 내부 (높이 유동형 압축 핸드) --- */
-        .bottom-hq-deck {
-            display: grid; grid-template-columns: 1fr 210px; gap: 8px;
-            background: var(--panel-color); border: 1px solid var(--border-color);
-            padding: 6px 10px; border-radius: 4px; height: 100%; min-height: 0;
-            box-sizing: border-box;
-        }
-        .hand-rack { 
-            display: flex; gap: 6px; align-items: center; 
-            overflow-x: auto; overflow-y: hidden; height: 100%;
-        }
-
-        /* 짤림 완벽 방지: 박스 높이를 하단 패널 내에 완벽 핏(fit) 시킴 */
-        .war-card {
-            width: 76px; height: calc(100% - 4px); max-height: 125px; background: #1c1510; border: 2px solid #3b2e24;
-            border-radius: 3px; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 5px; cursor: pointer; flex-shrink: 0; transition: transform 0.15s, border-color 0.15s;
-            box-sizing: border-box;
-        }
-        .war-card:hover { transform: translateY(-3px); border-color: var(--gold-color); }
-        .war-card.selected { border-color: #ff3b3b; box-shadow: 0 0 6px #ff3b3b; transform: translateY(-4px); }
-        .war-card.com-combo { border-color: #9b6bb5 !important; box-shadow: 0 0 6px #9b6bb5; transform: translateY(-4px); }
-        .war-card.item-type { border-color: var(--item-color); }
-        .war-card.locked { opacity: 0.25; border-color: #4f1d1d !important; cursor: not-allowed; }
-        .war-card.locked:hover { transform: none; }
-
-        .c-type { font-size: 0.55rem; color: #8f7f71; font-weight: bold; text-transform: uppercase; }
-        .c-name { font-weight: bold; text-align: center; font-size: 0.72rem; color: #e6dfd3; word-break: keep-all; }
-        .c-status { font-size: 0.55rem; color: #5e5247; text-align: center; }
-
-        /* 우측 다기능 기획 패널 */
-        .control-side-panel {
-            display: grid; grid-template-rows: 1fr 32px; gap: 4px; height: 100%;
-        }
-        
-        .embedded-relation-guide {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
-            border-radius: 3px; padding: 4px 6px; font-size: 0.65rem; line-height: 1.3;
-            color: #bfae9d; display: flex; flex-direction: column; justify-content: center;
-        }
-        .embedded-relation-guide b { color: var(--gold-color); }
-        .loop-track { color: #caa428; font-weight: bold; text-align: center; margin-top: 1px; font-size: 0.62rem; }
-
-        .action-button-row { display: flex; gap: 4px; }
-        .panel-btn {
-            flex: 1; height: 100%; background: #36291e; color: var(--text-color);
-            border: 1px solid var(--border-color); border-radius: 3px;
-            font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: background 0.2s;
-        }
-        .panel-btn:hover { background: #4a392a; border-color: var(--gold-color); }
+        .text-upbit-red { color: #d60000; } /* 상승 빨강 */
+        .text-upbit-blue { color: #0052ee; } /* 하락 파랑 */
+        .bg-upbit-red { background-color: #d60000; }
+        .bg-upbit-blue { background-color: #0052ee; }
+        .border-upbit { border-color: #e9ecf1; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <div id="start-overlay">
-        <h1 class="title-banner">CHRONICLES OF WAR<br><span style="font-size:1.3rem; color:#a89989;">중세 카드 전술 아레나</span></h1>
-        <div class="menu-btn-group">
-            <button class="main-btn btn-gold" onclick="startCoinFlip()">전쟁 출정</button>
-            <button class="main-btn" onclick="openCodex()">전술 도감 개방</button>
+    <!-- 상단 헤더 -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-xl font-black tracking-wider text-slate-900">VCT STOCK PLATFORM</h1>
+            <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full font-mono font-bold">v3.1.1</span>
         </div>
-    </div>
-
-    <div id="codex-modal" onclick="closeCodex()">
-        <div class="codex-window parchment" onclick="event.stopPropagation()">
-            <div class="codex-header">
-                <h2>📜 제국 전술 정보 지침서</h2>
-                <span class="close-x" onclick="closeCodex()">&times;</span>
+        
+        <div class="flex items-center space-x-6">
+            <div class="text-sm font-semibold bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 font-mono text-slate-800">
+                보유 예수금: <span class="text-red-600 font-bold" id="user-cash">10,000,000</span> 원
             </div>
-            <div class="codex-scroll">
-                <div class="codex-sec-title">⚔️ 정규 군수 병종 (꼬리잡기 상성 체계)</div>
-                <div class="codex-grid">
-                    <div class="codex-card"><div class="codex-name">보병 (Infantry)</div><div class="codex-desc">방어선의 기초. 장창을 꼬아 쥐고 버티는 창병의 진형을 비집고 들어가 격파합니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">창병 (Spearman)</div><div class="codex-desc">기병 전용 카운터. 돌진해오는 기병들의 기동 관성을 역이용하여 대열을 무너뜨립니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">기병 (Cavalry)</div><div class="codex-desc">우회 기동의 주역. 단단히 닫힌 방패병의 측면 장막을 빠른 속도로 침투해 유린합니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">방패병 (Shield)</div><div class="codex-desc">원거리 방호 진형. 머리 위를 가득 채우며 쏟아지는 궁병의 화살 격사 세례를 완벽히 차단합니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">궁병 (Archer)</div><div class="codex-desc">원거리 저격수. 무거운 장갑을 걸치고 느릿하게 전진해오는 보병들을 사거리 밖에서 사살합니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">용병 (Mercenary)</div><div class="codex-desc"><b>[상성 예외 특수직]</b> 꼬리잡기식 상성 고리를 거부하며, 무조건 60%의 고정 성공 확률 계산으로 싸웁니다.</div></div>
-                </div>
-
-                <div class="codex-sec-title">📦 특수 비정규 계책 (아이템 카드 제원)</div>
-                <div class="codex-grid">
-                    <div class="codex-card"><div class="codex-name">특급 사령관 (Commander)</div><div class="codex-desc">아군 군수 카드와 연계 출격합니다. 적 1선발을 상성 무시 즉시 처단하며, 공성 보정으로 성벽 체력을 무조건 1 추가 감소시킵니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">폭파병 (Sapper)</div><div class="codex-desc">적 전선의 1선발 부대를 75%의 성공률로 즉시 무력화(폭사) 시키는 기밀 공작조입니다. (첫 턴 배치 잠김)</div></div>
-                    <div class="codex-card"><div class="codex-name">함정 (Trap)</div><div class="codex-desc">아군 영토에 잠복 설치합니다. 기병을 제외한 침투 공격조를 즉시 전멸시키는 수비형 덫입니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">위장 장막 (Camouflage)</div><div class="codex-desc">아군 2선발 대기조에 은닉 스킨을 입혀 적이 정체를 스캔하거나 교전 상성을 계산하지 못하도록 가립니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">첩보서 (Intelligence)</div><div class="codex-desc">적의 특정 거점을 영구 도청 정찰하여 안개에 가려진 2, 3선발 대기조의 병종 실체를 투명하게 드러냅니다.</div></div>
-                    <div class="codex-card"><div class="codex-name">군수 보급 (Supply)</div><div class="codex-desc">군수 창고를 즉시 징발하여 예비 전술 가용 카드 2장을 덱에서 추가로 뽑아 핸드를 보강합니다. (턴당 1회 제한)</div></div>
-                    <div class="codex-card"><div class="codex-name">복귀 명령 (Recall)</div><div class="codex-desc">이미 전선 대기열에 배치되어 소모된 아군 전방 병력 1개 조를 안전하게 내 핸드로 다시 회군시켜 복구합니다.</div></div>
-                </div>
+            <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                <button onclick="switchView('player')" id="btn-view-player" class="px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-800 shadow-sm transition-all border border-slate-200">
+                    사용자 화면
+                </button>
+                <button onclick="switchView('admin')" id="btn-view-admin" class="px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1">
+                    관리자 설정창
+                </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div id="coin-overlay">
-        <div class="coin-container">
-            <div class="coin" id="game-coin">
-                <div class="coin-side coin-front">선공</div>
-                <div class="coin-side coin-back">후공</div>
-            </div>
-        </div>
-        <div class="coin-text" id="coin-announce">수 정세를 계측하는 중...</div>
-    </div>
-
-    <div id="game-board">
-        <div class="top-status-bar">
-            <div class="turn-title" id="txt-turn-owner">진형 배치 단계</div>
-            <div class="combat-log" id="txt-combat-log">출정 전선이 형성되었습니다.</div>
-        </div>
-
-        <div class="arena">
-            <div class="side-container enemy-side">
-                <div class="zone-card-box" id="zone-ai-A" onclick="clickZone('A', 'ai')">
-                    <div class="zone-meta">
-                        <span>적 초소 A</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-A" style="width:100%;"></div></div>
-                            <span id="hp-txt-ai-A">6/6</span>
-                        </div>
-                    </div>
-                    <div class="item-status-line" id="buff-ai-A"></div>
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-A-1">1선발</div>
-                        <div class="grid-slot" id="slot-ai-A-2">2선발</div>
-                        <div class="grid-slot" id="slot-ai-A-3">3선발</div> </div>
-                </div>
-
-                <div class="zone-card-box" id="zone-ai-B" onclick="clickZone('B', 'ai')">
-                    <div class="zone-meta">
-                        <span>적 초소 B</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-B" style="width:100%;"></div></div>
-                            <span id="hp-txt-ai-B">8/8</span>
-                        </div>
-                    </div>
-                    <div class="item-status-line" id="buff-ai-B"></div>
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-B-1">1선발</div>
-                        <div class="grid-slot" id="slot-ai-B-2">2선발</div>
-                        <div class="grid-slot" id="slot-ai-B-3">3선발</div>
-                    </div>
-                </div>
-
-                <div class="zone-card-box" id="zone-ai-C" onclick="clickZone('C', 'ai')">
-                    <div class="zone-meta">
-                        <span>적 초소 C</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-ai-C" style="width:100%;"></div></div>
-                            <span id="hp-txt-ai-C">4/4</span>
-                        </div>
-                    </div>
-                    <div class="item-status-line" id="buff-ai-C"></div>
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-ai-C-1">1선발</div>
-                        <div class="grid-slot" id="slot-ai-C-2">2선발</div>
-                        <div class="grid-slot" id="slot-ai-C-3">3선발</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="side-container player-side">
-                <div class="zone-card-box" id="zone-player-A" onclick="clickZone('A', 'player')">
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-player-A-1">1선발</div> 
-                        <div class="grid-slot" id="slot-player-A-2">2선발</div>
-                        <div class="grid-slot" id="slot-player-A-3">3선발</div>
-                    </div>
-                    <div class="item-status-line" id="buff-player-A"></div>
-                    <div class="zone-meta">
-                        <span>아군 기지 A</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-player-A" style="width:100%;"></div></div>
-                            <span id="hp-txt-player-A">6/6</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="zone-card-box" id="zone-player-B" onclick="clickZone('B', 'player')">
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-player-B-1">1선발</div>
-                        <div class="grid-slot" id="slot-player-B-2">2선발</div>
-                        <div class="grid-slot" id="slot-player-B-3">3선발</div>
-                    </div>
-                    <div class="item-status-line" id="buff-player-B"></div>
-                    <div class="zone-meta">
-                        <span>아군 기지 B</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-player-B" style="width:100%;"></div></div>
-                            <span id="hp-txt-player-B">8/8</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="zone-card-box" id="zone-player-C" onclick="clickZone('C', 'player')">
-                    <div class="queue-flow">
-                        <div class="grid-slot" id="slot-player-C-1">1선발</div>
-                        <div class="grid-slot" id="slot-player-C-2">2선발</div>
-                        <div class="grid-slot" id="slot-player-C-3">3선발</div>
-                    </div>
-                    <div class="item-status-line" id="buff-player-C"></div>
-                    <div class="zone-meta">
-                        <span>아군 기지 C</span>
-                        <div class="hp-wrap">
-                            <div class="hp-meter"><div class="hp-core" id="hp-bar-player-C" style="width:100%;"></div></div>
-                            <span id="hp-txt-player-C">4/4</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bottom-hq-deck">
-            <div class="hand-rack" id="rack-player-hand"></div>
+    <main class="p-6 max-w-7xl mx-auto">
+        
+        <!-- ==================== [1] 사용자 화면 (PLAYER VIEW) ==================== -->
+        <div id="view-player" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <div class="control-side-panel">
-                <div class="embedded-relation-guide">
-                    <div>⚔️ <b>꼬리잡기 상성</b></div>
-                    <div class="loop-track">보병 ➡️ 창병 ➡️ 기병 ➡️ 방패병 ➡️ 궁병 ➡️ 보병</div>
-                    <div> <b> 무상성: 용병 </b> </div>
+            <!-- 왼쪽: 종목 리스트 -->
+            <div class="lg:col-span-4 bg-white rounded-xl border border-slate-200 flex flex-col h-[750px] shadow-sm">
+                <div class="flex border-b border-slate-200 bg-slate-50 rounded-t-xl">
+                    <button onclick="switchMarketTab('player-stock')" id="tab-market-player" class="w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600">
+                        선수 개인 주식
+                    </button>
+                    <button onclick="switchMarketTab('team-stock')" id="tab-market-team" class="w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+                        팀 단위 주식
+                    </button>
                 </div>
-                <div class="action-button-row">
-                    <button class="panel-btn" style="background:#262a30;" onclick="openCodex()">도감</button>
-                    <button class="panel-btn" onclick="endTurnManual()">턴 정산</button>
+                <!-- 검색창 -->
+                <div class="p-3 border-b border-slate-200 bg-white">
+                    <input type="text" id="market-search" oninput="renderMarkets()" placeholder="태그 또는 종목 검색" class="w-full bg-slate-50 text-sm text-slate-800 px-3 py-2 rounded border border-slate-300 focus:outline-none focus:border-blue-500">
+                </div>
+                <!-- 리스트 출력 영역 -->
+                <div class="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white" id="market-list">
+                    <!-- JS 동적 주입 -->
                 </div>
             </div>
+
+            <!-- 중앙: 종목 정보 차트 및 주문창 -->
+            <div class="lg:col-span-5 flex flex-col space-y-6">
+                <!-- 종목 요약 카드 -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-2">
+                            <span id="selected-tag" class="text-[10px] px-2.5 py-1 rounded font-black text-white uppercase tracking-wider">TAG</span>
+                            <h2 class="text-2xl font-black text-slate-900 mt-1" id="selected-title">-</h2>
+                            <!-- 버그 원인이었던 소속 대체용 필드를 마크업에 복원 완료했습니다. -->
+                            <span class="text-xs text-slate-500 block" id="selected-sub-info">-</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black font-mono text-upbit-red" id="selected-price">0</span> <span class="text-xs text-slate-500 font-bold">KRW</span>
+                            <div class="text-xs font-bold mt-1 font-mono text-upbit-red" id="selected-change">+0.00%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 라인 차트 (더미 가공 없는 순수 실제 기록 데이터 연동) -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 h-[280px] flex flex-col justify-between shadow-sm">
+                    <div class="text-xs font-bold text-slate-400">실시간 체결 기준 변동 추이</div>
+                    <div class="flex-1 mt-2 relative">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 트레이딩 주문 모듈 -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex border-b border-slate-200 pb-3 mb-4">
+                        <button onclick="setTradeMode('buy')" id="btn-trade-buy" class="w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-red text-white shadow-sm">매수</button>
+                        <button onclick="setTradeMode('sell')" id="btn-trade-sell" class="w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800 ml-2">매도</button>
+                    </div>
+                    <div class="space-y-4 text-sm font-mono">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">체결 예정가</span>
+                            <span class="font-bold text-slate-800" id="trade-price-display">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">주문 수량</span>
+                            <input type="number" id="trade-quantity" oninput="calculateTradeTotal()" min="1" value="1" class="w-28 bg-slate-50 text-right text-slate-800 px-3 py-1.5 rounded border border-slate-300 focus:outline-none">
+                        </div>
+                        <div class="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center text-base">
+                            <span class="text-slate-500 font-sans">총 결산 금액</span>
+                            <span class="font-bold text-red-600 text-lg" id="trade-total-display">0 원</span>
+                        </div>
+                        <button onclick="executeTrade()" id="btn-execute-trade" class="w-full py-3 bg-upbit-red text-white rounded-lg font-bold text-sm shadow-sm hover:opacity-95 transition-all mt-2">
+                            매수 체결 실행
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 계좌 현황 및 보유 포트폴리오 -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- 손익 정보 요약 -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-700 mb-4">계좌 평가 잔고</h3>
+                    <div class="space-y-3 text-xs font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">총 투자 원금</span>
+                            <span id="pfo-total-buy" class="text-slate-800">0 원</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">평가 금액 합계</span>
+                            <span id="pfo-total-val" class="text-slate-800 font-bold">0 원</span>
+                        </div>
+                        <div class="flex justify-between border-t border-slate-100 pt-2 text-sm">
+                            <span class="text-slate-500 font-sans">총 손익률</span>
+                            <span id="pfo-total-profit" class="font-bold">0 원 (0.00%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 보유 종목 리스트 -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 h-[480px] flex flex-col shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-700 mb-3">보유 가상 주식</h3>
+                    <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="portfolio-list">
+                        <!-- JS 렌더링 -->
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
 
+        <!-- ==================== [2] 관리자 설정창 (ADMIN VIEW) ==================== -->
+        <div id="view-admin" class="hidden space-y-6">
+            
+            <!-- 관리 상태 표시부 -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">VCT 가상 자산 관리자 포털</h2>
+                    <p class="text-xs text-slate-500 mt-1">지표 연산 제어, 종목 유지보수 및 전용 태그 관리 시스템을 운영합니다.</p>
+                </div>
+                <div class="flex space-x-3 text-xs font-bold">
+                    <button onclick="rollbackPrice()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all">
+                        ↺ 가격 기록 1회 취소 (Undo)
+                    </button>
+                    <button onclick="resetExchangeData()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                        ⚠ 거래소 데이터 리셋
+                    </button>
+                </div>
+            </div>
+
+            <!-- 내부 제어 네비게이션 탭 -->
+            <div class="flex space-x-2 border-b border-slate-200 pb-2 text-xs font-bold">
+                <button onclick="switchAdminTab('match-update')" id="btn-adm-tab-match" class="px-4 py-2 text-slate-800 bg-white border border-slate-300 shadow-sm rounded">경기 결과 대입</button>
+                <button onclick="switchAdminTab('listing')" id="btn-adm-tab-listing" class="px-4 py-2 text-slate-500 hover:text-slate-800 rounded">신규 상장 / 마스터 수정</button>
+                <button onclick="switchAdminTab('tag-manage')" id="btn-adm-tab-tag" class="px-4 py-2 text-slate-500 hover:text-slate-800 rounded">태그 매니저</button>
+            </div>
+
+            <!-- 관리자 탭 1: 경기 결과 대입 -->
+            <div id="adm-sec-match-update" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- 선수 경기 결과 반영 -->
+                <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
+                    <h3 class="text-sm font-bold text-blue-600 border-b border-slate-100 pb-2">● 선수 경기 통계 수치 기입</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-slate-500 block mb-1">대상 선수</label>
+                            <select id="admin-player-select" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800"></select>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="text-slate-500 block mb-1">당일 K/D</label>
+                                <input type="number" step="0.01" id="admin-player-kd" placeholder="K/D 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                            </div>
+                            <div>
+                                <label class="text-slate-500 block mb-1">당일 ACS</label>
+                                <input type="number" id="admin-player-acs" placeholder="ACS 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                            </div>
+                            <div>
+                                <label class="text-slate-500 block mb-1">당일 KAST (%)</label>
+                                <input type="number" id="admin-player-kast" placeholder="KAST 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                            </div>
+                        </div>
+                        <button onclick="applyPlayerMatchRecord()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition-all shadow-sm">선수 주가 가치 변동 적용</button>
+                    </div>
+                </div>
+
+                <!-- 팀 경기 결과 반영 -->
+                <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">● 팀 세트 매칭 결과 기입</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-slate-500 block mb-1">대상 팀</label>
+                            <select id="admin-team-select" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800"></select>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="text-slate-500 block mb-1">해외 배당률 (Odds)</label>
+                                <input type="number" step="0.01" id="admin-team-odds" placeholder="배당률 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                            </div>
+                            <div>
+                                <label class="text-slate-500 block mb-1">경기 방식 설정</label>
+                                <select id="admin-team-match-format" onchange="updateSetScoreOptions()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                                    <option value="bo3">Bo3 (3판 2선승제)</option>
+                                    <option value="bo5">Bo5 (5판 3선승제)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-slate-500 block mb-1">세부 세트 결과</label>
+                                <select id="admin-team-set-result" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 font-bold">
+                                    <!-- JS 연동 로딩 -->
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="applyTeamMatchRecord()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded transition-all shadow-sm">팀 세트 연동 등락 반영</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 관리자 탭 2: 상장 양식 및 마스터 수정 -->
+            <div id="adm-sec-listing" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- 상장 양식 -->
+                    <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
+                        <h3 class="text-sm font-bold text-emerald-600 border-b border-slate-100 pb-2">● 신규 자산 상장 승인</h3>
+                        <div class="flex space-x-4 mb-2">
+                            <label class="flex items-center space-x-1 cursor-pointer"><input type="radio" name="list-mode" value="player" checked onchange="toggleListingFormFields()"> <span>선수 신규 등록</span></label>
+                            <label class="flex items-center space-x-1 cursor-pointer"><input type="radio" name="list-mode" value="team" onchange="toggleListingFormFields()"> <span>구단 신규 등록</span></label>
+                        </div>
+                        <div class="space-y-3" id="listing-fields-container">
+                            <!-- JS 바인딩 -->
+                        </div>
+                        <button onclick="executeNewListing()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-sm">심사 통과 및 강제 상장</button>
+                    </div>
+
+                    <!-- 마스터 데이터 수정 -->
+                    <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
+                        <h3 class="text-sm font-bold text-amber-600 border-b border-slate-100 pb-2">● 자산 마스터 스펙 조율</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-slate-500 block mb-1">수정 타겟 분류</label>
+                                <select id="master-edit-type" onchange="loadMasterList()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                                    <option value="player">등록 선수 스펙 수정</option>
+                                    <option value="team">등록 구단 스펙 수정</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-slate-500 block mb-1">수정 대상 지정</label>
+                                <select id="master-item-select" onchange="loadMasterDetails()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800"></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2" id="master-edit-fields-container">
+                            <!-- JS 바인딩 -->
+                        </div>
+                        <button onclick="updateMasterData()" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold shadow-sm">스펙 데이터 즉시 반영</button>
+                    </div>
+                </div>
+
+                <!-- 상폐 관리 제어판 테이블 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2 text-xs">
+                        <span class="text-sm font-bold text-slate-800">상장 자산 보존 조치 보드</span>
+                        <div class="flex space-x-1">
+                            <button onclick="switchAdminListingTab('player')" id="btn-admin-list-player" class="px-3 py-1 bg-blue-600 text-white rounded font-bold">선수 라이브러리</button>
+                            <button onclick="switchAdminListingTab('team')" id="btn-admin-list-team" class="px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold">구단 라이브러리</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto text-xs font-mono">
+                        <table class="w-full text-left divide-y divide-slate-100">
+                            <thead>
+                                <tr class="text-slate-400">
+                                    <th class="py-2">식별 명칭</th>
+                                    <th class="py-2">연동 태그</th>
+                                    <th class="py-2">현재 주가</th>
+                                    <th class="py-2">상태</th>
+                                    <th class="py-2 text-right">상태 관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-listing-tbody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 관리자 탭 3: 태그 매니저 -->
+            <div id="adm-sec-tag-manage" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- 태그 추가/수정 폼 -->
+                <div class="lg:col-span-5 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
+                    <h3 class="text-sm font-bold text-teal-600 border-b border-slate-100 pb-2" id="tag-form-title">● 태그 신규 추가</h3>
+                    <input type="hidden" id="tag-form-id">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-slate-500 block mb-1">태그 명칭 (중복 주의)</label>
+                            <input type="text" id="tag-form-name" placeholder="예: PRX, PACIFIC" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                        </div>
+                        <div>
+                            <label class="text-slate-500 block mb-1">태그 전용 배경 식별 컬러</label>
+                            <div class="flex space-x-2">
+                                <input type="color" id="tag-form-color-picker" oninput="document.getElementById('tag-form-color-text').value = this.value" class="w-10 h-8 bg-slate-50 border border-slate-300 rounded cursor-pointer">
+                                <input type="text" id="tag-form-color-text" oninput="document.getElementById('tag-form-color-picker').value = this.value" placeholder="#000000" class="flex-1 bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 pt-2">
+                            <button onclick="saveTag()" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded shadow-sm">저장</button>
+                            <button onclick="resetTagForm()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded">취소</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 태그 목록 및 삭제 -->
+                <div class="lg:col-span-7 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs flex flex-col h-[500px] shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">● 시스템 태그 라이브러리</h3>
+                    <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="admin-tag-list">
+                        <!-- JS 렌더링 -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JS 스크립트 본문 -->
     <script>
-        const troops = ['보병', '창병', '기병', '방패병', '궁병', '용병'];
-        const logistics = ['특급 사령관', '폭파병', '함정', '위장 장막', '첩보서', '군수 보급', '복귀 명령'];
-
-        let match = {
-            turnCount: 0,
-            isUserTurn: true,
-            isInitialTurn: true, 
-            selectSlot: null,
-            comboSlot: null, 
-            supplyLocked: false,
-            hp: {
-                player: { A: 6, B: 8, C: 4, maxA: 6, maxB: 8, maxC: 4 },
-                ai: { A: 6, B: 8, C: 4, maxA: 6, maxB: 8, maxC: 4 }
-            },
-            board: {
-                player: { A: [], B: [], C: [] },
-                ai: { A: [], B: [], C: [] }
-            },
-            perks: {
-                player: { A: [], B: [], C: [] },
-                ai: { A: [], B: [], C: [] }
-            },
-            hand: { player: [], ai: [] }
+        // 초기 기본 태그 목록
+        const INITIAL_TAGS = {
+            "tag_prx": { id: "tag_prx", name: "PRX", color: "#8b5cf6" },
+            "tag_fs": { id: "tag_fs", name: "FS", color: "#f43f5e" },
+            "tag_ge": { id: "tag_ge", name: "GE", color: "#6366f1" },
+            "tag_t1": { id: "tag_t1", name: "T1", color: "#ef4444" },
+            "tag_rrq": { id: "tag_rrq", name: "RRQ", color: "#eab308" },
+            "tag_drx": { id: "tag_drx", name: "DRX", color: "#3b82f6" },
+            "tag_dfm": { id: "tag_dfm", name: "DFM", color: "#0ea5e9" },
+            "tag_ns": { id: "tag_ns", name: "NS", color: "#f97316" },
+            "tag_ts": { id: "tag_ts", name: "TS", color: "#64748b" },
+            "tag_zeta": { id: "tag_zeta", name: "ZETA", color: "#3f3f46" },
+            "tag_gen": { id: "tag_gen", name: "GEN", color: "#f59e0b" },
+            "tag_vl": { id: "tag_vl", name: "VL", color: "#14b8a6" },
+            "tag_pacific": { id: "tag_pacific", name: "Pacific", color: "#10b981" }
         };
 
-        function openCodex() { document.getElementById('codex-modal').style.display = 'flex'; }
-        function closeCodex() { document.getElementById('codex-modal').style.display = 'none'; }
+        // 제공 데이터 기반 초기 배치 (가짜 차트용 더미 히스토리 배제, 시작점 배열 1개 값으로 한정)
+        const INITIAL_PLAYERS = [
+            { id: "p1", name: "primmie", tagId: "tag_fs", price: 12400, basePrice: 12400, expectation: 1.24, status: "active", priceHistory: [12400] },
+            { id: "p2", name: "something", tagId: "tag_prx", price: 12300, basePrice: 12300, expectation: 1.23, status: "active", priceHistory: [12300] },
+            { id: "p3", name: "Jinggg", tagId: "tag_prx", price: 11900, basePrice: 11900, expectation: 1.19, status: "active", priceHistory: [11900] },
+            { id: "p4", name: "Meiy", tagId: "tag_dfm", price: 11800, basePrice: 11800, expectation: 1.18, status: "active", priceHistory: [11800] },
+            { id: "p5", name: "iZu", tagId: "tag_t1", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
+            { id: "p6", name: "Jemkin", tagId: "tag_rrq", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
+            { id: "p7", name: "BuZz", tagId: "tag_t1", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
+            { id: "p8", name: "oonzmlp", tagId: "tag_vl", price: 11200, basePrice: 11200, expectation: 1.12, status: "active", priceHistory: [11200] },
+            { id: "p9", name: "t3xture", tagId: "tag_gen", price: 11000, basePrice: 11000, expectation: 1.10, status: "active", priceHistory: [11000] },
+            { id: "p10", name: "MaKo", tagId: "tag_drx", price: 10900, basePrice: 10900, expectation: 1.09, status: "active", priceHistory: [10900] },
+            { id: "p11", name: "xffero", tagId: "tag_rrq", price: 10800, basePrice: 10800, expectation: 1.08, status: "active", priceHistory: [10800] },
+            { id: "p12", name: "PatMen", tagId: "tag_ge", price: 10800, basePrice: 10800, expectation: 1.08, status: "active", priceHistory: [10800] },
+            { id: "p13", name: "f0rsakeN", tagId: "tag_prx", price: 10700, basePrice: 10700, expectation: 1.07, status: "active", priceHistory: [10700] },
+            { id: "p14", name: "Sylvan", tagId: "tag_ts", price: 10700, basePrice: 10700, expectation: 1.07, status: "active", priceHistory: [10700] },
+            { id: "p15", name: "HYUNMIN", tagId: "tag_drx", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
+            { id: "p16", name: "kellyS", tagId: "tag_ts", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
+            { id: "p17", name: "Killua", tagId: "tag_fs", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
+            { id: "p18", name: "Zeus", tagId: "tag_ts", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
+            { id: "p19", name: "JitBoyS", tagId: "tag_fs", price: 10500, basePrice: 10500, expectation: 1.05, status: "active", priceHistory: [10500] },
+            { id: "p20", name: "Absol", tagId: "tag_zeta", price: 10500, basePrice: 10500, expectation: 1.05, status: "active", priceHistory: [10500] },
+            { id: "p21", name: "invy", tagId: "tag_prx", price: 10400, basePrice: 10400, expectation: 1.04, status: "active", priceHistory: [10400] },
+            { id: "p22", name: "d4v41", tagId: "tag_prx", price: 10400, basePrice: 10400, expectation: 1.04, status: "active", priceHistory: [10400] },
+            { id: "p23", name: "Autumn", tagId: "tag_ge", price: 10300, basePrice: 10300, expectation: 1.03, status: "active", priceHistory: [10300] },
+            { id: "p24", name: "UdoTan", tagId: "tag_ge", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
+            { id: "p25", name: "Karon", tagId: "tag_gen", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
+            { id: "p26", name: "stax", tagId: "tag_t1", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
+            { id: "p27", name: "Caedye", tagId: "tag_dfm", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
+            { id: "p28", name: "Meteor", tagId: "tag_t1", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
+            { id: "p29", name: "Xross", tagId: "tag_ns", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
+            { id: "p30", name: "Francis", tagId: "tag_ns", price: 10000, basePrice: 10000, expectation: 1.00, status: "active", priceHistory: [10000] },
+            { id: "p31", name: "Dambi", tagId: "tag_ns", price: 9900, basePrice: 9900, expectation: 0.99, status: "active", priceHistory: [9900] },
+            { id: "p32", name: "SyouTa", tagId: "tag_zeta", price: 9900, basePrice: 9900, expectation: 0.99, status: "active", priceHistory: [9900] },
+            { id: "p33", name: "Leviathan", tagId: "tag_fs", price: 9800, basePrice: 9800, expectation: 0.98, status: "active", priceHistory: [9800] },
+            { id: "p34", name: "Akame", tagId: "tag_dfm", price: 9800, basePrice: 9800, expectation: 0.98, status: "active", priceHistory: [9800] },
+            { id: "p35", name: "Ash", tagId: "tag_gen", price: 9700, basePrice: 9700, expectation: 0.97, status: "active", priceHistory: [9700] },
+            { id: "p36", name: "free1ng", tagId: "tag_drx", price: 9700, basePrice: 9700, expectation: 0.97, status: "active", priceHistory: [9700] },
+            { id: "p37", name: "Monyet", tagId: "tag_rrq", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
+            { id: "p38", name: "XuNa", tagId: "tag_vl", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
+            { id: "p39", name: "Lakia", tagId: "tag_gen", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
+            { id: "p40", name: "Kr1stal", tagId: "tag_ge", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
+            { id: "p41", name: "yong", tagId: "tag_drx", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
+            { id: "p42", name: "Munchkin", tagId: "tag_t1", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
+            { id: "p43", name: "crazyguy", tagId: "tag_rrq", price: 9300, basePrice: 9300, expectation: 0.93, status: "active", priceHistory: [9300] },
+            { id: "p44", name: "BeYN", tagId: "tag_drx", price: 9300, basePrice: 9300, expectation: 0.93, status: "active", priceHistory: [9300] },
+            { id: "p45", name: "Ivy", tagId: "tag_ns", price: 9200, basePrice: 9200, expectation: 0.92, status: "active", priceHistory: [9200] },
+            { id: "p46", name: "BerserX", tagId: "tag_ts", price: 9200, basePrice: 9200, expectation: 0.92, status: "active", priceHistory: [9200] },
+            { id: "p47", name: "Kushy", tagId: "tag_rrq", price: 9100, basePrice: 9100, expectation: 0.91, status: "active", priceHistory: [9100] },
+            { id: "p48", name: "Crws", tagId: "tag_fs", price: 9000, basePrice: 9000, expectation: 0.90, status: "active", priceHistory: [9000] },
+            { id: "p49", name: "Zexy", tagId: "tag_vl", price: 8900, basePrice: 8900, expectation: 0.89, status: "active", priceHistory: [8900] },
+            { id: "p50", name: "Klaus", tagId: "tag_vl", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
+            { id: "p51", name: "xavi8k", tagId: "tag_ge", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
+            { id: "p52", name: "SSeeS", tagId: "tag_dfm", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
+            { id: "p53", name: "Rb", tagId: "tag_ns", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
+            { id: "p54", name: "eKo", tagId: "tag_zeta", price: 8700, basePrice: 8700, expectation: 0.87, status: "active", priceHistory: [8700] },
+            { id: "p55", name: "SugarZ3ro", tagId: "tag_zeta", price: 8700, basePrice: 8700, expectation: 0.87, status: "active", priceHistory: [8700] },
+            { id: "p56", name: "JessieVash", tagId: "tag_ts", price: 8500, basePrice: 8500, expectation: 0.85, status: "active", priceHistory: [8500] },
+            { id: "p57", name: "yatsuka", tagId: "tag_dfm", price: 8500, basePrice: 8500, expectation: 0.85, status: "active", priceHistory: [8500] },
+            { id: "p58", name: "Xdll", tagId: "tag_zeta", price: 8300, basePrice: 8300, expectation: 0.83, status: "active", priceHistory: [8300] },
+            { id: "p59", name: "ZynX", tagId: "tag_gen", price: 8200, basePrice: 8200, expectation: 0.82, status: "active", priceHistory: [8200] },
+            { id: "p60", name: "C1ndeR", tagId: "tag_vl", price: 8200, basePrice: 8200, expectation: 0.82, status: "active", priceHistory: [8200] },
+            { id: "p61", name: "KiTae", tagId: "tag_gen", price: 8000, basePrice: 8000, expectation: 0.80, status: "active", priceHistory: [8000] },
+            { id: "p62", name: "Foxy9", tagId: "tag_gen", price: 7900, basePrice: 7900, expectation: 0.79, status: "active", priceHistory: [7900] },
+            { id: "p63", name: "Rimuru", tagId: "tag_ts", price: 7700, basePrice: 7700, expectation: 0.77, status: "active", priceHistory: [7700] },
+            { id: "p64", name: "Hermes", tagId: "tag_drx", price: 7300, basePrice: 7300, expectation: 0.73, status: "active", priceHistory: [7300] }
+        ];
 
-        function startCoinFlip() {
-            document.getElementById('start-overlay').style.display = 'none';
-            const overlay = document.getElementById('coin-overlay');
-            const coin = document.getElementById('game-coin');
-            const text = document.getElementById('coin-announce');
-            overlay.style.display = 'flex';
-            coin.classList.add('spinning');
+        const INITIAL_TEAMS = [
+            { id: "t1", name: "Paper Rex", tagId: "tag_pacific", price: 150000, basePrice: 150000, status: "active", priceHistory: [150000] },
+            { id: "t2", name: "Full Sense", tagId: "tag_pacific", price: 140000, basePrice: 140000, status: "active", priceHistory: [140000] },
+            { id: "t3", name: "Global Esports", tagId: "tag_pacific", price: 130000, basePrice: 130000, status: "active", priceHistory: [130000] },
+            { id: "t4", name: "T1", tagId: "tag_pacific", price: 120000, basePrice: 120000, status: "active", priceHistory: [120000] },
+            { id: "t5", name: "Kiwoom DRX", tagId: "tag_pacific", price: 110000, basePrice: 110000, status: "active", priceHistory: [110000] },
+            { id: "t6", name: "Rex Regum Qeon", tagId: "tag_pacific", price: 110000, basePrice: 110000, status: "active", priceHistory: [110000] },
+            { id: "t7", name: "DetonatioN FocusMe", tagId: "tag_pacific", price: 100000, basePrice: 100000, status: "active", priceHistory: [100000] },
+            { id: "t8", name: "Nongshim RedForce", tagId: "tag_pacific", price: 100000, basePrice: 100000, status: "active", priceHistory: [100000] },
+            { id: "t9", name: "Team Secret", tagId: "tag_pacific", price: 90000, basePrice: 90000, status: "active", priceHistory: [90000] },
+            { id: "t10", name: "ZETA DIVISION", tagId: "tag_pacific", price: 90000, basePrice: 90000, status: "active", priceHistory: [90000] },
+            { id: "t11", name: "Gen.G Esports", tagId: "tag_pacific", price: 80000, basePrice: 80000, status: "active", priceHistory: [80000] },
+            { id: "t12", name: "VARREL", tagId: "tag_pacific", price: 80000, basePrice: 80000, status: "active", priceHistory: [80000] }
+        ];
 
-            const coinHit = Math.random() < 0.5;
+        // 가중치 보정
+        const setWeights = {
+            "bo3_2_0": 1.2, "bo3_2_1": 1.0, "bo3_1_2": 1.0, "bo3_0_2": 1.2,
+            "bo5_3_0": 1.3, "bo5_3_1": 1.1, "bo5_3_2": 0.9, "bo5_2_3": 0.8, "bo5_1_3": 1.0, "bo5_0_3": 1.3
+        };
 
-            setTimeout(() => {
-                coin.classList.remove('spinning');
-                if (coinHit) {
-                    coin.style.transform = 'rotateY(0deg)';
-                    text.innerText = "👑 유저 선공! 진형 구축을 하달하십시오.";
-                    match.isUserTurn = true;
-                    match.turnCount = 1;
-                } else {
-                    coin.style.transform = 'rotateY(180deg)';
-                    text.innerText = "🤖 AI 기습 선공! 방어 대세를 고수하십시오.";
-                    match.isUserTurn = false;
-                    match.turnCount = 2;
-                }
+        // 데이터 상태 제어
+        let currentView = 'player';
+        let marketTab = 'player-stock';
+        let adminListingTab = 'player';
+        let adminTab = 'match-update';
+        let listingMode = 'player';
+        let selectedItem = null;
+        let tradeMode = 'buy';
+        let chartInstance = null;
 
-                setTimeout(() => {
-                    overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                        document.getElementById('game-board').classList.add('fade-in');
-                        initSession();
-                    }, 300);
-                }, 1200);
-            }, 1800);
+        let db = {
+            players: [],
+            teams: [],
+            tags: {},
+            cash: 10000000,
+            holdings: {},
+            history: []
+        };
+
+        function initApp() {
+            if (localStorage.getItem('vct_stock_db_v3_light')) {
+                db = JSON.parse(localStorage.getItem('vct_stock_db_v3_light'));
+            } else {
+                db.players = INITIAL_PLAYERS;
+                db.teams = INITIAL_TEAMS;
+                db.tags = INITIAL_TAGS;
+                saveToLocalStorage();
+            }
+            renderMarkets();
+            renderPortfolio();
+            initAdminSelectors();
+            updateSetScoreOptions();
+            toggleListingFormFields();
+            loadMasterList();
+            renderAdminTagList();
+
+            const firstPlayer = db.players.find(p => p.status === 'active');
+            if (firstPlayer) {
+                selectItem('player', firstPlayer.id);
+            }
         }
 
-        function initSession() {
-            ['A', 'B', 'C'].forEach(z => {
-                match.board.player[z].push({ name: pickRandom(troops), camouflage: false, spied: false });
-                match.board.ai[z].push({ name: pickRandom(troops), camouflage: false, spied: false });
-            });
-
-            for(let i=0; i<6; i++) match.hand.player.push(dealCard());
-            for(let i=0; i<5; i++) match.hand.ai.push(dealCard());
-
-            refreshScreen();
-            if(!match.isUserTurn) setTimeout(() => { executeAiStrategy(); }, 1200);
+        function saveToLocalStorage() {
+            localStorage.setItem('vct_stock_db_v3_light', JSON.stringify(db));
         }
 
-        function dealCard() {
-            return Math.random() < 0.65 ? { type: 'military', name: pickRandom(troops) } : { type: 'item', name: pickRandom(logistics) };
+        function pushToHistory() {
+            db.history.push(JSON.stringify({
+                players: db.players,
+                teams: db.teams,
+                tags: db.tags
+            }));
+            if (db.history.length > 20) db.history.shift();
+            saveToLocalStorage();
         }
-        function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-        function refreshScreen() {
-            ['player', 'ai'].forEach(side => {
-                ['A', 'B', 'C'].forEach(z => {
-                    const currentHp = match.hp[side][z];
-                    const maxHp = match.hp[side][`max${z}`];
-                    
-                    const box = document.getElementById(`zone-${side}-${z}`);
-                    const hpBar = document.getElementById(`hp-bar-${side}-${z}`);
-                    const hpTxt = document.getElementById(`hp-txt-${side}-${z}`);
-                    
-                    hpBar.style.width = `${(currentHp/maxHp)*100}%`;
-                    hpTxt.innerText = `${currentHp}/${maxHp}`;
+        // 화면 뷰 탭 전환
+        function switchView(view) {
+            currentView = view;
+            const btnPlayer = document.getElementById('btn-view-player');
+            const btnAdmin = document.getElementById('btn-view-admin');
+            const viewPlayer = document.getElementById('view-player');
+            const viewAdmin = document.getElementById('view-admin');
 
-                    if (currentHp <= 0) {
-                        box.classList.add('captured-zone');
-                        if (!box.querySelector('.captured-banner')) {
-                            const banner = document.createElement('div');
-                            banner.className = 'captured-banner';
-                            banner.innerText = '🚨 점령된 땅';
-                            box.appendChild(banner);
-                        }
-                    }
+            if (view === 'player') {
+                viewPlayer.classList.remove('hidden');
+                viewAdmin.classList.add('hidden');
+                btnPlayer.className = "px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-850 shadow-sm border border-slate-200 transition-all";
+                btnAdmin.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1";
+                renderMarkets();
+                renderPortfolio();
+            } else {
+                viewPlayer.classList.add('hidden');
+                viewAdmin.classList.remove('hidden');
+                btnPlayer.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1";
+                btnAdmin.className = "px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-850 shadow-sm border border-slate-200 transition-all";
+                switchAdminTab(adminTab);
+            }
+        }
 
-                    const buffLine = document.getElementById(`buff-${side}-${z}`);
-                    buffLine.innerHTML = '';
-                    match.perks[side][z].forEach(p => {
-                        const b = document.createElement('span');
-                        b.className = `badge ${p==='함정'?'trap':'veil'}`;
-                        b.innerText = p==='함정'?'함정 ⚠️':'위장막 🛡️';
-                        buffLine.appendChild(b);
-                    });
+        function switchMarketTab(tab) {
+            marketTab = tab;
+            const tabPlayer = document.getElementById('tab-market-player');
+            const tabTeam = document.getElementById('tab-market-team');
 
-                    for(let i=1; i<=3; i++) {
-                        const slot = document.getElementById(`slot-${side}-${z}-${i}`);
-                        const troopCard = match.board[side][z][i-1];
+            if (tab === 'player-stock') {
+                tabPlayer.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600";
+                tabTeam.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
+            } else {
+                tabPlayer.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
+                tabTeam.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600";
+            }
+            renderMarkets();
+        }
 
-                        if(troopCard && currentHp > 0) {
-                            slot.classList.add('occupied');
-                            slot.classList.remove('fog-of-war', 'spied-war');
+        // 사용자 자산 렌더링
+        function renderMarkets() {
+            const listEl = document.getElementById('market-list');
+            const searchVal = document.getElementById('market-search').value.toLowerCase();
+            listEl.innerHTML = "";
 
-                            if(side === 'player') {
-                                slot.innerText = `${i}선발: ${troopCard.name}${troopCard.camouflage?' [위장]':''}`;
-                            } else {
-                                // AI 진영 렌더링 피드백 반영
-                                if(i === 1) {
-                                    slot.innerText = troopCard.camouflage ? `1선발: [위장 은닉]` : `1선발: ${troopCard.name}`;
-                                    if(troopCard.camouflage) slot.classList.add('fog-of-war');
-                                } else {
-                                    if(troopCard.spied) {
-                                        slot.classList.add('spied-war');
-                                        slot.innerText = `${i}선발: ${troopCard.name} 👁️`;
-                                    } else {
-                                        slot.classList.add('fog-of-war');
-                                        slot.innerText = `${i}선발: [대기부대]`;
-                                    }
-                                }
-                            }
-                        } else {
-                            slot.classList.remove('occupied', 'fog-of-war', 'spied-war');
-                            slot.innerText = currentHp <= 0 ? '❌ 거점 함락' : `${i}선발: 비어있음`;
-                        }
+            if (marketTab === 'player-stock') {
+                db.players.forEach(p => {
+                    if (p.status !== 'active') return;
+                    const tag = db.tags[p.tagId] || { name: "NONE", color: "#64748b" };
+                    if (p.name.toLowerCase().includes(searchVal) || tag.name.toLowerCase().includes(searchVal)) {
+                        const isSelected = selectedItem && selectedItem.type === 'player' && selectedItem.data.id === p.id;
+                        listEl.appendChild(createMarketItemHTML(p, 'player', isSelected, tag));
                     }
                 });
+            } else {
+                db.teams.forEach(t => {
+                    if (t.status !== 'active') return;
+                    const tag = db.tags[t.tagId] || { name: "NONE", color: "#64748b" };
+                    if (t.name.toLowerCase().includes(searchVal) || tag.name.toLowerCase().includes(searchVal)) {
+                        const isSelected = selectedItem && selectedItem.type === 'team' && selectedItem.data.id === t.id;
+                        listEl.appendChild(createMarketItemHTML(t, 'team', isSelected, tag));
+                    }
+                });
+            }
+        }
+
+        function createMarketItemHTML(item, type, isSelected, tag) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `p-4 cursor-pointer transition-all hover:bg-slate-50 flex justify-between items-center ${isSelected ? 'bg-blue-50/70 border-l-4 border-blue-600' : 'bg-white'}`;
+            wrapper.onclick = () => selectItem(type, item.id);
+
+            const prevPrice = item.priceHistory && item.priceHistory.length > 1 ? item.priceHistory[item.priceHistory.length - 2] : item.basePrice;
+            const diff = item.price - prevPrice;
+            const pct = prevPrice !== 0 ? ((diff / prevPrice) * 100).toFixed(2) : 0;
+            const isUp = diff >= 0;
+
+            const nameHtml = `
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[9px] px-2 py-0.5 rounded font-extrabold text-white" style="background-color: ${tag.color}">
+                            ${tag.name}
+                        </span>
+                        <span class="font-bold text-slate-800 text-sm">${item.name}</span>
+                    </div>
+                </div>
+            `;
+
+            const priceHtml = `
+                <div class="text-right font-mono">
+                    <div class="font-bold text-sm text-slate-800">${item.price.toLocaleString()}원</div>
+                    <div class="text-xs font-bold ${isUp ? 'text-upbit-red' : 'text-upbit-blue'}">
+                        ${isUp ? '▲' : '▼'} ${Math.abs(pct)}%
+                    </div>
+                </div>
+            `;
+
+            wrapper.innerHTML = nameHtml + priceHtml;
+            return wrapper;
+        }
+
+        function selectItem(type, id) {
+            let item = type === 'player' ? db.players.find(p => p.id === id) : db.teams.find(t => t.id === id);
+            if (!item) return;
+
+            selectedItem = { type, data: item };
+
+            // 안전하게 존재하는 요소들에 데이터 맵핑
+            if(document.getElementById('selected-title')) {
+                document.getElementById('selected-title').innerText = item.name;
+            }
+            
+            const tag = db.tags[item.tagId] || { name: "NONE", color: "#64748b" };
+            const tagEl = document.getElementById('selected-tag');
+            if(tagEl) {
+                tagEl.innerText = tag.name;
+                tagEl.style.backgroundColor = tag.color;
+            }
+
+            const subInfoEl = document.getElementById('selected-sub-info');
+            if (subInfoEl) {
+                subInfoEl.innerText = type === 'player' ? '선수 개인 자산 종목' : '구단 단위 투자 종목';
+            }
+
+            if(document.getElementById('selected-price')) {
+                document.getElementById('selected-price').innerText = item.price.toLocaleString();
+            }
+
+            const prevPrice = item.priceHistory && item.priceHistory.length > 1 ? item.priceHistory[item.priceHistory.length - 2] : item.basePrice;
+            const diff = item.price - prevPrice;
+            const pct = prevPrice !== 0 ? ((diff / prevPrice) * 100).toFixed(2) : 0;
+            const changeEl = document.getElementById('selected-change');
+            
+            if (changeEl) {
+                if (diff >= 0) {
+                    changeEl.innerText = `▲ ${pct}%`;
+                    changeEl.className = "text-xs font-bold mt-1 font-mono text-upbit-red";
+                } else {
+                    changeEl.innerText = `▼ ${Math.abs(pct)}%`;
+                    changeEl.className = "text-xs font-bold mt-1 font-mono text-upbit-blue";
+                }
+            }
+
+            if(document.getElementById('trade-price-display')) {
+                document.getElementById('trade-price-display').innerText = `${item.price.toLocaleString()} 원`;
+            }
+            
+            const qtyInput = document.getElementById('trade-quantity');
+            if(qtyInput) {
+                qtyInput.value = 1;
+            }
+            
+            calculateTradeTotal();
+            renderMarkets();
+            renderChart(item.priceHistory);
+        }
+
+        // 차트 드로잉 (실제 주가 역사만 100% 매핑)
+        function renderChart(historyData) {
+            const chartCanvas = document.getElementById('stockChart');
+            if(!chartCanvas) return;
+            const ctx = chartCanvas.getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const labels = historyData.map((_, index) => index === 0 ? "상장가" : `${index}회차 변동`);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: historyData,
+                        borderColor: '#2563eb', 
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                        borderWidth: 2.5,
+                        tension: 0.1,
+                        fill: true,
+                        pointRadius: historyData.length === 1 ? 6 : 4,
+                        pointBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        // 거래 프로세스
+        function setTradeMode(mode) {
+            tradeMode = mode;
+            const btnBuy = document.getElementById('btn-trade-buy');
+            const btnSell = document.getElementById('btn-trade-sell');
+            const btnExec = document.getElementById('btn-execute-trade');
+
+            if (mode === 'buy') {
+                btnBuy.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-red text-white shadow-sm";
+                btnSell.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800 ml-2";
+                btnExec.className = "w-full py-3 bg-upbit-red text-white rounded-lg font-bold text-sm mt-2 shadow-sm";
+                btnExec.innerText = "매수 체결 실행";
+            } else {
+                btnBuy.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800";
+                btnSell.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-blue text-white ml-2 shadow-sm";
+                btnExec.className = "w-full py-3 bg-upbit-blue text-white rounded-lg font-bold text-sm mt-2 shadow-sm";
+                btnExec.innerText = "매도 체결 실행";
+            }
+            calculateTradeTotal();
+        }
+
+        function calculateTradeTotal() {
+            if (!selectedItem) return;
+            const qtyInput = document.getElementById('trade-quantity');
+            const totalDisplay = document.getElementById('trade-total-display');
+            if(!qtyInput || !totalDisplay) return;
+
+            const qty = parseInt(qtyInput.value) || 0;
+            const total = selectedItem.data.price * qty;
+            totalDisplay.innerText = `${total.toLocaleString()} 원`;
+        }
+
+        function executeTrade() {
+            if (!selectedItem) return;
+            if (selectedItem.data.status !== 'active') {
+                alert("상장 폐지 처리되어 거래가 불가한 종목입니다.");
+                return;
+            }
+
+            const qtyInput = document.getElementById('trade-quantity');
+            if(!qtyInput) return;
+            const qty = parseInt(qtyInput.value) || 0;
+            if (qty <= 0) {
+                alert("체결 수량을 확인해주십시오.");
+                return;
+            }
+
+            const totalCost = selectedItem.data.price * qty;
+            const id = selectedItem.data.id;
+
+            if (tradeMode === 'buy') {
+                if (db.cash < totalCost) {
+                    alert("가용 원화 예수금이 부족합니다.");
+                    return;
+                }
+                db.cash -= totalCost;
+
+                if (!db.holdings[id]) {
+                    db.holdings[id] = { qty: 0, avgPrice: 0 };
+                }
+
+                const hold = db.holdings[id];
+                const newQty = hold.qty + qty;
+                const newAvg = Math.round(((hold.qty * hold.avgPrice) + totalCost) / newQty);
+
+                hold.qty = newQty;
+                hold.avgPrice = newAvg;
+            } else {
+                if (!db.holdings[id] || db.holdings[id].qty < qty) {
+                    alert("매도하려는 수량이 보유 잔고보다 많습니다.");
+                    return;
+                }
+                db.cash += totalCost;
+                db.holdings[id].qty -= qty;
+
+                if (db.holdings[id].qty === 0) {
+                    delete db.holdings[id];
+                }
+            }
+
+            saveToLocalStorage();
+            renderPortfolio();
+            selectItem(selectedItem.type, selectedItem.data.id);
+            alert("주문이 체결 완료되었습니다.");
+        }
+
+        function renderPortfolio() {
+            const userCashEl = document.getElementById('user-cash');
+            if(userCashEl) {
+                userCashEl.innerText = db.cash.toLocaleString();
+            }
+            const listEl = document.getElementById('portfolio-list');
+            if(!listEl) return;
+            listEl.innerHTML = "";
+
+            let totalBuy = 0;
+            let totalEval = 0;
+
+            const keys = Object.keys(db.holdings);
+            if (keys.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center font-sans">체결 완료 내역이 존재하지 않습니다.</div>`;
+            } else {
+                keys.forEach(id => {
+                    const hold = db.holdings[id];
+                    if (hold.qty <= 0) return;
+
+                    const stock = db.players.find(p => p.id === id) || db.teams.find(t => t.id === id);
+                    if (!stock) return;
+
+                    const buyAmt = hold.avgPrice * hold.qty;
+                    const evalAmt = stock.price * hold.qty;
+                    totalBuy += buyAmt;
+                    totalEval += evalAmt;
+
+                    const diff = evalAmt - buyAmt;
+                    const pct = buyAmt !== 0 ? ((diff / buyAmt) * 100).toFixed(2) : 0;
+                    const isUp = diff >= 0;
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = "py-3 flex justify-between items-center text-xs font-mono border-b border-slate-100";
+                    itemDiv.innerHTML = `
+                        <div>
+                            <div class="font-bold text-slate-800">${stock.name}</div>
+                            <div class="text-slate-400 text-[10px]">${hold.qty}개 | 평단 ${hold.avgPrice.toLocaleString()}원</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-800">${evalAmt.toLocaleString()}원</div>
+                            <div class="${isUp ? 'text-upbit-red' : 'text-upbit-blue'} font-bold">${isUp ? '+' : ''}${pct}%</div>
+                        </div>
+                    `;
+                    listEl.appendChild(itemDiv);
+                });
+            }
+
+            const pfoTotalBuyEl = document.getElementById('pfo-total-buy');
+            const pfoTotalValEl = document.getElementById('pfo-total-val');
+            if(pfoTotalBuyEl) pfoTotalBuyEl.innerText = `${totalBuy.toLocaleString()} 원`;
+            if(pfoTotalValEl) pfoTotalValEl.innerText = `${totalEval.toLocaleString()} 원`;
+
+            const diffAmt = totalEval - totalBuy;
+            const pctVal = totalBuy !== 0 ? ((diffAmt / totalBuy) * 100).toFixed(2) : "0.00";
+            const profitEl = document.getElementById('pfo-total-profit');
+
+            if (profitEl) {
+                if (diffAmt >= 0) {
+                    profitEl.innerText = `+${diffAmt.toLocaleString()} 원 (+${pctVal}%)`;
+                    profitEl.className = "font-bold text-upbit-red text-sm";
+                } else {
+                    profitEl.innerText = `${diffAmt.toLocaleString()} 원 (${pctVal}%)`;
+                    profitEl.className = "font-bold text-upbit-blue text-sm";
+                }
+            }
+        }
+
+
+        // ==================== [ADMIN] 세부 관리 업무 제어 ====================
+
+        function switchAdminTab(tab) {
+            adminTab = tab;
+            const tabs = {
+                'match-update': 'btn-adm-tab-match',
+                'listing': 'btn-adm-tab-listing',
+                'tag-manage': 'btn-adm-tab-tag'
+            };
+
+            Object.keys(tabs).forEach(k => {
+                const btn = document.getElementById(tabs[k]);
+                const sec = document.getElementById(`adm-sec-${k}`);
+                if (k === tab) {
+                    btn.className = "px-4 py-2 text-slate-800 bg-white border border-slate-300 shadow-sm rounded";
+                    sec.classList.remove('hidden');
+                } else {
+                    btn.className = "px-4 py-2 text-slate-500 hover:text-slate-855 rounded";
+                    sec.classList.add('hidden');
+                }
             });
 
-            const rack = document.getElementById('rack-player-hand');
-            rack.innerHTML = '';
-            match.hand.player.forEach((c, idx) => {
-                const cardView = document.createElement('div');
-                const isFirstTurnLock = match.isInitialTurn && match.isUserTurn && (c.name === '폭파병');
-                
-                let stateClass = '';
-                if (match.selectSlot === idx) stateClass = 'selected';
-                if (match.comboSlot === idx) stateClass = 'com-combo';
-                if (isFirstTurnLock) stateClass = 'locked';
+            if (tab === 'listing') {
+                renderAdminListingTable();
+                loadMasterList();
+            } else if (tab === 'tag-manage') {
+                renderAdminTagList();
+                resetTagForm();
+            }
+        }
 
-                cardView.className = `war-card ${c.type==='item'?'item-type':''} ${stateClass}`;
-                cardView.onclick = (e) => { e.stopPropagation(); if(!isFirstTurnLock) clickHand(idx); };
-                
-                cardView.innerHTML = `
-                    <div class="c-type">${c.type==='military'?'군수':'전술'}</div>
-                    <div class="c-name">${c.name}</div>
-                    <div class="c-status">${isFirstTurnLock?'첫 턴 잠김':'대기'}</div>
+        // 셀렉터 및 Bo3 / Bo5 분기 설정
+        function initAdminSelectors() {
+            const pSel = document.getElementById('admin-player-select');
+            if(pSel) {
+                pSel.innerHTML = "";
+                db.players.forEach(p => {
+                    pSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                });
+            }
+
+            const tSel = document.getElementById('admin-team-select');
+            if(tSel) {
+                tSel.innerHTML = "";
+                db.teams.forEach(t => {
+                    tSel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                });
+            }
+        }
+
+        function updateSetScoreOptions() {
+            const formatEl = document.getElementById('admin-team-match-format');
+            const select = document.getElementById('admin-team-set-result');
+            if(!formatEl || !select) return;
+
+            const format = formatEl.value;
+            select.innerHTML = "";
+
+            if (format === 'bo3') {
+                select.innerHTML = `
+                    <option value="bo3_2_0">2:0 승리 (가중치 1.2)</option>
+                    <option value="bo3_2_1">2:1 승리 (가중치 1.0)</option>
+                    <option value="bo3_1_2">1:2 패배 (가중치 1.0)</option>
+                    <option value="bo3_0_2">0:2 패배 (가중치 1.2)</option>
                 `;
-                rack.appendChild(cardView);
-            });
-
-            ['A', 'B', 'C'].forEach(z => {
-                const pSideBox = document.getElementById(`zone-player-${z}`);
-                const eSideBox = document.getElementById(`zone-ai-${z}`);
-                
-                pSideBox.classList.remove('glow-deploy', 'glow-attack');
-                eSideBox.classList.remove('glow-deploy', 'glow-attack');
-
-                if (match.selectSlot !== null && match.isUserTurn) {
-                    const currentCard = match.hand.player[match.selectSlot];
-                    if (match.hp.player[z] > 0 && currentCard.type === 'military') pSideBox.classList.add('glow-deploy');
-                    if (match.hp.ai[z] > 0) {
-                        if (currentCard.type === 'military' && !match.isInitialTurn) eSideBox.classList.add('glow-attack');
-                        if (currentCard.name === '특급 사령관' && match.comboSlot !== null) eSideBox.classList.add('glow-attack');
-                        if (['첩보서', '폭파병'].includes(currentCard.name)) eSideBox.classList.add('glow-attack');
-                    }
-                    if (match.hp.player[z] > 0 && ['함정', '위장 장막', '복귀 명령'].includes(currentCard.name)) pSideBox.classList.add('glow-deploy');
-                }
-            });
-
-            document.getElementById('txt-turn-owner').innerText = match.isUserTurn ? "아군 턴 (지휘 통제)" : "상대 턴 (AI 연산 중)";
-        }
-
-        function log(m) { document.getElementById('txt-combat-log').innerText = m; }
-
-        function clickHand(idx) {
-            if(!match.isUserTurn) return;
-            const card = match.hand.player[idx];
-
-            if (match.selectSlot !== null && match.hand.player[match.selectSlot].name === '특급 사령관') {
-                if (card.type === 'military') {
-                    match.comboSlot = (match.comboSlot === idx) ? null : idx;
-                    refreshScreen(); return;
-                }
+            } else {
+                select.innerHTML = `
+                    <option value="bo5_3_0">3:0 승리 (가중치 1.3)</option>
+                    <option value="bo5_3_1">3:1 승리 (가중치 1.1)</option>
+                    <option value="bo5_3_2">3:2 승리 (가중치 0.9)</option>
+                    <option value="bo5_2_3">2:3 패배 (가중치 0.8)</option>
+                    <option value="bo5_1_3">1:3 패배 (가중치 1.0)</option>
+                    <option value="bo5_0_3">0:3 패배 (가중치 1.3)</option>
+                `;
             }
-            if (card.name === '특급 사령관') match.comboSlot = null;
-
-            match.selectSlot = (match.selectSlot === idx) ? null : idx;
-            if (match.selectSlot === null) match.comboSlot = null;
-            refreshScreen();
         }
 
-        function clickZone(z, targetSide) {
-            if(match.selectSlot === null || !match.isUserTurn) return;
-            if(match.hp[targetSide][z] <= 0) { alert("함락 완료된 점령지입니다."); return; }
-            
-            const card = match.hand.player[match.selectSlot];
+        // 선수 통계 반영
+        function applyPlayerMatchRecord() {
+            const idSel = document.getElementById('admin-player-select');
+            if(!idSel) return;
+            const id = idSel.value;
+            const p = db.players.find(item => item.id === id);
+            if (!p) return;
 
-            if(targetSide === 'player') {
-                if(card.type === 'military') {
-                    if(match.board.player[z].length < 3) {
-                        match.board.player[z].push({ name: card.name, camouflage: false, spied: false });
-                        log(`[🛡️ 증원 배치] 아군 ${z} 요새에 ${card.name} 부대를 입항시켰습니다.`);
-                        useHandCard(match.selectSlot);
-                    } else { alert("수비대 한도 초과입니다."); }
-                } else {
-                    handleItemAction(z, card.name, 'player');
+            const kdVal = document.getElementById('admin-player-kd').value;
+            const acsVal = document.getElementById('admin-player-acs').value;
+            const kastVal = document.getElementById('admin-player-kast').value;
+
+            if (kdVal === "" || acsVal === "" || kastVal === "") {
+                alert("선수 성적 수치를 빠짐없이 수동 기입해 주십시오.");
+                return;
+            }
+
+            const kd = parseFloat(kdVal);
+            const acs = parseFloat(acsVal);
+            const kast = parseFloat(kastVal);
+
+            pushToHistory();
+
+            const dailyScore = (kd * 0.4) + ((acs / 200) * 0.3) + ((kast / 70) * 0.3);
+            const changeRate = (dailyScore - p.expectation) * 100;
+
+            const newPrice = Math.max(100, Math.round(p.price * (1 + (changeRate / 100))));
+            p.price = newPrice;
+            p.priceHistory.push(newPrice);
+
+            saveToLocalStorage();
+            alert(`[${p.name}] 선수 변동 수치 반영 완료\n- 계산 점수: ${dailyScore.toFixed(3)}\n- 변동률: ${changeRate.toFixed(2)}%\n- 갱신된 주가: ${newPrice.toLocaleString()}원`);
+            
+            document.getElementById('admin-player-kd').value = "";
+            document.getElementById('admin-player-acs').value = "";
+            document.getElementById('admin-player-kast').value = "";
+
+            if (selectedItem && selectedItem.data.id === p.id) selectItem('player', p.id);
+        }
+
+        // 팀 통계 반영
+        function applyTeamMatchRecord() {
+            const idSel = document.getElementById('admin-team-select');
+            if(!idSel) return;
+            const id = idSel.value;
+            const t = db.teams.find(item => item.id === id);
+            if (!t) return;
+
+            const oddsVal = document.getElementById('admin-team-odds').value;
+            if (oddsVal === "") {
+                alert("해외 배당률을 정밀 기입해 주십시오.");
+                return;
+            }
+
+            const odds = parseFloat(oddsVal);
+            const setKey = document.getElementById('admin-team-set-result').value;
+            const weight = setWeights[setKey] || 1.0;
+
+            pushToHistory();
+
+            const isWin = ["bo3_2_0", "bo3_2_1", "bo5_3_0", "bo5_3_1", "bo5_3_2"].includes(setKey);
+            let changeRate = 0;
+
+            if (isWin) {
+                changeRate = (5 * odds) * weight;
+            } else {
+                changeRate = -((5 * (3.0 / odds)) * weight);
+            }
+
+            const newPrice = Math.max(100, Math.round(t.price * (1 + (changeRate / 100))));
+            t.price = newPrice;
+            t.priceHistory.push(newPrice);
+
+            saveToLocalStorage();
+            alert(`[${t.name}] 구단 가중 변동 완료\n- 가중 비율: ${weight}배\n- 주가 변동률: ${changeRate.toFixed(2)}%\n- 결정 주가: ${newPrice.toLocaleString()}원`);
+            
+            document.getElementById('admin-team-odds').value = "";
+
+            if (selectedItem && selectedItem.data.id === t.id) selectItem('team', t.id);
+        }
+
+
+        // ==================== 상장 및 마스터 데이터베이스 제어 (Listing & Mod) ====================
+
+        function toggleListingFormFields() {
+            const mode = document.querySelector('input[name="list-mode"]:checked').value;
+            listingMode = mode;
+            const container = document.getElementById('listing-fields-container');
+            if(!container) return;
+
+            let tagOptions = "";
+            Object.keys(db.tags).forEach(k => {
+                tagOptions += `<option value="${db.tags[k].id}">${db.tags[k].name}</option>`;
+            });
+
+            if (mode === 'player') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-slate-500 mb-1">선수 이름</label>
+                            <input type="text" id="list-p-name" placeholder="영문 명칭 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 mb-1">소속 리그 태그 지정</label>
+                            <select id="list-p-tagId" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800">${tagOptions}</select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 mb-1">고정 기댓값 (Score)</label>
+                            <input type="number" step="0.01" id="list-p-exp" placeholder="예: 1.05" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-slate-500 mb-1">상장 개시 단가 (KRW)</label>
+                            <input type="number" id="list-p-price" placeholder="원 단위 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-slate-500 mb-1">구단명</label>
+                            <input type="text" id="list-t-name" placeholder="정식 구단 명칭 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 mb-1">소속 권역 태그 지정</label>
+                            <select id="list-t-tagId" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800">${tagOptions}</select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 mb-1">상장 개시 단가 (KRW)</label>
+                            <input type="number" id="list-t-price" placeholder="원 단위 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function executeNewListing() {
+            pushToHistory();
+
+            if (listingMode === 'player') {
+                const name = document.getElementById('list-p-name').value.trim();
+                const tagId = document.getElementById('list-p-tagId').value;
+                const expVal = document.getElementById('list-p-exp').value;
+                const priceVal = document.getElementById('list-p-price').value;
+
+                if (!name || expVal === "" || priceVal === "") {
+                    alert("누락된 정보를 확인해주십시오.");
+                    return;
+                }
+
+                const price = parseInt(priceVal);
+                const exp = parseFloat(expVal);
+
+                const newP = {
+                    id: "p_" + Date.now(),
+                    name, tagId, price, basePrice: price, expectation: exp,
+                    status: "active", priceHistory: [price]
+                };
+                db.players.push(newP);
+                alert(`선수 [${name}] 의 자산 상장 심사가 완료되었습니다.`);
+            } else {
+                const name = document.getElementById('list-t-name').value.trim();
+                const tagId = document.getElementById('list-t-tagId').value;
+                const priceVal = document.getElementById('list-t-price').value;
+
+                if (!name || priceVal === "") {
+                    alert("누락된 정보를 확인해주십시오.");
+                    return;
+                }
+
+                const price = parseInt(priceVal);
+
+                const newT = {
+                    id: "t_" + Date.now(),
+                    name, tagId, price, basePrice: price,
+                    status: "active", priceHistory: [price]
+                };
+                db.teams.push(newT);
+                alert(`구단 [${name}] 의 자산 상장이 완료되었습니다.`);
+            }
+
+            saveToLocalStorage();
+            toggleListingFormFields();
+            initAdminSelectors();
+            loadMasterList();
+            renderMarkets();
+        }
+
+        // 마스터 수정 기능 로드
+        function loadMasterList() {
+            const type = document.getElementById('master-edit-type').value;
+            const select = document.getElementById('master-item-select');
+            if(!select) return;
+            select.innerHTML = "";
+
+            const target = type === 'player' ? db.players : db.teams;
+            target.forEach(item => {
+                select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            });
+
+            loadMasterDetails();
+        }
+
+        function loadMasterDetails() {
+            const type = document.getElementById('master-edit-type').value;
+            const id = document.getElementById('master-item-select').value;
+            const container = document.getElementById('master-edit-fields-container');
+
+            if (!id || !container) {
+                if(container) container.innerHTML = "";
+                return;
+            }
+
+            let tagOptions = "";
+            Object.keys(db.tags).forEach(k => {
+                tagOptions += `<option value="${db.tags[k].id}">${db.tags[k].name}</option>`;
+            });
+
+            if (type === 'player') {
+                const p = db.players.find(x => x.id === id);
+                if (!p) return;
+                container.innerHTML = `
+                    <div class="col-span-2">
+                        <label class="block text-slate-500 mb-1">선수 이름</label>
+                        <input type="text" id="mst-p-name" value="${p.name}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1">연동 태그 지정</label>
+                        <select id="mst-p-tagId" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">${tagOptions}</select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1">고정 기댓값 (Score)</label>
+                        <input type="number" step="0.01" id="mst-p-exp" value="${p.expectation}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-slate-500 mb-1">현재 주가 수동 설정 (KRW)</label>
+                        <input type="number" id="mst-p-price" value="${p.price}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                    </div>
+                `;
+                document.getElementById('mst-p-tagId').value = p.tagId;
+            } else {
+                const t = db.teams.find(x => x.id === id);
+                if (!t) return;
+                container.innerHTML = `
+                    <div class="col-span-2">
+                        <label class="block text-slate-500 mb-1">구단명</label>
+                        <input type="text" id="mst-t-name" value="${t.name}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1">소속 태그 바인딩</label>
+                        <select id="mst-t-tagId" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">${tagOptions}</select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1">현재 주가 수동 설정 (KRW)</label>
+                        <input type="number" id="mst-t-price" value="${t.price}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
+                    </div>
+                `;
+                document.getElementById('mst-t-tagId').value = t.tagId;
+            }
+        }
+
+        function updateMasterData() {
+            const type = document.getElementById('master-edit-type').value;
+            const id = document.getElementById('master-item-select').value;
+            if (!id) return;
+
+            pushToHistory();
+
+            if (type === 'player') {
+                const p = db.players.find(x => x.id === id);
+                if (p) {
+                    p.name = document.getElementById('mst-p-name').value.trim();
+                    p.tagId = document.getElementById('mst-p-tagId').value;
+                    p.expectation = parseFloat(document.getElementById('mst-p-exp').value) || p.expectation;
+                    p.price = parseInt(document.getElementById('mst-p-price').value) || p.price;
+                    p.priceHistory[p.priceHistory.length - 1] = p.price;
                 }
             } else {
-                if(card.type === 'military') {
-                    if(match.isInitialTurn) { alert("첫 턴에는 침투 타격이 봉쇄됩니다."); return; }
-                    invokeAttack(z, card.name);
-                } else if(card.name === '특급 사령관') {
-                    if(match.comboSlot === null) { alert("함께 진격할 군사 카드를 선택해주십시오."); return; }
-                    invokeCommanderCombo(z);
-                } else {
-                    handleItemAction(z, card.name, 'ai');
+                const t = db.teams.find(x => x.id === id);
+                if (t) {
+                    t.name = document.getElementById('mst-t-name').value.trim();
+                    t.tagId = document.getElementById('mst-t-tagId').value;
+                    t.price = parseInt(document.getElementById('mst-t-price').value) || t.price;
+                    t.priceHistory[t.priceHistory.length - 1] = t.price;
                 }
             }
-        }
 
-        function useHandCard(idx) {
-            match.hand.player.splice(idx, 1);
-            match.selectSlot = null;
-            match.comboSlot = null;
-            refreshScreen();
-        }
-
-        function invokeAttack(z, attacker) {
-    if (match.turnCount < 2) {
-        alert("전시 상황입니다! 선공의 첫 턴에는 배치만 가능하며 공격은 봉쇄됩니다.");
-        return;
-    }
+            saveToLocalStorage();
+            alert("지정한 항목 수정 사항이 최종 스펙에 적용되었습니다.");
             
-            useHandCard(match.selectSlot);
-            log(`[⚔️ 돌격 개시] 적 ${z} 거점으로 ${attacker} 부대를 진격시켰습니다.`);
-
-            setTimeout(() => {
-                const list = match.board.ai[z];
-                if(list.length === 0) {
-                    match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 2);
-                    log(`[성벽 추격] 수비 부대가 없어 성벽 구조물에 공성 큰 피해(-2)를 주었습니다.`);
-                    endTurnSequence(); return;
-                }
-
-                let enemyUnit = list[0];
-                if(enemyUnit.camouflage) {
-                    enemyUnit.camouflage = false;
-                    log(`[위장 탈착] 격돌로 인해 적 1선발 [${enemyUnit.name}]의 위장막이 찢어졌습니다.`);
-                }
-
-                if(attacker === '기병' && match.perks.ai[z].includes('함정')) {
-                    match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[함정 돌파] 기병의 돌파 속도로 매설 지뢰 함정을 기동 파쇄했습니다.`);
-                }
-
-                if(match.perks.ai[z].includes('함정')) {
-                    match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[⚠️ 대함정 작렬] 진격 부대가 매설 함정을 밟아 자멸했습니다.`);
-                    endTurnSequence(); return;
-                }
-
-                const outcome = evalClash(attacker, enemyUnit.name);
-                if(outcome === 'win') {
-                    list.shift();
-                    match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 1);
-                    log(`[공세 돌파] 아군 [${attacker}]이 적 [${enemyUnit.name}]을 완파, 성벽 체력을 1 차감시켰습니다.`);
-                } else {
-                    log(`[진격 격퇴] 적 [${enemyUnit.name}]의 견고한 대열에 밀려 후퇴했습니다.`);
-                }
-                endTurnSequence();
-            }, 600);
-        }
-
-        function invokeCommanderCombo(z) {
-            const comI = match.selectSlot;
-            const milI = match.comboSlot;
-            const companionUnit = match.hand.player[milI].name;
-
-            log(`[👑 사령관 친정] 사령관이 직접 ${companionUnit} 대대를 앞세워 적 ${z}진형을 유린합니다.`);
-
-            const cleanList = [comI, milI].sort((a,b)=>b-a);
-            match.hand.player.splice(cleanList[0], 1);
-            match.hand.player.splice(cleanList[1], 1);
-            match.selectSlot = null;
-            match.comboSlot = null;
-            refreshScreen();
-
-            setTimeout(() => {
-                const list = match.board.ai[z];
-                if(list.length === 0) {
-                    match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 2);
-                    log(`[성벽 붕괴] 황막한 빈 기지에 사령관이 가하는 직접 타격(-2)이 발동되었습니다.`);
-                    endTurnSequence(); return;
-                }
-
-                let victim = list[0];
-                log(`[권능 처단] 특급 사령관의 공성 위력으로 적 1선발 [${victim.name}]을 상성 무시 즉시 격멸했습니다.`);
-                list.shift();
-                
-                match.hp.ai[z] = Math.max(0, match.hp.ai[z] - 1);
-                log(`[공성 후폭풍] 선발 파쇄 여파가 성벽 내부까지 통과되어 내구도가 1 추가 감소했습니다.`);
-                
-                endTurnSequence();
-            }, 600);
-        }
-
-        function evalClash(atk, def) {
-            const counterMap = { '보병': '창병', '창병': '기병', '기병': '방패병', '방패병': '궁병', '궁병': '보병' };
-            if(atk === '용병' || def === '용병') return Math.random() < 0.60 ? 'win' : 'lose';
-            if(counterMap[atk] === def) return 'win';
-            if(counterMap[def] === atk) return 'lose';
-            return Math.random() < 0.50 ? 'win' : 'lose';
-        }
-
-        function handleItemAction(z, name, side) {
-            if(name === '군수 보급') {
-                if(match.supplyLocked) { alert("보급 전술은 턴당 1회 지침 제한입니다."); return; }
-                useHandCard(match.selectSlot);
-                match.supplyLocked = true;
-                for(let i=0; i<2; i++) { if(match.hand.player.length < 9) match.hand.player.push(dealCard()); }
-                log(`[예비대 보급] 보급 전술을 통해 새로운 가용 전술 전서 2장을 드로우했습니다.`);
-                refreshScreen(); return;
+            renderMarkets();
+            initAdminSelectors();
+            loadMasterList();
+            if (selectedItem) {
+                selectItem(selectedItem.type, selectedItem.data.id);
             }
-            if(name === '복귀 명령' && side === 'player') {
-                if(match.board.player[z].length > 0) {
-                    const troop = match.board.player[z].shift();
-                    useHandCard(match.selectSlot);
-                    if(match.hand.player.length < 9) match.hand.player.push({ type:'military', name: troop.name });
-                    log(`[전술적 회군] ${z}지역 전선 병력을 예비 패로 안전하게 퇴각 복귀시켰습니다.`);
-                    refreshScreen();
-                } else { alert("귀환시킬 전방 병력이 부재합니다."); }
+        }
+
+
+        // ==================== [신설] 독립된 태그 매니저 시스템 ====================
+
+        function renderAdminTagList() {
+            const container = document.getElementById('admin-tag-list');
+            if(!container) return;
+            container.innerHTML = "";
+
+            const keys = Object.keys(db.tags);
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center">태그 데이터베이스가 유실되었거나 비어 있습니다.</div>`;
                 return;
             }
-            if(name === '함정' && side === 'player') {
-                if(match.perks.player[z].length < 2) {
-                    match.perks.player[z].push('함정');
-                    useHandCard(match.selectSlot);
-                    log(`[매복 덫 가동] 아군 ${z} 초소 진입로에 전술 [함정]을 조립 매설했습니다.`);
-                    refreshScreen();
-                } else { alert("함정 설치 한도를 초과했습니다."); }
-                return;
-            }
-            if(name === '위장 장막' && side === 'player') {
-                if(match.board.player[z].length >= 2) {
-                    match.board.player[z][1].camouflage = true;
-                    match.perks.player[z].push('위장');
-                    useHandCard(match.selectSlot);
-                    log(`[위장 피복 소집] ${z} 초소의 2선발 대기조에 기밀 [위장막]을 특수 은폐 적용했습니다.`);
-                    refreshScreen();
-                } else { alert("위장을 부여할 은닉 대기군(2선발)이 없습니다."); }
-                return;
-            }
-            if(name === '첩보서' && side === 'ai') {
-                useHandCard(match.selectSlot);
-                const list = match.board.ai[z];
-                if(list.length > 0) {
-                    let text = `[👁️ 첩보 투과 성공] 적 ${z}지역 감청 완료 -> `;
-                    list.forEach((u, i) => { u.spied = true; text += `${i+1}선발:[${u.name}] `; });
-                    log(text);
-                } else { log(`[첩보 결과 미달] 적 ${z} 구역엔 관측할 군대가 없습니다.`); }
-                refreshScreen(); return;
-            }
-            if(name === '폭파병' && side === 'ai') {
-                if(match.board.ai[z].length === 0) { alert("폭파 공작을 가할 적군 대열이 비어있습니다."); return; }
-                useHandCard(match.selectSlot);
 
-                if(match.perks.ai[z].includes('함정')) {
-                    match.perks.ai[z] = match.perks.ai[z].filter(i => i !== '함정');
-                    log(`[공작 좌절] 침투조가 사전에 적이 깔아둔 역함정에 휘말려 사망했습니다.`);
-                    refreshScreen(); return;
-                }
-
-                if(Math.random() < 0.75) {
-                    const rip = match.board.ai[z].shift();
-                    log(`[🧨 막사 폭파] 공작 폭파병이 적 1선발 부대 [${rip.name}]의 주둔지를 날려버렸습니다.`);
-                } else { log(`[공작 발각] 삼엄한 경계를 뚫지 못하고 공작조가 사살되었습니다.`); }
-                refreshScreen(); return;
-            }
-            alert("유효하지 않은 타깃 영역이거나 전장 규칙 위반입니다.");
-        }
-
-        function endTurnManual() {
-            if(!match.isUserTurn) return;
-            log("[작전권 이양] 전장 정비를 마치고 상대 진영에게 주도권을 넘깁니다.");
-            endTurnSequence();
-        }
-
-        function endTurnSequence() {
-            match.turnCount++;
-            evalMatchEnd();
-            match.isUserTurn = !match.isUserTurn;
-            match.selectSlot = null;
-            match.comboSlot = null;
-            match.supplyLocked = false;
-            refreshScreen();
-            setTimeout(() => { executeAiStrategy(); }, 1200);
-        }
-
-        function executeAiStrategy() {
-            if(match.hand.ai.length < 6) { while(match.hand.ai.length < 6) match.hand.ai.push(dealCard()); }
-            
-            let targetZone = 'A';
-            let minHpValue = 99;
-            ['A', 'B', 'C'].forEach(z => {
-                if(match.hp.player[z] > 0 && match.hp.player[z] < minHpValue) {
-                    minHpValue = match.hp.player[z];
-                    targetZone = z;
-                }
+            keys.forEach(k => {
+                const tag = db.tags[k];
+                const div = document.createElement('div');
+                div.className = "py-3 flex justify-between items-center text-xs border-b border-slate-100";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2 py-0.5 rounded font-extrabold text-white text-[10px]" style="background-color: ${tag.color}">
+                            ${tag.name}
+                        </span>
+                        <span class="text-slate-400 font-mono">${tag.color}</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editTag('${tag.id}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold shadow-sm">수정</button>
+                        <button onclick="deleteTag('${tag.id}')" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm">삭제</button>
+                    </div>
+                `;
+                container.appendChild(div);
             });
+        }
 
-            if(match.hp.player[targetZone] <= 0) targetZone = pickRandom(['A', 'B', 'C']);
+        function saveTag() {
+            const id = document.getElementById('tag-form-id').value;
+            const name = document.getElementById('tag-form-name').value.trim();
+            const color = document.getElementById('tag-form-color-text').value.trim();
 
-            const aiHand = match.hand.ai;
-            const mCards = aiHand.filter(c => c.type === 'military');
-            const returnCards = aiHand.filter(c => c.name === '복귀 명령');
-
-            const leaked = match.board.ai[targetZone].find(u => u.spied === true);
-            if(leaked && returnCards.length > 0) {
-                match.board.ai[targetZone] = match.board.ai[targetZone].filter(u => u !== leaked);
-                aiHand.splice(aiHand.indexOf(returnCards[0]), 1);
-                leaked.spied = false;
-                leaked.camouflage = false;
-                aiHand.push({ type: 'military', name: leaked.name });
-                log(`[🤖 AI의 기만술] 첩보망에 들통난 병력을 수뇌부로 철수 복귀 시켰습니다.`);
-                passControlToUser(); return;
+            if (!name || !color) {
+                alert("태그 내용 및 백그라운드 색상을 기입해 주십시오.");
+                return;
             }
 
-            if(mCards.length > 0 && match.hp.player[targetZone] > 0) {
-                const enemyFirstUnit = match.board.player[targetZone][0];
-                let chosenCard = mCards[0];
-                
-                if(enemyFirstUnit) {
-                    const counterMap = { '보병': '궁병', '창병': '보병', '기병': '창병', '방패병': '기병', '궁병': '방패병' };
-                    const dynamicBest = mCards.find(c => c.name === counterMap[enemyFirstUnit.name]);
-                    if(dynamicBest) chosenCard = dynamicBest;
+            pushToHistory();
+
+            if (id) {
+                if (db.tags[id]) {
+                    db.tags[id].name = name;
+                    db.tags[id].color = color;
                 }
-
-                aiHand.splice(aiHand.indexOf(chosenCard), 1);
-                log(`[🤖 AI 카운터 공습] 아군 ${targetZone} 기지로 [${chosenCard.name}] 부대를 격사시켰습니다!`);
-
-                setTimeout(() => {
-                    const myDef = match.board.player[targetZone];
-                    if(myDef.length === 0) {
-                        match.hp.player[targetZone] = Math.max(0, match.hp.player[targetZone] - 2);
-                        log(`[성벽 타격 유효] 아군 수비진이 전멸하여 공성 피해(-2)를 입었습니다.`);
-                    } else {
-                        if(match.perks.player[targetZone].includes('함정') && chosenCard.name !== '기병') {
-                            match.perks.player[targetZone] = match.perks.player[targetZone].filter(i => i !== '함정');
-                            log(`[아군 매복 승리] 미리 깔아둔 함정으로 진격해오던 적 공격조 [${chosenCard.name}]를 폭사시켰습니다.`);
-                            passControlToUser(); return;
-                        }
-
-                        let res = evalClash(chosenCard.name, myDef[0].name);
-                        if(res === 'win') {
-                            const dead = myDef.shift();
-                            match.hp.player[targetZone] = Math.max(0, match.hp.player[targetZone] - 1);
-                            log(`[방어벽 균열] 아군 수비대 [${dead.name}] 부대가 전멸하며 성벽 체력이 1 감소했습니다.`);
-                        } else {
-                            log(`[방어 수호 성공] 수비 선발대가 적의 일점사 습격을 노련하게 막아냈습니다.`);
-                        }
-                    }
-                    passControlToUser();
-                }, 900);
             } else {
-                if(mCards.length > 0 && match.board.ai[targetZone].length < 3) {
-                    const troopItem = mCards[0];
-                    match.board.ai[targetZone].push({ name: troopItem.name, camouflage: false, spied: false });
-                    aiHand.splice(aiHand.indexOf(troopItem), 1);
-                    log(`[적 전열 정비] AI가 역전 기회를 잡기 위해 ${targetZone} 기지 대기열에 병력을 추가 주둔시켰습니다.`);
-                } else {
-                    log("[적의 휴식] AI 진영이 전술 카드를 아끼며 전략 카드를 축적했습니다.");
-                }
-                passControlToUser();
+                const newId = "tag_" + Date.now();
+                db.tags[newId] = {
+                    id: newId,
+                    name: name,
+                    color: color
+                };
             }
+
+            saveToLocalStorage();
+            resetTagForm();
+            renderAdminTagList();
+            renderMarkets();
+            if (selectedItem) selectItem(selectedItem.type, selectedItem.data.id);
         }
 
-        function passControlToUser() {
-            evalMatchEnd();
-            match.isUserTurn = true;
-            match.isInitialTurn = false; 
+        function editTag(id) {
+            const tag = db.tags[id];
+            if (!tag) return;
 
-            if(match.hand.player.length < 6) {
-                while(match.hand.player.length < 6) match.hand.player.push(dealCard());
-            }
-            refreshScreen();
+            document.getElementById('tag-form-title').innerText = "● 태그 수정하기";
+            document.getElementById('tag-form-id').value = tag.id;
+            document.getElementById('tag-form-name').value = tag.name;
+            document.getElementById('tag-form-color-picker').value = tag.color;
+            document.getElementById('tag-form-color-text').value = tag.color;
         }
 
-        function evalMatchEnd() {
-            let pDestroyed = 0; let eDestroyed = 0;
-            ['A', 'B', 'C'].forEach(z => {
-                if(match.hp.player[z] <= 0) pDestroyed++;
-                if(match.hp.ai[z] <= 0) eDestroyed++;
+        function deleteTag(id) {
+            const confirmDel = confirm("해당 식별자 태그를 삭제합니까?\n연결된 종목들의 백그라운드 뱃지는 기본 규격으로 임시 전격 교체됩니다.");
+            if (!confirmDel) return;
+
+            pushToHistory();
+            delete db.tags[id];
+            saveToLocalStorage();
+
+            renderAdminTagList();
+            renderMarkets();
+            if (selectedItem) selectItem(selectedItem.type, selectedItem.data.id);
+        }
+
+        function resetTagForm() {
+            document.getElementById('tag-form-title').innerText = "● 태그 신규 추가";
+            document.getElementById('tag-form-id').value = "";
+            document.getElementById('tag-form-name').value = "";
+            document.getElementById('tag-form-color-picker').value = "#3b82f6";
+            document.getElementById('tag-form-color-text').value = "";
+        }
+
+
+        // ==================== 상장 및 상장폐지 관리판 ====================
+
+        function switchAdminListingTab(type) {
+            adminListingTab = type;
+            const btnP = document.getElementById('btn-admin-list-player');
+            const btnT = document.getElementById('btn-admin-list-team');
+            if (type === 'player') {
+                btnP.className = "px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm";
+                btnT.className = "px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold";
+            } else {
+                btnP.className = "px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold";
+                btnT.className = "px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm";
+            }
+            renderAdminListingTable();
+        }
+
+        function renderAdminListingTable() {
+            const tbody = document.getElementById('admin-listing-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = "";
+
+            const targetArray = adminListingTab === 'player' ? db.players : db.teams;
+
+            targetArray.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "border-b border-slate-100 text-slate-700";
+
+                const tag = db.tags[item.tagId] || { name: "NONE", color: "#64748b" };
+                const tagSpan = `<span class="px-2 py-0.5 rounded font-bold text-white text-[9px]" style="background-color: ${tag.color}">${tag.name}</span>`;
+
+                const statusBadge = item.status === 'active'
+                    ? `<span class="text-emerald-600 font-bold">상장 완료</span>`
+                    : `<span class="text-red-500 font-bold">상장폐지</span>`;
+
+                const actionBtn = item.status === 'active'
+                    ? `<button onclick="toggleListingStatus('${adminListingTab}', '${item.id}')" class="bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded text-[11px] text-white font-bold shadow-sm">상폐 선고</button>`
+                    : `<button onclick="toggleListingStatus('${adminListingTab}', '${item.id}')" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded text-[11px] text-white font-bold shadow-sm">상장 승인</button>`;
+
+                row.innerHTML = `
+                    <td class="py-3 font-bold text-slate-900">${item.name}</td>
+                    <td class="py-3 flex items-center space-x-2">${tagSpan}</td>
+                    <td class="py-3 font-bold font-mono">${item.price.toLocaleString()}원</td>
+                    <td class="py-3">${statusBadge}</td>
+                    <td class="py-3 text-right">${actionBtn}</td>
+                `;
+                tbody.appendChild(row);
             });
+        }
 
-            if(eDestroyed >= 2) {
-                alert("👑 대승리: 적의 핵심 초소 2곳을 무너트리고 요새를 장악했습니다!");
-                location.reload();
-            } else if(pDestroyed >= 2) {
-                alert("💀 참패: 아군 기지 2곳이 함락당해 국경 전선이 완전히 붕괴되었습니다.");
-                location.reload();
+        function toggleListingStatus(type, id) {
+            pushToHistory();
+            const target = type === 'player' ? db.players.find(x => x.id === id) : db.teams.find(x => x.id === id);
+            if (target) {
+                target.status = target.status === 'active' ? 'delisted' : 'active';
+                alert(`[${target.name}]의 상태가 정상 전환되었습니다.`);
+                saveToLocalStorage();
+                renderAdminListingTable();
+                renderMarkets();
             }
         }
+
+        // Undo / 롤백 시스템
+        function rollbackPrice() {
+            if (db.history.length === 0) {
+                alert("복구 조치를 수행할 수 있는 이전 변경 내역 보관 지점이 없습니다.");
+                return;
+            }
+
+            const restore = confirm("마지막의 변동 사항들을 취소하고 1단계 이전으로 스냅샷을 롤백하시겠습니까?");
+            if (!restore) return;
+
+            const lastState = JSON.parse(db.history.pop());
+            db.players = lastState.players;
+            db.teams = lastState.teams;
+            db.tags = lastState.tags;
+
+            saveToLocalStorage();
+            alert("롤백 전표 처리가 완료되었습니다.");
+            
+            renderMarkets();
+            initAdminSelectors();
+            loadMasterList();
+            renderAdminTagList();
+            if (selectedItem) {
+                selectItem(selectedItem.type, selectedItem.data.id);
+            }
+        }
+
+        function resetExchangeData() {
+            const reset = confirm("시스템의 데이터 테이블을 전체 제거하고 기초 적재 데이터셋으로 귀환시킵니까?");
+            if (!reset) return;
+
+            localStorage.removeItem('vct_stock_db_v3_light');
+            location.reload();
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
