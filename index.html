@@ -1,1426 +1,1775 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VCT 가상 주식 거래소 (VCT Stock Exchange)</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .text-upbit-red { color: #d60000; } /* 상승 빨강 */
-        .text-upbit-blue { color: #0052ee; } /* 하락 파랑 */
-        .bg-upbit-red { background-color: #d60000; }
-        .bg-upbit-blue { background-color: #0052ee; }
-        .border-upbit { border-color: #e9ecf1; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ VCT 주식 거래소</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #1e293b;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body class="min-h-screen flex flex-col">
 
-    <!-- 상단 헤더 -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
-        <div class="flex items-center space-x-4">
-            <h1 class="text-xl font-black tracking-wider text-slate-900">VCT STOCK PLATFORM</h1>
-            <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full font-mono font-bold">v3.1.1</span>
-        </div>
-        
-        <div class="flex items-center space-x-6">
-            <div class="text-sm font-semibold bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 font-mono text-slate-800">
-                보유 예수금: <span class="text-red-600 font-bold" id="user-cash">10,000,000</span> 원
-            </div>
-            <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-                <button onclick="switchView('player')" id="btn-view-player" class="px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-800 shadow-sm transition-all border border-slate-200">
-                    사용자 화면
-                </button>
-                <button onclick="switchView('admin')" id="btn-view-admin" class="px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1">
-                    관리자 설정창
-                </button>
-            </div>
-        </div>
-    </header>
+  <!-- 상단 네비게이션 헤더 -->
+  <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <span class="text-xl font-black tracking-wider text-indigo-600">VCT 주식 거래소</span>
+    </div>
+    
+    <!-- 탭 내비게이션 -->
+    <nav class="flex gap-2">
+      <button onclick="switchTab('exchange')" id="tab-exchange" class="px-4 py-2 rounded font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm">📈 가상 거래소</button>
+      <button onclick="switchTab('portfolio')" id="tab-portfolio" class="px-4 py-2 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">💼 내 포트폴리오</button>
+      <button onclick="switchTab('admin')" id="tab-admin" class="px-4 py-2 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">⚙️ 관리자 설정</button>
+    </nav>
 
-    <main class="p-6 max-w-7xl mx-auto">
-        
-        <!-- ==================== [1] 사용자 화면 (PLAYER VIEW) ==================== -->
-        <div id="view-player" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- 실시간 보유 자산 간략정보 -->
+    <div class="flex gap-4 text-xs bg-slate-50 p-2 rounded border border-slate-200">
+      <div>예수금: <span id="header-cash" class="font-bold text-red-600">10,000,000원</span></div>
+      <div class="border-l border-slate-300 pl-4">평가자산: <span id="header-total" class="font-bold text-indigo-600">10,000,000원</span></div>
+    </div>
+  </header>
+
+  <!-- 메인 컨텐츠 영역 -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+    <!-- 1. 가상 거래소 탭 -->
+    <section id="view-exchange" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- 종목 상세 및 차트/거래 영역 (좌측 8열) -->
+      <div class="lg:col-span-8 space-y-6">
+        <!-- 종목 상세 헤더 및 요약 -->
+        <div id="exchange-detail-panel" class="bg-white rounded-lg p-6 border border-slate-200 shadow-sm transition-all">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <div class="flex gap-1.5 items-center flex-wrap" id="detail-tags-container">
+                <!-- 동적 배지 형식 태그 표시 영역 -->
+              </div>
+              <h2 id="detail-name" class="text-2xl font-black mt-2 text-slate-900">종목을 선택해주세요</h2>
+              <p id="detail-desc" class="text-xs text-slate-500 mt-1">소속 세부 정보가 이곳에 표시됩니다.</p>
+            </div>
+            <div class="text-right">
+              <div id="detail-price" class="text-3xl font-black text-slate-900">- 원</div>
+              <div id="detail-change" class="text-sm font-bold text-slate-500">- (-%)</div>
+            </div>
+          </div>
+          
+          <!-- 기대값 세부 분석 (선수 주식에만 렌더링) -->
+          <div id="detail-ev-container" class="hidden bg-slate-50 p-3 rounded border border-slate-200 mb-4 text-xs grid grid-cols-4 gap-2 text-slate-700">
+            <div>• 기준 기대값: <span id="ev-total" class="font-bold text-indigo-600">-</span></div>
+            <div>• 평균 ACS: <span id="ev-acs" class="font-bold">-</span></div>
+            <div>• 평균 K/D: <span id="ev-kd" class="font-bold">-</span></div>
+            <div>• 평균 KAST: <span id="ev-kast" class="font-bold">-</span></div>
+          </div>
+
+          <!-- 차트 영역 -->
+          <div class="bg-slate-50 p-4 rounded border border-slate-200 h-[280px] flex items-center justify-center">
+            <canvas id="priceChart" class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <!-- 거래 주문창 (좌: 보유 현황, 우: 거래 주문) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- 내 보유 현황 -->
+          <div class="bg-white rounded-lg p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-slate-700 border-b border-slate-100 pb-2 mb-4">💼 종목별 보유 현황</h3>
+              <div id="selected-stock-holding" class="space-y-3 text-sm text-slate-700"></div>
+            </div>
+          </div>
+
+          <!-- 즉시 거래 주문창 -->
+          <div id="order-box-panel" class="bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-4 transition-all">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+              <h3 class="font-bold text-sm text-slate-700">⚖️ 즉시 거래 주문</h3>
+              <span id="lft-status-badge" class="hidden text-xs bg-slate-100 text-slate-400 px-2 py-0.5 rounded border border-slate-200 font-extrabold">거래 비활성</span>
+            </div>
             
-            <!-- 왼쪽: 종목 리스트 -->
-            <div class="lg:col-span-4 bg-white rounded-xl border border-slate-200 flex flex-col h-[750px] shadow-sm">
-                <div class="flex border-b border-slate-200 bg-slate-50 rounded-t-xl">
-                    <button onclick="switchMarketTab('player-stock')" id="tab-market-player" class="w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600">
-                        선수 개인 주식
-                    </button>
-                    <button onclick="switchMarketTab('team-stock')" id="tab-market-team" class="w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800">
-                        팀 단위 주식
-                    </button>
-                </div>
-                <!-- 검색창 -->
-                <div class="p-3 border-b border-slate-200 bg-white">
-                    <input type="text" id="market-search" oninput="renderMarkets()" placeholder="태그 또는 종목 검색" class="w-full bg-slate-50 text-sm text-slate-800 px-3 py-2 rounded border border-slate-300 focus:outline-none focus:border-blue-500">
-                </div>
-                <!-- 리스트 출력 영역 -->
-                <div class="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white" id="market-list">
-                    <!-- JS 동적 주입 -->
-                </div>
+            <div class="flex gap-2">
+              <button onclick="setOrderType('buy')" id="btn-order-buy" class="flex-1 py-2 rounded font-bold text-center bg-red-600 text-white shadow-sm">매수 (Buy)</button>
+              <button onclick="setOrderType('sell')" id="btn-order-sell" class="flex-1 py-2 rounded font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">매도 (Sell)</button>
+            </div>
+            
+            <div class="space-y-2">
+              <label class="text-xs text-slate-500 block">주문 수량</label>
+              <div class="flex gap-2">
+                <input type="number" id="order-qty" value="1" min="1" oninput="calculateTotalOrderCost()" class="flex-1 bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                <button id="order-max-btn" onclick="setOrderMax()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 rounded font-bold border border-slate-200">최대</button>
+              </div>
             </div>
 
-            <!-- 중앙: 종목 정보 차트 및 주문창 -->
-            <div class="lg:col-span-5 flex flex-col space-y-6">
-                <!-- 종목 요약 카드 -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div class="space-y-2">
-                            <span id="selected-tag" class="text-[10px] px-2.5 py-1 rounded font-black text-white uppercase tracking-wider">TAG</span>
-                            <h2 class="text-2xl font-black text-slate-900 mt-1" id="selected-title">-</h2>
-                            <!-- 버그 원인이었던 소속 대체용 필드를 마크업에 복원 완료했습니다. -->
-                            <span class="text-xs text-slate-500 block" id="selected-sub-info">-</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-black font-mono text-upbit-red" id="selected-price">0</span> <span class="text-xs text-slate-500 font-bold">KRW</span>
-                            <div class="text-xs font-bold mt-1 font-mono text-upbit-red" id="selected-change">+0.00%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 라인 차트 (더미 가공 없는 순수 실제 기록 데이터 연동) -->
-                <div class="bg-white p-4 rounded-xl border border-slate-200 h-[280px] flex flex-col justify-between shadow-sm">
-                    <div class="text-xs font-bold text-slate-400">실시간 체결 기준 변동 추이</div>
-                    <div class="flex-1 mt-2 relative">
-                        <canvas id="stockChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- 트레이딩 주문 모듈 -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex border-b border-slate-200 pb-3 mb-4">
-                        <button onclick="setTradeMode('buy')" id="btn-trade-buy" class="w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-red text-white shadow-sm">매수</button>
-                        <button onclick="setTradeMode('sell')" id="btn-trade-sell" class="w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800 ml-2">매도</button>
-                    </div>
-                    <div class="space-y-4 text-sm font-mono">
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500">체결 예정가</span>
-                            <span class="font-bold text-slate-800" id="trade-price-display">0 원</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500">주문 수량</span>
-                            <input type="number" id="trade-quantity" oninput="calculateTradeTotal()" min="1" value="1" class="w-28 bg-slate-50 text-right text-slate-800 px-3 py-1.5 rounded border border-slate-300 focus:outline-none">
-                        </div>
-                        <div class="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center text-base">
-                            <span class="text-slate-500 font-sans">총 결산 금액</span>
-                            <span class="font-bold text-red-600 text-lg" id="trade-total-display">0 원</span>
-                        </div>
-                        <button onclick="executeTrade()" id="btn-execute-trade" class="w-full py-3 bg-upbit-red text-white rounded-lg font-bold text-sm shadow-sm hover:opacity-95 transition-all mt-2">
-                            매수 체결 실행
-                        </button>
-                    </div>
-                </div>
+            <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-1 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-500">보유 가능 금액 / 수량</span>
+                <span id="order-user-has" class="font-bold text-slate-800">0원 / 0주</span>
+              </div>
+              <div class="flex justify-between border-t border-slate-200 pt-1 mt-1 text-sm">
+                <span class="text-slate-600 font-bold">총 주문 금액</span>
+                <span id="order-total-cost" class="font-bold text-indigo-600">0 원</span>
+              </div>
             </div>
 
-            <!-- 오른쪽: 계좌 현황 및 보유 포트폴리오 -->
-            <div class="lg:col-span-3 space-y-6">
-                <!-- 손익 정보 요약 -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-700 mb-4">계좌 평가 잔고</h3>
-                    <div class="space-y-3 text-xs font-mono">
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">총 투자 원금</span>
-                            <span id="pfo-total-buy" class="text-slate-800">0 원</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">평가 금액 합계</span>
-                            <span id="pfo-total-val" class="text-slate-800 font-bold">0 원</span>
-                        </div>
-                        <div class="flex justify-between border-t border-slate-100 pt-2 text-sm">
-                            <span class="text-slate-500 font-sans">총 손익률</span>
-                            <span id="pfo-total-profit" class="font-bold">0 원 (0.00%)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 보유 종목 리스트 -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 h-[480px] flex flex-col shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-700 mb-3">보유 가상 주식</h3>
-                    <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="portfolio-list">
-                        <!-- JS 렌더링 -->
-                    </div>
-                </div>
+            <div id="lft-warning-banner" class="hidden bg-slate-100 text-slate-500 text-xs p-2.5 rounded border border-slate-200 text-center font-bold">
+              ⚠️ LFT 선수는 소속 구단이 지정되어 정상 상장(태그 부여)이 완료될 때까지 주식 거래가 비활성화됩니다.
             </div>
+
+            <button id="order-submit-btn" onclick="executeOrder()" class="w-full py-3 rounded font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm">주문 전송</button>
+          </div>
 
         </div>
+      </div>
 
-        <!-- ==================== [2] 관리자 설정창 (ADMIN VIEW) ==================== -->
-        <div id="view-admin" class="hidden space-y-6">
-            
-            <!-- 관리 상태 표시부 -->
-            <div class="bg-white p-6 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+      <!-- 종목 리스트 (우측 4열 배치) -->
+      <div class="lg:col-span-4 bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col h-[650px]">
+        <div class="mb-4">
+          <input type="text" id="search-input" oninput="renderStockList()" placeholder="종목 또는 팀 검색..." class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex gap-2 mb-4">
+          <button onclick="setStockTypeFilter('all')" id="btn-filter-all" class="flex-1 py-1 text-xs font-bold rounded bg-indigo-600 text-white">전체</button>
+          <button onclick="setStockTypeFilter('team')" id="btn-filter-team" class="flex-1 py-1 text-xs font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">팀 주식</button>
+          <button onclick="setStockTypeFilter('player')" id="btn-filter-player" class="flex-1 py-1 text-xs font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">선수 주식</button>
+        </div>
+        <div id="stock-list-container" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+      </div>
+
+    </section>
+
+    <!-- 2. 내 포트폴리오 탭 -->
+    <section id="view-portfolio" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-lg p-6 border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="p-4 bg-slate-50 rounded border border-slate-200">
+          <div class="text-xs text-slate-500 font-bold">총 평가 자산</div>
+          <div id="port-total-assets" class="text-2xl font-black text-indigo-600 mt-1">0원</div>
+        </div>
+        <div class="p-4 bg-slate-50 rounded border border-slate-200">
+          <div class="text-xs text-slate-500 font-bold">보유 가용 예수금</div>
+          <div id="port-cash" class="text-2xl font-black text-slate-800 mt-1">0원</div>
+        </div>
+        <div class="p-4 bg-slate-50 rounded border border-slate-200">
+          <div class="text-xs text-slate-500 font-bold">주식 평가 금액</div>
+          <div id="port-stock-val" class="text-2xl font-black text-slate-800 mt-1">0원</div>
+        </div>
+        <div class="p-4 bg-slate-50 rounded border border-slate-200">
+          <div class="text-xs text-slate-500 font-bold">평가 손익률</div>
+          <div id="port-total-profit" class="text-2xl font-black text-red-600 mt-1">0.00%</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-lg mb-4 text-slate-800">📋 보유 주식 상세 내역</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500 text-xs bg-slate-50">
+                <th class="p-3">구분</th>
+                <th class="p-3">종목명</th>
+                <th class="p-3 text-right">보유 수량</th>
+                <th class="p-3 text-right">평균 매수가</th>
+                <th class="p-3 text-right">현재가</th>
+                <th class="p-3 text-right">평가 금액</th>
+                <th class="p-3 text-right">평가 손익</th>
+              </tr>
+            </thead>
+            <tbody id="portfolio-table-body" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 관리자 도구 탭 (내부 4분할 서브 탭 시스템 및 거시 순위 보정 장착) -->
+    <section id="view-admin" class="tab-content hidden space-y-6">
+      
+      <!-- 어드민 서브탭 내비게이션 (4단 분할 구조) -->
+      <div class="bg-slate-100 p-1 rounded-lg flex border border-slate-200 gap-1 shadow-sm max-w-2xl">
+        <button onclick="switchAdminSubTab('match')" id="admin-subtab-match" class="flex-1 py-2 text-xs font-bold rounded transition-all bg-white text-indigo-600 shadow-sm">🎮 경기 결과 입력</button>
+        <button onclick="switchAdminSubTab('stocks')" id="admin-subtab-stocks" class="flex-1 py-2 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">✏️ 종목 및 이적 제어</button>
+        <button onclick="switchAdminSubTab('season')" id="admin-subtab-season" class="flex-1 py-2 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏆 시즌 종료 보정</button>
+        <button onclick="switchAdminSubTab('system')" id="admin-subtab-system" class="flex-1 py-2 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏷️ 태그 및 시스템 제어</button>
+      </div>
+
+      <!-- [어드민 서브탭 1] 경기 결과 등록 제어판 -->
+      <div id="admin-panel-match" class="admin-sub-content bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+          <h3 class="font-extrabold text-base text-slate-800">🎮 VCT 경기 점수 및 주전(5인 필수) 활약 스탯 적용</h3>
+          <span class="text-xs text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">주전 5인 체크 필수</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-500">홈 팀 (승리구단)</label>
+            <select id="admin-team-a" onchange="loadRosters()" class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"></select>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-500">어웨이 팀 (패배구단)</label>
+            <select id="admin-team-b" onchange="loadRosters()" class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded border border-slate-200 text-sm">
+          <div class="space-y-1">
+            <label class="text-xs text-slate-500 block">매치 포맷</label>
+            <select id="match-format" onchange="adjustScoreLimits()" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none">
+              <option value="Bo3">Bo3 (3판 2선승)</option>
+              <option value="Bo5">Bo5 (5판 3선승)</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-xs text-slate-500 block">최종 스코어 (홈 : 어웨이)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="score-a" value="2" min="0" max="3" class="w-12 bg-white border border-slate-200 rounded text-center py-1 text-xs focus:outline-none">
+              <span>:</span>
+              <input type="number" id="score-b" value="0" min="0" max="3" class="w-12 bg-white border border-slate-200 rounded text-center py-1 text-xs focus:outline-none">
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-xs text-slate-500 block font-semibold text-indigo-600">이긴 팀(승리구단) 배당률</label>
+            <input type="number" id="odds-winner" value="1.80" step="0.01" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-1">
+              <h4 class="font-bold text-sm text-slate-700" id="roster-title-a">홈 로스터</h4>
+              <span id="active-count-a" class="text-[11px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">선택: 5 / 5</span>
+            </div>
+            <div id="roster-container-a" class="space-y-2 max-h-[300px] overflow-y-auto pr-1"></div>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-1">
+              <h4 class="font-bold text-sm text-slate-700" id="roster-title-b">어웨이 로스터</h4>
+              <span id="active-count-b" class="text-[11px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">선택: 5 / 5</span>
+            </div>
+            <div id="roster-container-b" class="space-y-2 max-h-[300px] overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+
+        <button onclick="submitMatchResult()" class="w-full py-4 rounded font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors text-sm shadow-md">💾 경기 통계 결과 제출 및 주가 연산</button>
+      </div>
+
+      <!-- [어드민 서브탭 2] 새 종목 등록 및 구단 이적/수정 -->
+      <div id="admin-panel-stocks" class="admin-sub-content hidden bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-200 pb-3">
+          <h3 class="font-extrabold text-base text-slate-800">✏️ 신규 종목 추가 및 기존 선수 소속구단 변경</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+          <!-- 상장 추가 -->
+          <div class="space-y-4">
+            <h4 class="font-bold text-sm text-indigo-600 flex items-center gap-1.5">➕ 새 구단/선수 신규 상장</h4>
+            <div class="space-y-3 text-xs">
+              <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-900">VCT 가상 자산 관리자 포털</h2>
-                    <p class="text-xs text-slate-500 mt-1">지표 연산 제어, 종목 유지보수 및 전용 태그 관리 시스템을 운영합니다.</p>
+                  <label class="block mb-1 text-slate-500">상장 구분</label>
+                  <select id="add-stock-type" onchange="adjustAddForm()" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                    <option value="team">구단(Team) 등록</option>
+                    <option value="player">선수(Player) 등록</option>
+                  </select>
                 </div>
-                <div class="flex space-x-3 text-xs font-bold">
-                    <button onclick="rollbackPrice()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all">
-                        ↺ 가격 기록 1회 취소 (Undo)
-                    </button>
-                    <button onclick="resetExchangeData()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
-                        ⚠ 거래소 데이터 리셋
-                    </button>
+                <div>
+                  <label class="block mb-1 text-slate-500">종목 식별 ID</label>
+                  <input type="text" id="add-stock-id" placeholder="예: GEN, Buzz" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
                 </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block mb-1 text-slate-500">종목 표기명</label>
+                  <input type="text" id="add-stock-name" placeholder="예: Gen.G, BuZz" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                </div>
+                <div>
+                  <label id="add-label-tag" class="block mb-1 text-slate-500">연계 지정 태그</label>
+                  <select id="add-stock-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none"></select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block mb-1 text-slate-500">상장 시초가 (원)</label>
+                  <input type="number" id="add-stock-price" value="10000" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                </div>
+                <div id="add-team-rank-field">
+                  <label class="block mb-1 text-slate-500">시즌 최초 순위 (팀 전용)</label>
+                  <select id="add-stock-rank" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                    <option value="1">1위</option>
+                    <option value="2">2위</option>
+                    <option value="3">3위</option>
+                    <option value="4">4위</option>
+                    <option value="5.5">5-6위</option>
+                    <option value="7.5">7-8위</option>
+                    <option value="9.5">9-10위</option>
+                    <option value="11.5">11-12위</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 선수 추가 전용 세부 스탯 필드 -->
+              <div id="add-player-stats" class="hidden grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded border border-slate-200 mt-2">
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 ACS</label>
+                  <input type="number" id="add-p-acs" value="200" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 K/D</label>
+                  <input type="number" id="add-p-kd" value="1.0" step="0.1" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 KAST (%)</label>
+                  <input type="number" id="add-p-kast" value="70" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+              </div>
+
+              <button onclick="addNewStock()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs shadow-sm mt-2">상장 및 거래 대상 추가</button>
             </div>
+          </div>
 
-            <!-- 내부 제어 네비게이션 탭 -->
-            <div class="flex space-x-2 border-b border-slate-200 pb-2 text-xs font-bold">
-                <button onclick="switchAdminTab('match-update')" id="btn-adm-tab-match" class="px-4 py-2 text-slate-800 bg-white border border-slate-300 shadow-sm rounded">경기 결과 대입</button>
-                <button onclick="switchAdminTab('listing')" id="btn-adm-tab-listing" class="px-4 py-2 text-slate-500 hover:text-slate-800 rounded">신규 상장 / 마스터 수정</button>
-                <button onclick="switchAdminTab('tag-manage')" id="btn-adm-tab-tag" class="px-4 py-2 text-slate-500 hover:text-slate-800 rounded">태그 매니저</button>
+          <!-- 소속 수정 및 이적 -->
+          <div class="space-y-4 lg:pl-8">
+            <h4 class="font-bold text-sm text-emerald-600 flex items-center gap-1.5">✏️ 종목 배정 태그 수정 및 이적 처리</h4>
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block mb-1 text-slate-500">편집 대상 종목</label>
+                <select id="edit-stock-select" onchange="loadStockToEdit()" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none"></select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block mb-1 text-slate-500">표시 이름 수정</label>
+                  <input type="text" id="edit-stock-name" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                </div>
+                <div>
+                  <label class="block mb-1 text-slate-500">현재 가격 직접 수정</label>
+                  <input type="number" id="edit-stock-price" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label id="edit-tag-label" class="block mb-1 text-slate-500">연계 지정 태그</label>
+                  <select id="edit-stock-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none"></select>
+                </div>
+                <div id="edit-rank-field-div">
+                  <label class="block mb-1 text-slate-500">랭킹 순위</label>
+                  <select id="edit-stock-rank" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                    <option value="1">1위</option>
+                    <option value="2">2위</option>
+                    <option value="3">3위</option>
+                    <option value="4">4위</option>
+                    <option value="5.5">5-6위</option>
+                    <option value="7.5">7-8위</option>
+                    <option value="9.5">9-10위</option>
+                    <option value="11.5">11-12위</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 선수 기본 스탯 수정 -->
+              <div id="edit-player-stats-div" class="hidden grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded border border-slate-200 mt-2">
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 ACS</label>
+                  <input type="number" id="edit-p-acs" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 K/D</label>
+                  <input type="number" id="edit-p-kd" step="0.01" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">기본 KAST (%)</label>
+                  <input type="number" id="edit-p-kast" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+                </div>
+              </div>
+
+              <button onclick="updateExistingStock()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs shadow-sm mt-2">소속 정보 변경 및 종목 업데이트 완료</button>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- 관리자 탭 1: 경기 결과 대입 -->
-            <div id="adm-sec-match-update" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- 선수 경기 결과 반영 -->
-                <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
-                    <h3 class="text-sm font-bold text-blue-600 border-b border-slate-100 pb-2">● 선수 경기 통계 수치 기입</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-slate-500 block mb-1">대상 선수</label>
-                            <select id="admin-player-select" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800"></select>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <label class="text-slate-500 block mb-1">당일 K/D</label>
-                                <input type="number" step="0.01" id="admin-player-kd" placeholder="K/D 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                            </div>
-                            <div>
-                                <label class="text-slate-500 block mb-1">당일 ACS</label>
-                                <input type="number" id="admin-player-acs" placeholder="ACS 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                            </div>
-                            <div>
-                                <label class="text-slate-500 block mb-1">당일 KAST (%)</label>
-                                <input type="number" id="admin-player-kast" placeholder="KAST 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                            </div>
-                        </div>
-                        <button onclick="applyPlayerMatchRecord()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition-all shadow-sm">선수 주가 가치 변동 적용</button>
-                    </div>
-                </div>
-
-                <!-- 팀 경기 결과 반영 -->
-                <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">● 팀 세트 매칭 결과 기입</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-slate-500 block mb-1">대상 팀</label>
-                            <select id="admin-team-select" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800"></select>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <label class="text-slate-500 block mb-1">해외 배당률 (Odds)</label>
-                                <input type="number" step="0.01" id="admin-team-odds" placeholder="배당률 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                            </div>
-                            <div>
-                                <label class="text-slate-500 block mb-1">경기 방식 설정</label>
-                                <select id="admin-team-match-format" onchange="updateSetScoreOptions()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                                    <option value="bo3">Bo3 (3판 2선승제)</option>
-                                    <option value="bo5">Bo5 (5판 3선승제)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-slate-500 block mb-1">세부 세트 결과</label>
-                                <select id="admin-team-set-result" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 font-bold">
-                                    <!-- JS 연동 로딩 -->
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="applyTeamMatchRecord()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded transition-all shadow-sm">팀 세트 연동 등락 반영</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 관리자 탭 2: 상장 양식 및 마스터 수정 -->
-            <div id="adm-sec-listing" class="hidden space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- 상장 양식 -->
-                    <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
-                        <h3 class="text-sm font-bold text-emerald-600 border-b border-slate-100 pb-2">● 신규 자산 상장 승인</h3>
-                        <div class="flex space-x-4 mb-2">
-                            <label class="flex items-center space-x-1 cursor-pointer"><input type="radio" name="list-mode" value="player" checked onchange="toggleListingFormFields()"> <span>선수 신규 등록</span></label>
-                            <label class="flex items-center space-x-1 cursor-pointer"><input type="radio" name="list-mode" value="team" onchange="toggleListingFormFields()"> <span>구단 신규 등록</span></label>
-                        </div>
-                        <div class="space-y-3" id="listing-fields-container">
-                            <!-- JS 바인딩 -->
-                        </div>
-                        <button onclick="executeNewListing()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-sm">심사 통과 및 강제 상장</button>
-                    </div>
-
-                    <!-- 마스터 데이터 수정 -->
-                    <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
-                        <h3 class="text-sm font-bold text-amber-600 border-b border-slate-100 pb-2">● 자산 마스터 스펙 조율</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-slate-500 block mb-1">수정 타겟 분류</label>
-                                <select id="master-edit-type" onchange="loadMasterList()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                                    <option value="player">등록 선수 스펙 수정</option>
-                                    <option value="team">등록 구단 스펙 수정</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-slate-500 block mb-1">수정 대상 지정</label>
-                                <select id="master-item-select" onchange="loadMasterDetails()" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800"></select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2" id="master-edit-fields-container">
-                            <!-- JS 바인딩 -->
-                        </div>
-                        <button onclick="updateMasterData()" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold shadow-sm">스펙 데이터 즉시 반영</button>
-                    </div>
-                </div>
-
-                <!-- 상폐 관리 제어판 테이블 -->
-                <div class="bg-white p-6 rounded-xl border border-slate-200 space-y-3 shadow-sm">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-2 text-xs">
-                        <span class="text-sm font-bold text-slate-800">상장 자산 보존 조치 보드</span>
-                        <div class="flex space-x-1">
-                            <button onclick="switchAdminListingTab('player')" id="btn-admin-list-player" class="px-3 py-1 bg-blue-600 text-white rounded font-bold">선수 라이브러리</button>
-                            <button onclick="switchAdminListingTab('team')" id="btn-admin-list-team" class="px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold">구단 라이브러리</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto text-xs font-mono">
-                        <table class="w-full text-left divide-y divide-slate-100">
-                            <thead>
-                                <tr class="text-slate-400">
-                                    <th class="py-2">식별 명칭</th>
-                                    <th class="py-2">연동 태그</th>
-                                    <th class="py-2">현재 주가</th>
-                                    <th class="py-2">상태</th>
-                                    <th class="py-2 text-right">상태 관리</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-listing-tbody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 관리자 탭 3: 태그 매니저 -->
-            <div id="adm-sec-tag-manage" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- 태그 추가/수정 폼 -->
-                <div class="lg:col-span-5 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs shadow-sm">
-                    <h3 class="text-sm font-bold text-teal-600 border-b border-slate-100 pb-2" id="tag-form-title">● 태그 신규 추가</h3>
-                    <input type="hidden" id="tag-form-id">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-slate-500 block mb-1">태그 명칭 (중복 주의)</label>
-                            <input type="text" id="tag-form-name" placeholder="예: PRX, PACIFIC" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                        </div>
-                        <div>
-                            <label class="text-slate-500 block mb-1">태그 전용 배경 식별 컬러</label>
-                            <div class="flex space-x-2">
-                                <input type="color" id="tag-form-color-picker" oninput="document.getElementById('tag-form-color-text').value = this.value" class="w-10 h-8 bg-slate-50 border border-slate-300 rounded cursor-pointer">
-                                <input type="text" id="tag-form-color-text" oninput="document.getElementById('tag-form-color-picker').value = this.value" placeholder="#000000" class="flex-1 bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                            </div>
-                        </div>
-                        <div class="flex space-x-2 pt-2">
-                            <button onclick="saveTag()" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded shadow-sm">저장</button>
-                            <button onclick="resetTagForm()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded">취소</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 태그 목록 및 삭제 -->
-                <div class="lg:col-span-7 bg-white p-6 rounded-xl border border-slate-200 space-y-4 font-mono text-xs flex flex-col h-[500px] shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">● 시스템 태그 라이브러리</h3>
-                    <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="admin-tag-list">
-                        <!-- JS 렌더링 -->
-                    </div>
-                </div>
-            </div>
-
+      <!-- [어드민 서브탭 🏆] 시즌 종료 공동 순위 변동 보정 제어실 (공동 그룹 선택으로 전면 일원화 완료) -->
+      <div id="admin-panel-season" class="admin-sub-content hidden bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+          <h3 class="font-extrabold text-base text-slate-800">🏆 시즌 종료 후 거시적 순위 변동 보정 (연 1회 전산 반영)</h3>
+          <span class="text-xs text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">공동 등수 그룹화 연산 일원화</span>
         </div>
 
-    </main>
+        <div class="bg-slate-50 p-4 rounded border border-slate-200 text-xs text-slate-600 leading-relaxed">
+          <strong>💡 공동 순위 일원화 처리 규칙 (기획 3단계 완벽 수용):</strong><br>
+          • 1위: +20% / 2위: +15% / 3위: +10% / 4위: +5% / <strong>5-6위 (수치 5.5): 0%</strong> / 7-8위 (수치 7.5): 0% / 9-10위 (수치 9.5): -10% / 11012위 (수치 11.5): -20%<br>
+          • 기본 순위 변동률: (전 시즌 순위 수치 - 현재 시즌 순위 수치) × 5%<br>
+        </div>
 
-    <!-- JS 스크립트 본문 -->
-    <script>
-        // 초기 기본 태그 목록
-        const INITIAL_TAGS = {
-            "tag_prx": { id: "tag_prx", name: "PRX", color: "#8b5cf6" },
-            "tag_fs": { id: "tag_fs", name: "FS", color: "#f43f5e" },
-            "tag_ge": { id: "tag_ge", name: "GE", color: "#6366f1" },
-            "tag_t1": { id: "tag_t1", name: "T1", color: "#ef4444" },
-            "tag_rrq": { id: "tag_rrq", name: "RRQ", color: "#eab308" },
-            "tag_drx": { id: "tag_drx", name: "DRX", color: "#3b82f6" },
-            "tag_dfm": { id: "tag_dfm", name: "DFM", color: "#0ea5e9" },
-            "tag_ns": { id: "tag_ns", name: "NS", color: "#f97316" },
-            "tag_ts": { id: "tag_ts", name: "TS", color: "#64748b" },
-            "tag_zeta": { id: "tag_zeta", name: "ZETA", color: "#3f3f46" },
-            "tag_gen": { id: "tag_gen", name: "GEN", color: "#f59e0b" },
-            "tag_vl": { id: "tag_vl", name: "VL", color: "#14b8a6" },
-            "tag_pacific": { id: "tag_pacific", name: "Pacific", color: "#10b981" }
-        };
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs whitespace-nowrap">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 text-[11px]">
+                <th class="p-3">구단명 (ID)</th>
+                <th class="p-3">전 시즌 순위</th>
+                <th class="p-3">현재 가격</th>
+                <th class="p-3">현재 최종 순위 설정</th>
+                <th class="p-3">기본 변동률</th>
+                <th class="p-3">특별 보정률</th>
+                <th class="p-3 text-right">최종 합산 변동률</th>
+                <th class="p-3 text-right font-semibold text-indigo-600">보정 후 예상 가치</th>
+              </tr>
+            </thead>
+            <tbody id="season-adjustment-table-body" class="divide-y divide-slate-100 text-slate-800"></tbody>
+          </table>
+        </div>
 
-        // 제공 데이터 기반 초기 배치 (가짜 차트용 더미 히스토리 배제, 시작점 배열 1개 값으로 한정)
-        const INITIAL_PLAYERS = [
-            { id: "p1", name: "primmie", tagId: "tag_fs", price: 12400, basePrice: 12400, expectation: 1.24, status: "active", priceHistory: [12400] },
-            { id: "p2", name: "something", tagId: "tag_prx", price: 12300, basePrice: 12300, expectation: 1.23, status: "active", priceHistory: [12300] },
-            { id: "p3", name: "Jinggg", tagId: "tag_prx", price: 11900, basePrice: 11900, expectation: 1.19, status: "active", priceHistory: [11900] },
-            { id: "p4", name: "Meiy", tagId: "tag_dfm", price: 11800, basePrice: 11800, expectation: 1.18, status: "active", priceHistory: [11800] },
-            { id: "p5", name: "iZu", tagId: "tag_t1", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
-            { id: "p6", name: "Jemkin", tagId: "tag_rrq", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
-            { id: "p7", name: "BuZz", tagId: "tag_t1", price: 11600, basePrice: 11600, expectation: 1.16, status: "active", priceHistory: [11600] },
-            { id: "p8", name: "oonzmlp", tagId: "tag_vl", price: 11200, basePrice: 11200, expectation: 1.12, status: "active", priceHistory: [11200] },
-            { id: "p9", name: "t3xture", tagId: "tag_gen", price: 11000, basePrice: 11000, expectation: 1.10, status: "active", priceHistory: [11000] },
-            { id: "p10", name: "MaKo", tagId: "tag_drx", price: 10900, basePrice: 10900, expectation: 1.09, status: "active", priceHistory: [10900] },
-            { id: "p11", name: "xffero", tagId: "tag_rrq", price: 10800, basePrice: 10800, expectation: 1.08, status: "active", priceHistory: [10800] },
-            { id: "p12", name: "PatMen", tagId: "tag_ge", price: 10800, basePrice: 10800, expectation: 1.08, status: "active", priceHistory: [10800] },
-            { id: "p13", name: "f0rsakeN", tagId: "tag_prx", price: 10700, basePrice: 10700, expectation: 1.07, status: "active", priceHistory: [10700] },
-            { id: "p14", name: "Sylvan", tagId: "tag_ts", price: 10700, basePrice: 10700, expectation: 1.07, status: "active", priceHistory: [10700] },
-            { id: "p15", name: "HYUNMIN", tagId: "tag_drx", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
-            { id: "p16", name: "kellyS", tagId: "tag_ts", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
-            { id: "p17", name: "Killua", tagId: "tag_fs", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
-            { id: "p18", name: "Zeus", tagId: "tag_ts", price: 10600, basePrice: 10600, expectation: 1.06, status: "active", priceHistory: [10600] },
-            { id: "p19", name: "JitBoyS", tagId: "tag_fs", price: 10500, basePrice: 10500, expectation: 1.05, status: "active", priceHistory: [10500] },
-            { id: "p20", name: "Absol", tagId: "tag_zeta", price: 10500, basePrice: 10500, expectation: 1.05, status: "active", priceHistory: [10500] },
-            { id: "p21", name: "invy", tagId: "tag_prx", price: 10400, basePrice: 10400, expectation: 1.04, status: "active", priceHistory: [10400] },
-            { id: "p22", name: "d4v41", tagId: "tag_prx", price: 10400, basePrice: 10400, expectation: 1.04, status: "active", priceHistory: [10400] },
-            { id: "p23", name: "Autumn", tagId: "tag_ge", price: 10300, basePrice: 10300, expectation: 1.03, status: "active", priceHistory: [10300] },
-            { id: "p24", name: "UdoTan", tagId: "tag_ge", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
-            { id: "p25", name: "Karon", tagId: "tag_gen", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
-            { id: "p26", name: "stax", tagId: "tag_t1", price: 10200, basePrice: 10200, expectation: 1.02, status: "active", priceHistory: [10200] },
-            { id: "p27", name: "Caedye", tagId: "tag_dfm", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
-            { id: "p28", name: "Meteor", tagId: "tag_t1", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
-            { id: "p29", name: "Xross", tagId: "tag_ns", price: 10100, basePrice: 10100, expectation: 1.01, status: "active", priceHistory: [10100] },
-            { id: "p30", name: "Francis", tagId: "tag_ns", price: 10000, basePrice: 10000, expectation: 1.00, status: "active", priceHistory: [10000] },
-            { id: "p31", name: "Dambi", tagId: "tag_ns", price: 9900, basePrice: 9900, expectation: 0.99, status: "active", priceHistory: [9900] },
-            { id: "p32", name: "SyouTa", tagId: "tag_zeta", price: 9900, basePrice: 9900, expectation: 0.99, status: "active", priceHistory: [9900] },
-            { id: "p33", name: "Leviathan", tagId: "tag_fs", price: 9800, basePrice: 9800, expectation: 0.98, status: "active", priceHistory: [9800] },
-            { id: "p34", name: "Akame", tagId: "tag_dfm", price: 9800, basePrice: 9800, expectation: 0.98, status: "active", priceHistory: [9800] },
-            { id: "p35", name: "Ash", tagId: "tag_gen", price: 9700, basePrice: 9700, expectation: 0.97, status: "active", priceHistory: [9700] },
-            { id: "p36", name: "free1ng", tagId: "tag_drx", price: 9700, basePrice: 9700, expectation: 0.97, status: "active", priceHistory: [9700] },
-            { id: "p37", name: "Monyet", tagId: "tag_rrq", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
-            { id: "p38", name: "XuNa", tagId: "tag_vl", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
-            { id: "p39", name: "Lakia", tagId: "tag_gen", price: 9600, basePrice: 9600, expectation: 0.96, status: "active", priceHistory: [9600] },
-            { id: "p40", name: "Kr1stal", tagId: "tag_ge", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
-            { id: "p41", name: "yong", tagId: "tag_drx", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
-            { id: "p42", name: "Munchkin", tagId: "tag_t1", price: 9400, basePrice: 9400, expectation: 0.94, status: "active", priceHistory: [9400] },
-            { id: "p43", name: "crazyguy", tagId: "tag_rrq", price: 9300, basePrice: 9300, expectation: 0.93, status: "active", priceHistory: [9300] },
-            { id: "p44", name: "BeYN", tagId: "tag_drx", price: 9300, basePrice: 9300, expectation: 0.93, status: "active", priceHistory: [9300] },
-            { id: "p45", name: "Ivy", tagId: "tag_ns", price: 9200, basePrice: 9200, expectation: 0.92, status: "active", priceHistory: [9200] },
-            { id: "p46", name: "BerserX", tagId: "tag_ts", price: 9200, basePrice: 9200, expectation: 0.92, status: "active", priceHistory: [9200] },
-            { id: "p47", name: "Kushy", tagId: "tag_rrq", price: 9100, basePrice: 9100, expectation: 0.91, status: "active", priceHistory: [9100] },
-            { id: "p48", name: "Crws", tagId: "tag_fs", price: 9000, basePrice: 9000, expectation: 0.90, status: "active", priceHistory: [9000] },
-            { id: "p49", name: "Zexy", tagId: "tag_vl", price: 8900, basePrice: 8900, expectation: 0.89, status: "active", priceHistory: [8900] },
-            { id: "p50", name: "Klaus", tagId: "tag_vl", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
-            { id: "p51", name: "xavi8k", tagId: "tag_ge", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
-            { id: "p52", name: "SSeeS", tagId: "tag_dfm", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
-            { id: "p53", name: "Rb", tagId: "tag_ns", price: 8800, basePrice: 8800, expectation: 0.88, status: "active", priceHistory: [8800] },
-            { id: "p54", name: "eKo", tagId: "tag_zeta", price: 8700, basePrice: 8700, expectation: 0.87, status: "active", priceHistory: [8700] },
-            { id: "p55", name: "SugarZ3ro", tagId: "tag_zeta", price: 8700, basePrice: 8700, expectation: 0.87, status: "active", priceHistory: [8700] },
-            { id: "p56", name: "JessieVash", tagId: "tag_ts", price: 8500, basePrice: 8500, expectation: 0.85, status: "active", priceHistory: [8500] },
-            { id: "p57", name: "yatsuka", tagId: "tag_dfm", price: 8500, basePrice: 8500, expectation: 0.85, status: "active", priceHistory: [8500] },
-            { id: "p58", name: "Xdll", tagId: "tag_zeta", price: 8300, basePrice: 8300, expectation: 0.83, status: "active", priceHistory: [8300] },
-            { id: "p59", name: "ZynX", tagId: "tag_gen", price: 8200, basePrice: 8200, expectation: 0.82, status: "active", priceHistory: [8200] },
-            { id: "p60", name: "C1ndeR", tagId: "tag_vl", price: 8200, basePrice: 8200, expectation: 0.82, status: "active", priceHistory: [8200] },
-            { id: "p61", name: "KiTae", tagId: "tag_gen", price: 8000, basePrice: 8000, expectation: 0.80, status: "active", priceHistory: [8000] },
-            { id: "p62", name: "Foxy9", tagId: "tag_gen", price: 7900, basePrice: 7900, expectation: 0.79, status: "active", priceHistory: [7900] },
-            { id: "p63", name: "Rimuru", tagId: "tag_ts", price: 7700, basePrice: 7700, expectation: 0.77, status: "active", priceHistory: [7700] },
-            { id: "p64", name: "Hermes", tagId: "tag_drx", price: 7300, basePrice: 7300, expectation: 0.73, status: "active", priceHistory: [7300] }
-        ];
+        <button onclick="executeSeasonEndAdjustment()" class="w-full py-4 rounded font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors text-sm shadow-md">🏆 시즌 최종 순위 주가 전산 일괄 반영 및 마감</button>
+      </div>
 
-        const INITIAL_TEAMS = [
-            { id: "t1", name: "Paper Rex", tagId: "tag_pacific", price: 150000, basePrice: 150000, status: "active", priceHistory: [150000] },
-            { id: "t2", name: "Full Sense", tagId: "tag_pacific", price: 140000, basePrice: 140000, status: "active", priceHistory: [140000] },
-            { id: "t3", name: "Global Esports", tagId: "tag_pacific", price: 130000, basePrice: 130000, status: "active", priceHistory: [130000] },
-            { id: "t4", name: "T1", tagId: "tag_pacific", price: 120000, basePrice: 120000, status: "active", priceHistory: [120000] },
-            { id: "t5", name: "Kiwoom DRX", tagId: "tag_pacific", price: 110000, basePrice: 110000, status: "active", priceHistory: [110000] },
-            { id: "t6", name: "Rex Regum Qeon", tagId: "tag_pacific", price: 110000, basePrice: 110000, status: "active", priceHistory: [110000] },
-            { id: "t7", name: "DetonatioN FocusMe", tagId: "tag_pacific", price: 100000, basePrice: 100000, status: "active", priceHistory: [100000] },
-            { id: "t8", name: "Nongshim RedForce", tagId: "tag_pacific", price: 100000, basePrice: 100000, status: "active", priceHistory: [100000] },
-            { id: "t9", name: "Team Secret", tagId: "tag_pacific", price: 90000, basePrice: 90000, status: "active", priceHistory: [90000] },
-            { id: "t10", name: "ZETA DIVISION", tagId: "tag_pacific", price: 90000, basePrice: 90000, status: "active", priceHistory: [90000] },
-            { id: "t11", name: "Gen.G Esports", tagId: "tag_pacific", price: 80000, basePrice: 80000, status: "active", priceHistory: [80000] },
-            { id: "t12", name: "VARREL", tagId: "tag_pacific", price: 80000, basePrice: 80000, status: "active", priceHistory: [80000] }
-        ];
+      <!-- [어드민 서브탭 4] 태그 편집 및 통합 시스템 관제실 -->
+      <div id="admin-panel-system" class="admin-sub-content hidden bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-200 pb-3">
+          <h3 class="font-extrabold text-base text-slate-800">🏷️ 유니버설 태그 및 시스템 라이프사이클 관리</h3>
+        </div>
 
-        // 가중치 보정
-        const setWeights = {
-            "bo3_2_0": 1.2, "bo3_2_1": 1.0, "bo3_1_2": 1.0, "bo3_0_2": 1.2,
-            "bo5_3_0": 1.3, "bo5_3_1": 1.1, "bo5_3_2": 0.9, "bo5_2_3": 0.8, "bo5_1_3": 1.0, "bo5_0_3": 1.3
-        };
-
-        // 데이터 상태 제어
-        let currentView = 'player';
-        let marketTab = 'player-stock';
-        let adminListingTab = 'player';
-        let adminTab = 'match-update';
-        let listingMode = 'player';
-        let selectedItem = null;
-        let tradeMode = 'buy';
-        let chartInstance = null;
-
-        let db = {
-            players: [],
-            teams: [],
-            tags: {},
-            cash: 10000000,
-            holdings: {},
-            history: []
-        };
-
-        function initApp() {
-            if (localStorage.getItem('vct_stock_db_v3_light')) {
-                db = JSON.parse(localStorage.getItem('vct_stock_db_v3_light'));
-            } else {
-                db.players = INITIAL_PLAYERS;
-                db.teams = INITIAL_TEAMS;
-                db.tags = INITIAL_TAGS;
-                saveToLocalStorage();
-            }
-            renderMarkets();
-            renderPortfolio();
-            initAdminSelectors();
-            updateSetScoreOptions();
-            toggleListingFormFields();
-            loadMasterList();
-            renderAdminTagList();
-
-            const firstPlayer = db.players.find(p => p.status === 'active');
-            if (firstPlayer) {
-                selectItem('player', firstPlayer.id);
-            }
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem('vct_stock_db_v3_light', JSON.stringify(db));
-        }
-
-        function pushToHistory() {
-            db.history.push(JSON.stringify({
-                players: db.players,
-                teams: db.teams,
-                tags: db.tags
-            }));
-            if (db.history.length > 20) db.history.shift();
-            saveToLocalStorage();
-        }
-
-        // 화면 뷰 탭 전환
-        function switchView(view) {
-            currentView = view;
-            const btnPlayer = document.getElementById('btn-view-player');
-            const btnAdmin = document.getElementById('btn-view-admin');
-            const viewPlayer = document.getElementById('view-player');
-            const viewAdmin = document.getElementById('view-admin');
-
-            if (view === 'player') {
-                viewPlayer.classList.remove('hidden');
-                viewAdmin.classList.add('hidden');
-                btnPlayer.className = "px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-850 shadow-sm border border-slate-200 transition-all";
-                btnAdmin.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1";
-                renderMarkets();
-                renderPortfolio();
-            } else {
-                viewPlayer.classList.add('hidden');
-                viewAdmin.classList.remove('hidden');
-                btnPlayer.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-800 transition-all ml-1";
-                btnAdmin.className = "px-4 py-1.5 text-xs font-bold rounded-md bg-white text-slate-850 shadow-sm border border-slate-200 transition-all";
-                switchAdminTab(adminTab);
-            }
-        }
-
-        function switchMarketTab(tab) {
-            marketTab = tab;
-            const tabPlayer = document.getElementById('tab-market-player');
-            const tabTeam = document.getElementById('tab-market-team');
-
-            if (tab === 'player-stock') {
-                tabPlayer.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600";
-                tabTeam.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
-            } else {
-                tabPlayer.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
-                tabTeam.className = "w-1/2 py-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600";
-            }
-            renderMarkets();
-        }
-
-        // 사용자 자산 렌더링
-        function renderMarkets() {
-            const listEl = document.getElementById('market-list');
-            const searchVal = document.getElementById('market-search').value.toLowerCase();
-            listEl.innerHTML = "";
-
-            if (marketTab === 'player-stock') {
-                db.players.forEach(p => {
-                    if (p.status !== 'active') return;
-                    const tag = db.tags[p.tagId] || { name: "NONE", color: "#64748b" };
-                    if (p.name.toLowerCase().includes(searchVal) || tag.name.toLowerCase().includes(searchVal)) {
-                        const isSelected = selectedItem && selectedItem.type === 'player' && selectedItem.data.id === p.id;
-                        listEl.appendChild(createMarketItemHTML(p, 'player', isSelected, tag));
-                    }
-                });
-            } else {
-                db.teams.forEach(t => {
-                    if (t.status !== 'active') return;
-                    const tag = db.tags[t.tagId] || { name: "NONE", color: "#64748b" };
-                    if (t.name.toLowerCase().includes(searchVal) || tag.name.toLowerCase().includes(searchVal)) {
-                        const isSelected = selectedItem && selectedItem.type === 'team' && selectedItem.data.id === t.id;
-                        listEl.appendChild(createMarketItemHTML(t, 'team', isSelected, tag));
-                    }
-                });
-            }
-        }
-
-        function createMarketItemHTML(item, type, isSelected, tag) {
-            const wrapper = document.createElement('div');
-            wrapper.className = `p-4 cursor-pointer transition-all hover:bg-slate-50 flex justify-between items-center ${isSelected ? 'bg-blue-50/70 border-l-4 border-blue-600' : 'bg-white'}`;
-            wrapper.onclick = () => selectItem(type, item.id);
-
-            const prevPrice = item.priceHistory && item.priceHistory.length > 1 ? item.priceHistory[item.priceHistory.length - 2] : item.basePrice;
-            const diff = item.price - prevPrice;
-            const pct = prevPrice !== 0 ? ((diff / prevPrice) * 100).toFixed(2) : 0;
-            const isUp = diff >= 0;
-
-            const nameHtml = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- 태그 추가 및 편집실 -->
+          <div class="lg:col-span-5 space-y-4">
+            <h4 class="font-bold text-sm text-slate-700 flex items-center gap-1.5">🏷️ 시스템 태그 생성 및 자유 편집</h4>
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block mb-1 text-slate-500">태그명</label>
+                <div class="flex gap-2">
+                  <input type="text" id="add-tag-name" placeholder="예: VCT Pacific, LFT" class="flex-1 bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                  <select id="edit-tag-select-choice" onchange="loadTagToEdit()" class="bg-slate-50 border border-slate-200 rounded px-2.5 py-2 focus:outline-none">
+                    <option value="">-- 신규 생성 --</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-[9px] px-2 py-0.5 rounded font-extrabold text-white" style="background-color: ${tag.color}">
-                            ${tag.name}
-                        </span>
-                        <span class="font-bold text-slate-800 text-sm">${item.name}</span>
-                    </div>
+                  <label class="block mb-1 text-slate-500">배경 색상</label>
+                  <input type="color" id="add-tag-bg" value="#e0e7ff" class="w-full h-8 bg-slate-50 border border-slate-200 rounded">
                 </div>
-            `;
-
-            const priceHtml = `
-                <div class="text-right font-mono">
-                    <div class="font-bold text-sm text-slate-800">${item.price.toLocaleString()}원</div>
-                    <div class="text-xs font-bold ${isUp ? 'text-upbit-red' : 'text-upbit-blue'}">
-                        ${isUp ? '▲' : '▼'} ${Math.abs(pct)}%
-                    </div>
+                <div>
+                  <label class="block mb-1 text-slate-500">글자 색상</label>
+                  <input type="color" id="add-tag-text" value="#4338ca" class="w-full h-8 bg-slate-50 border border-slate-200 rounded">
                 </div>
-            `;
-
-            wrapper.innerHTML = nameHtml + priceHtml;
-            return wrapper;
-        }
-
-        function selectItem(type, id) {
-            let item = type === 'player' ? db.players.find(p => p.id === id) : db.teams.find(t => t.id === id);
-            if (!item) return;
-
-            selectedItem = { type, data: item };
-
-            // 안전하게 존재하는 요소들에 데이터 맵핑
-            if(document.getElementById('selected-title')) {
-                document.getElementById('selected-title').innerText = item.name;
-            }
+              </div>
+              <div class="flex gap-2">
+                <button onclick="createNewTag()" id="tag-submit-btn" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded text-[11px] shadow-sm">태그 등록 및 변경 저장</button>
+                <button onclick="deleteSelectedTag()" id="tag-delete-btn" class="hidden py-2 px-3 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded text-[11px]">삭제</button>
+              </div>
+            </div>
             
-            const tag = db.tags[item.tagId] || { name: "NONE", color: "#64748b" };
-            const tagEl = document.getElementById('selected-tag');
-            if(tagEl) {
-                tagEl.innerText = tag.name;
-                tagEl.style.backgroundColor = tag.color;
-            }
+            <div class="pt-2 border-t border-slate-100">
+              <span class="text-[10px] font-bold text-slate-400 block mb-1">등록된 전체 시스템 태그</span>
+              <div id="admin-tags-list" class="flex flex-wrap gap-1.5 pt-1"></div>
+            </div>
+          </div>
 
-            const subInfoEl = document.getElementById('selected-sub-info');
-            if (subInfoEl) {
-                subInfoEl.innerText = type === 'player' ? '선수 개인 자산 종목' : '구단 단위 투자 종목';
-            }
+          <!-- 상장폐지 활성 상태 제어 -->
+          <div class="lg:col-span-4 border-l border-slate-100 lg:pl-6 space-y-3">
+            <h4 class="font-bold text-sm text-slate-700">❌ 임시 거래 정지 (Delisting)</h4>
+            <div class="overflow-y-auto max-h-[220px] divide-y divide-slate-100 space-y-1 text-xs">
+              <h5 class="text-[9px] font-bold text-slate-400 mt-1 uppercase">구단 상폐 목록</h5>
+              <div id="delist-team-list" class="pt-1"></div>
+              
+              <h5 class="text-[9px] font-bold text-slate-400 mt-3 uppercase">선수 상폐 목록</h5>
+              <div id="delist-player-list" class="pt-1"></div>
+            </div>
+          </div>
 
-            if(document.getElementById('selected-price')) {
-                document.getElementById('selected-price').innerText = item.price.toLocaleString();
-            }
+          <!-- 가상 서버 복구 센터 -->
+          <div class="lg:col-span-3 border-l border-slate-100 lg:pl-6 space-y-4">
+            <h4 class="font-bold text-sm text-slate-700">⚙️ 서버 초기화 및 Undo</h4>
+            <div class="space-y-2">
+              <button onclick="undoLastAction()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 rounded font-bold text-xs text-slate-700 border border-slate-200">↩️ 마지막 매치 무르기 (Undo)</button>
+              <button onclick="resetExchangeData()" class="w-full py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded font-bold text-xs text-red-700">⚠️ 전체 거래소 초기화 (Reset)</button>
+            </div>
+          </div>
 
-            const prevPrice = item.priceHistory && item.priceHistory.length > 1 ? item.priceHistory[item.priceHistory.length - 2] : item.basePrice;
-            const diff = item.price - prevPrice;
-            const pct = prevPrice !== 0 ? ((diff / prevPrice) * 100).toFixed(2) : 0;
-            const changeEl = document.getElementById('selected-change');
-            
-            if (changeEl) {
-                if (diff >= 0) {
-                    changeEl.innerText = `▲ ${pct}%`;
-                    changeEl.className = "text-xs font-bold mt-1 font-mono text-upbit-red";
-                } else {
-                    changeEl.innerText = `▼ ${Math.abs(pct)}%`;
-                    changeEl.className = "text-xs font-bold mt-1 font-mono text-upbit-blue";
-                }
-            }
+        </div>
+      </div>
 
-            if(document.getElementById('trade-price-display')) {
-                document.getElementById('trade-price-display').innerText = `${item.price.toLocaleString()} 원`;
-            }
-            
-            const qtyInput = document.getElementById('trade-quantity');
-            if(qtyInput) {
-                qtyInput.value = 1;
-            }
-            
-            calculateTradeTotal();
-            renderMarkets();
-            renderChart(item.priceHistory);
+    </section>
+
+  </main>
+
+  
+
+  <script>
+    // --- 1. 기초 데이터셋 구성 (공동 순위 수치 일원화 완료) ---
+    const initialTeams = {
+      "PRX": { id: "PRX", name: "Paper Rex", currentPrice: 140000, prevPrice: 140000, priceHistory: [140000], rank: 1, delisted: false, tagId: "PRX_tag" },
+      "FS": { id: "FS", name: "Full Sense", currentPrice: 130000, prevPrice: 130000, priceHistory: [130000], rank: 2, delisted: false, tagId: "FS_tag" },
+      "GE": { id: "GE", name: "Global Esports", currentPrice: 120000, prevPrice: 120000, priceHistory: [120000], rank: 3, delisted: false, tagId: "GE_tag" },
+      "T1": { id: "T1", name: "T1", currentPrice: 110000, prevPrice: 110000, priceHistory: [110000], rank: 4, delisted: false, tagId: "T1_tag" },
+      "RRQ": { id: "RRQ", name: "Rex Regum Qeon", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "RRQ_tag" },
+      "KRX": { id: "KRX", name: "Kiwoom DRX", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "KRX_tag" },
+      "DFM": { id: "DFM", name: "DetonatioN FocusMe", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "DFM_tag" },
+      "NS": { id: "NS", name: "Nongshim RedForce", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "NS_tag" },
+      "TS": { id: "TS", name: "Team Secret", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "TS_tag" },
+      "ZETA": { id: "ZETA", name: "ZETA DIVISION", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "ZETA_tag" },
+      "GEN": { id: "GEN", name: "Gen.G Esports", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "GEN_tag" },
+      "VL": { id: "VL", name: "VARREL", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "VL_tag" }
+    };
+
+    const initialPlayers = {
+      "primmie": { id: "primmie", name: "primmie", team: "FS", expectedValue: 114.41, currentPrice: 12818, prevPrice: 12818, priceHistory: [12818], baseStats: { acs: 265.4, kd: 1.31, kast: 74 }, delisted: false, tagId: "FS_tag" },
+      "something": { id: "something", name: "something", team: "PRX", expectedValue: 113.59, currentPrice: 12725, prevPrice: 12725, priceHistory: [12725], baseStats: { acs: 235.9, kd: 1.4, kast: 74 }, delisted: false, tagId: "PRX_tag" },
+      "Jinggg": { id: "Jinggg", name: "Jinggg", team: "PRX", expectedValue: 109.04, currentPrice: 12216, prevPrice: 12216, priceHistory: [12216], baseStats: { acs: 239.6, kd: 1.25, kast: 77 }, delisted: false, tagId: "PRX_tag" },
+      "Meiy": { id: "Meiy", name: "Meiy", team: "DFM", expectedValue: 108.39, currentPrice: 12143, prevPrice: 12143, priceHistory: [12143], baseStats: { acs: 249.9, kd: 1.21, kast: 75 }, delisted: false, tagId: "DFM_tag" },
+      "Jemkin": { id: "Jemkin", name: "Jemkin", team: "RRQ", expectedValue: 107.20, currentPrice: 12010, prevPrice: 12010, priceHistory: [12010], baseStats: { acs: 226, kd: 1.3, kast: 71 }, delisted: false, tagId: "RRQ_tag" },
+      "iZu": { id: "iZu", name: "iZu", team: "T1", expectedValue: 107.08, currentPrice: 11996, prevPrice: 11996, priceHistory: [11996], baseStats: { acs: 215.2, kd: 1.33, kast: 72 }, delisted: false, tagId: "T1_tag" },
+      "BuZz": { id: "BuZz", name: "BuZz", team: "T1", expectedValue: 106.50, currentPrice: 11931, prevPrice: 11931, priceHistory: [11931], baseStats: { acs: 243.3, kd: 1.21, kast: 72 }, delisted: false, tagId: "T1_tag" },
+      "oonzmlp": { id: "oonzmlp", name: "oonzmlp", team: "VL", expectedValue: 103.27, currentPrice: 11569, prevPrice: 11569, priceHistory: [11569], baseStats: { acs: 229.1, kd: 1.19, kast: 71 }, delisted: false, tagId: "VL_tag" },
+      "t3xture": { id: "t3xture", name: "t3xture", team: "GEN", expectedValue: 100.52, currentPrice: 11261, prevPrice: 11261, priceHistory: [11261], baseStats: { acs: 230.8, kd: 1.1, kast: 73 }, delisted: false, tagId: "GEN_tag" },
+      "PatMen": { id: "PatMen", name: "PatMen", team: "GE", expectedValue: 98.70, currentPrice: 11058, prevPrice: 11058, priceHistory: [11058], baseStats: { acs: 228, kd: 1.08, kast: 71 }, delisted: false, tagId: "GE_tag" },
+      "MaKo": { id: "MaKo", name: "MaKo", team: "KRX", expectedValue: 98.62, currentPrice: 11049, prevPrice: 11049, priceHistory: [11049], baseStats: { acs: 204.8, kd: 1.12, kast: 77 }, delisted: false, tagId: "KRX_tag" },
+      "xffero": { id: "xffero", name: "xffero", team: "RRQ", expectedValue: 98.51, currentPrice: 11036, prevPrice: 11036, priceHistory: [11036], baseStats: { acs: 211.4, kd: 1.13, kast: 72 }, delisted: false, tagId: "RRQ_tag" },
+      "HYUNMIN": { id: "HYUNMIN", name: "HYUNMIN", team: "KRX", expectedValue: 97.37, currentPrice: 10908, prevPrice: 10908, priceHistory: [10908], baseStats: { acs: 221.1, kd: 1.08, kast: 70 }, delisted: false, tagId: "KRX_tag" },
+      "f0rsakeN": { id: "f0rsakeN", name: "f0rsakeN", team: "PRX", expectedValue: 97.16, currentPrice: 10885, prevPrice: 10885, priceHistory: [10885], baseStats: { acs: 210.4, kd: 1.07, kast: 76 }, delisted: false, tagId: "PRX_tag" },
+      "Sylvan": { id: "Sylvan", name: "Sylvan", team: "TS", expectedValue: 97.10, currentPrice: 10878, prevPrice: 10878, priceHistory: [10878], baseStats: { acs: 210, kd: 1.07, kast: 76 }, delisted: false, tagId: "TS_tag" },
+      "Absol": { id: "Absol", name: "Absol", team: "ZETA", expectedValue: 96.49, currentPrice: 10810, prevPrice: 10810, priceHistory: [10810], baseStats: { acs: 228.6, kd: 1.06, kast: 66 }, delisted: false, tagId: "ZETA_tag" },
+      "Killua": { id: "Killua", name: "Killua", team: "FS", expectedValue: 95.92, currentPrice: 10746, prevPrice: 10746, priceHistory: [10746], baseStats: { acs: 200.1, kd: 1.07, kast: 77 }, delisted: false, tagId: "FS_tag" },
+      "JitBoyS": { id: "JitBoyS", name: "JitBoyS", team: "FS", expectedValue: 95.75, currentPrice: 10727, prevPrice: 10727, priceHistory: [10727], baseStats: { acs: 211, kd: 1.07, kast: 71 }, delisted: false, tagId: "FS_tag" },
+      "kellyS": { id: "kellyS", name: "kellyS", team: "TS", expectedValue: 95.74, currentPrice: 10726, prevPrice: 10726, priceHistory: [10726], baseStats: { acs: 211.6, kd: 1.03, kast: 76 }, delisted: false, tagId: "TS_tag" },
+      "Zeus": { id: "Zeus", name: "Zeus", team: "TS", expectedValue: 95.71, currentPrice: 10722, prevPrice: 10722, priceHistory: [10722], baseStats: { acs: 230.7, kd: 0.95, kast: 77 }, delisted: false, tagId: "TS_tag" },
+      "d4v41": { id: "d4v41", name: "d4v41", team: "PRX", expectedValue: 94.29, currentPrice: 10563, prevPrice: 10563, priceHistory: [10563], baseStats: { acs: 201.9, kd: 1.06, kast: 72 }, delisted: false, tagId: "PRX_tag" },
+      "Autumn": { id: "Autumn", name: "Autumn", team: "GE", expectedValue: 94.22, currentPrice: 10555, prevPrice: 10555, priceHistory: [10555], baseStats: { acs: 204.1, kd: 1.05, kast: 72 }, delisted: false, tagId: "GE_tag" },
+      "invy": { id: "invy", name: "invy", team: "PRX", expectedValue: 93.93, currentPrice: 10523, prevPrice: 10523, priceHistory: [10523], baseStats: { acs: 192.2, kd: 1.05, kast: 77 }, delisted: false, tagId: "PRX_tag" },
+      "UdoTan": { id: "UdoTan", name: "UdoTan", team: "GE", expectedValue: 92.99, currentPrice: 10418, prevPrice: 10418, priceHistory: [10418], baseStats: { acs: 204.6, kd: 1.01, kast: 73 }, delisted: false, tagId: "GE_tag" },
+      "Karon": { id: "Karon", name: "Karon", team: "GEN", expectedValue: 92.32, currentPrice: 10343, prevPrice: 10343, priceHistory: [10343], baseStats: { acs: 196.8, kd: 1.03, kast: 72 }, delisted: false, tagId: "GEN_tag" },
+      "Xross": { id: "Xross", name: "Xross", team: "NS", expectedValue: 92.19, currentPrice: 10328, prevPrice: 10328, priceHistory: [10328], baseStats: { acs: 198.6, kd: 1.02, kast: 72 }, delisted: false, tagId: "NS_tag" },
+      "Caedye": { id: "Caedye", name: "Caedye", team: "DFM", expectedValue: 92.02, currentPrice: 10309, prevPrice: 10309, priceHistory: [10309], baseStats: { acs: 210.8, kd: 1, kast: 68 }, delisted: false, tagId: "DFM_tag" },
+      "stax": { id: "stax", name: "stax", team: "T1", expectedValue: 91.97, currentPrice: 10304, prevPrice: 10304, priceHistory: [10304], baseStats: { acs: 185.8, kd: 1.04, kast: 75 }, delisted: false, tagId: "T1_tag" },
+      "Meteor": { id: "Meteor", name: "Meteor", team: "T1", expectedValue: 91.77, currentPrice: 10281, prevPrice: 10281, priceHistory: [10281], baseStats: { acs: 201.1, kd: 1, kast: 72 }, delisted: false, tagId: "T1_tag" },
+      "Francis": { id: "Francis", name: "Francis", team: "NS", expectedValue: 91.37, currentPrice: 10236, prevPrice: 10236, priceHistory: [10236], baseStats: { acs: 215.1, kd: 0.96, kast: 69 }, delisted: false, tagId: "NS_tag" },
+      "Dambi": { id: "Dambi", name: "Dambi", team: "NS", expectedValue: 90.07, currentPrice: 10091, prevPrice: 10091, priceHistory: [10091], baseStats: { acs: 211.8, kd: 0.94, kast: 69 }, delisted: false, tagId: "NS_tag" },
+      "SyouTa": { id: "SyouTa", name: "SyouTa", team: "ZETA", expectedValue: 89.44, currentPrice: 10020, prevPrice: 10020, priceHistory: [10020], baseStats: { acs: 193.6, kd: 0.97, kast: 72 }, delisted: false, tagId: "ZETA_tag" },
+      "Leviathan": { id: "Leviathan", name: "Leviathan", team: "FS", expectedValue: 88.96, currentPrice: 9966, prevPrice: 9966, priceHistory: [9966], baseStats: { acs: 178.4, kd: 1.03, kast: 70 }, delisted: false, tagId: "FS_tag" },
+      "Akame": { id: "Akame", name: "Akame", team: "DFM", expectedValue: 88.80, currentPrice: 9948, prevPrice: 9948, priceHistory: [9948], baseStats: { acs: 205.3, kd: 0.94, kast: 68 }, delisted: false, tagId: "DFM_tag" },
+      "Ash": { id: "Ash", name: "Ash", team: "GEN", expectedValue: 87.70, currentPrice: 9825, prevPrice: 9825, priceHistory: [9825], baseStats: { acs: 196, kd: 0.94, kast: 69 }, delisted: false, tagId: "GEN_tag" },
+      "free1ng": { id: "free1ng", name: "free1ng", team: "KRX", expectedValue: 87.69, currentPrice: 9824, prevPrice: 9824, priceHistory: [9824], baseStats: { acs: 190.6, kd: 0.96, kast: 69 }, delisted: false, tagId: "KRX_tag" },
+      "XuNa": { id: "XuNa", name: "XuNa", team: "VL", expectedValue: 87.54, currentPrice: 9807, prevPrice: 9807, priceHistory: [9807], baseStats: { acs: 189.6, kd: 0.96, kast: 69 }, delisted: false, tagId: "VL_tag" },
+      "Monyet": { id: "Monyet", name: "Monyet", team: "RRQ", expectedValue: 86.55, currentPrice: 9696, prevPrice: 9696, priceHistory: [9696], baseStats: { acs: 197, kd: 0.9, kast: 70 }, delisted: false, tagId: "RRQ_tag" },
+      "Lakia": { id: "Lakia", name: "Lakia", team: "GEN", expectedValue: 86.08, currentPrice: 9644, prevPrice: 9644, priceHistory: [9644], baseStats: { acs: 187.2, kd: 0.88, kast: 76 }, delisted: false, tagId: "GEN_tag" },
+      "yong": { id: "yong", name: "yong", team: "KRX", expectedValue: 85.62, currentPrice: 9592, prevPrice: 9592, priceHistory: [9592], baseStats: { acs: 184.8, kd: 0.93, kast: 69 }, delisted: false, tagId: "KRX_tag" },
+      "Kr1stal": { id: "Kr1stal", name: "Kr1stal", team: "GE", expectedValue: 84.94, currentPrice: 9516, prevPrice: 9516, priceHistory: [9516], baseStats: { acs: 185.6, kd: 0.91, kast: 69 }, delisted: false, tagId: "GE_tag" },
+      "crazyguy": { id: "crazyguy", name: "crazyguy", team: "RRQ", expectedValue: 84.48, currentPrice: 9464, prevPrice: 9464, priceHistory: [9464], baseStats: { acs: 180.5, kd: 0.91, kast: 70 }, delisted: false, tagId: "RRQ_tag" },
+      "Munchkin": { id: "Munchkin", name: "Munchkin", team: "T1", expectedValue: 84.31, currentPrice: 9445, prevPrice: 9445, priceHistory: [9445], baseStats: { acs: 170.7, kd: 0.92, kast: 73 }, delisted: false, tagId: "T1_tag" },
+      "Ivy": { id: "Ivy", name: "Ivy", team: "NS", expectedValue: 84.11, currentPrice: 9423, prevPrice: 9423, priceHistory: [9423], baseStats: { acs: 185.4, kd: 0.92, kast: 65 }, delisted: false, tagId: "NS_tag" },
+      "BeYN": { id: "BeYN", name: "BeYN", team: "KRX", expectedValue: 83.79, currentPrice: 9387, prevPrice: 9387, priceHistory: [9387], baseStats: { acs: 171.9, kd: 0.91, kast: 72 }, delisted: false, tagId: "KRX_tag" },
+      "BerserX": { id: "BerserX", name: "BerserX", team: "TS", expectedValue: 82.71, currentPrice: 9266, prevPrice: 9266, priceHistory: [9266], baseStats: { acs: 171.4, kd: 0.87, kast: 74 }, delisted: false, tagId: "TS_tag" },
+      "Kushy": { id: "Kushy", name: "Kushy", team: "RRQ", expectedValue: 81.83, currentPrice: 9168, prevPrice: 9168, priceHistory: [9168], baseStats: { acs: 166.2, kd: 0.86, kast: 75 }, delisted: false, tagId: "RRQ_tag" },
+      "Zexy": { id: "Zexy", name: "Zexy", team: "VL", expectedValue: 81.39, currentPrice: 9118, prevPrice: 9118, priceHistory: [9118], baseStats: { acs: 191.9, kd: 0.85, kast: 62 }, delisted: false, tagId: "VL_tag" },
+      "Crws": { id: "Crws", name: "Crws", team: "FS", expectedValue: 80.41, currentPrice: 9009, prevPrice: 9009, priceHistory: [9009], baseStats: { acs: 163.4, kd: 0.85, kast: 73 }, delisted: false, tagId: "FS_tag" },
+      "Klaus": { id: "Klaus", name: "Klaus", team: "VL", expectedValue: 80.25, currentPrice: 8990, prevPrice: 8990, priceHistory: [8990], baseStats: { acs: 172.3, kd: 0.88, kast: 64 }, delisted: false, tagId: "VL_tag" },
+      "xavi8k": { id: "xavi8k", name: "xavi8k", team: "GE", expectedValue: 79.07, currentPrice: 8858, prevPrice: 8858, priceHistory: [8858], baseStats: { acs: 167.1, kd: 0.84, kast: 68 }, delisted: false, tagId: "GE_tag" },
+      "Rb": { id: "Rb", name: "Rb", team: "NS", expectedValue: 78.97, currentPrice: 8847, prevPrice: 8847, priceHistory: [8847], baseStats: { acs: 157.1, kd: 0.86, kast: 70 }, delisted: false, tagId: "NS_tag" },
+      "SSeeS": { id: "SSeeS", name: "SSeeS", team: "DFM", expectedValue: 78.52, currentPrice: 8796, prevPrice: 8796, priceHistory: [8796], baseStats: { acs: 164.1, kd: 0.8, kast: 73 }, delisted: false, tagId: "DFM_tag" },
+      "SugarZ3ro": { id: "SugarZ3ro", name: "SugarZ3ro", team: "ZETA", expectedValue: 78.43, currentPrice: 8786, prevPrice: 8786, priceHistory: [8786], baseStats: { acs: 171.5, kd: 0.8, kast: 69 }, delisted: false, tagId: "ZETA_tag" },
+      "eKo": { id: "eKo", name: "eKo", team: "ZETA", expectedValue: 78.26, currentPrice: 8768, prevPrice: 8768, priceHistory: [8768], baseStats: { acs: 174.4, kd: 0.8, kast: 67 }, delisted: false, tagId: "ZETA_tag" },
+      "yatsuka": { id: "yatsuka", name: "yatsuka", team: "DFM", expectedValue: 76.42, currentPrice: 8562, prevPrice: 8562, priceHistory: [8562], baseStats: { acs: 152.8, kd: 0.82, kast: 69 }, delisted: false, tagId: "DFM_tag" },
+      "JessieVash": { id: "JessieVash", name: "JessieVash", team: "TS", expectedValue: 75.41, currentPrice: 8448, prevPrice: 8448, priceHistory: [8448], baseStats: { acs: 149.4, kd: 0.77, kast: 74 }, delisted: false, tagId: "TS_tag" },
+      "Xdll": { id: "Xdll", name: "Xdll", team: "ZETA", expectedValue: 74.41, currentPrice: 8336, prevPrice: 8336, priceHistory: [8336], baseStats: { acs: 160.7, kd: 0.77, kast: 65 }, delisted: false, tagId: "ZETA_tag" },
+      "ZynX": { id: "ZynX", name: "ZynX", team: "GEN", expectedValue: 73.62, currentPrice: 8247, prevPrice: 8247, priceHistory: [8247], baseStats: { acs: 168.1, kd: 0.7, kast: 68 }, delisted: false, tagId: "GEN_tag" },
+      "C1ndeR": { id: "C1ndeR", name: "C1ndeR", team: "VL", expectedValue: 73.15, currentPrice: 8195, prevPrice: 8195, priceHistory: [8195], baseStats: { acs: 157, kd: 0.73, kast: 68 }, delisted: false, tagId: "VL_tag" },
+      "KiTae": { id: "KiTae", name: "KiTae", team: "GEN", expectedValue: 70.51, currentPrice: 7899, prevPrice: 7899, priceHistory: [7899], baseStats: { acs: 156.7, kd: 0.65, kast: 70 }, delisted: false, tagId: "GEN_tag" },
+      "Foxy9": { id: "Foxy9", name: "Foxy9", team: "GEN", expectedValue: 70.30, currentPrice: 7876, prevPrice: 7876, priceHistory: [7876], baseStats: { acs: 140, kd: 0.7, kast: 71 }, delisted: false, tagId: "GEN_tag" },
+      "Rimuru": { id: "Rimuru", name: "Rimuru", team: "TS", expectedValue: 69.67, currentPrice: 7805, prevPrice: 7805, priceHistory: [7805], baseStats: { acs: 159.8, kd: 0.7, kast: 59 }, delisted: false, tagId: "TS_tag" },
+      "Hermes": { id: "Hermes", name: "Hermes", team: "KRX", expectedValue: 65.25, currentPrice: 7310, prevPrice: 7310, priceHistory: [7310], baseStats: { acs: 143, kd: 0.63, kast: 62 }, delisted: false, tagId: "KRX_tag" }
+    };
+
+    // 첨부해주신 이미지의 고유 배지 색감 Hex 코드를 정확하게 1:1 매칭 동기화
+    const initialTags = {
+      "pacific": { id: "pacific", name: "VCT Pacific", bg: "#00c4cc", text: "#ffffff" },
+      "PRX_tag": { id: "PRX_tag", name: "PRX", bg: "#ff007f", text: "#ffffff" },
+      "FS_tag": { id: "FS_tag", name: "FS", bg: "#ff4e00", text: "#ffffff" },
+      "GE_tag": { id: "GE_tag", name: "GE", bg: "#ffffff", text: "#1b559d" },
+      "T1_tag": { id: "T1_tag", name: "T1", bg: "#dc0024", text: "#ffffff" },
+      "RRQ_tag": { id: "RRQ_tag", name: "RRQ", bg: "#f5a623", text: "#1e293b" },
+      "KRX_tag": { id: "KRX_tag", name: "KRX", bg: "#0d235c", text: "#ffffff" },
+      "DFM_tag": { id: "DFM_tag", name: "DFM", bg: "#1f62f1", text: "#ffffff" },
+      "NS_tag": { id: "NS_tag", name: "NS", bg: "#e02020", text: "#ffffff" },
+      "TS_tag": { id: "TS_tag", name: "TS", bg: "#000000", text: "#00d4cc" },
+      "ZETA_tag": { id: "ZETA_tag", name: "ZETA", bg: "#d2f500", text: "#000000" },
+      "GEN_tag": { id: "GEN_tag", name: "GEN", bg: "#cca87a", text: "#000000" },
+      "VL_tag": { id: "VL_tag", name: "VL", bg: "#154240", text: "#f9ee73" },
+      "lft": { id: "lft", name: "LFT", bg: "#ebf1f5", text: "#4c6270" }
+    };
+
+    let state = {
+      cash: 10000000,
+      portfolio: {}, 
+      teams: JSON.parse(JSON.stringify(initialTeams)),
+      players: JSON.parse(JSON.stringify(initialPlayers)),
+      tags: JSON.parse(JSON.stringify(initialTags)),
+      historyStack: [] 
+    };
+
+    let activeTab = 'exchange';
+    let selectedStockId = 'PRX'; 
+    let selectedStockType = 'team'; 
+    let filterStockType = 'all'; 
+    let orderType = 'buy'; 
+    let chartInstance = null;
+
+    let activeAdminSubTab = 'match'; 
+
+    window.onload = function() {
+      if (localStorage.getItem('vct_state_store_v9')) {
+        try {
+          state = JSON.parse(localStorage.getItem('vct_state_store_v9'));
+        } catch (e) {
+          console.warn("스토리지를 재생성합니다.");
+        }
+      } else {
+        saveState();
+      }
+      
+      switchTab('exchange');
+      selectStock('PRX', 'team');
+      updateGlobalStatus();
+    };
+
+    function saveState() {
+      localStorage.setItem('vct_state_store_v9', JSON.stringify(state));
+    }
+
+    function updateGlobalStatus() {
+      document.getElementById('header-cash').innerText = state.cash.toLocaleString() + '원';
+      const totalVal = calculateTotalAssets();
+      document.getElementById('header-total').innerText = totalVal.toLocaleString() + '원';
+    }
+
+    function calculateTotalAssets() {
+      let stockValue = 0;
+      for (let id in state.portfolio) {
+        const item = state.portfolio[id];
+        const stock = state.teams[id] || state.players[id];
+        if (stock) {
+          stockValue += item.qty * stock.currentPrice;
+        }
+      }
+      return state.cash + stockValue;
+    }
+
+    // 순위 수치를 한국어 텍스트로 보정 표기해 주는 유틸리티 포맷터
+    function formatRank(rank) {
+      if (rank === 1) return "1위";
+      if (rank === 2) return "2위";
+      if (rank === 3) return "3위";
+      if (rank === 4) return "4위";
+      if (rank === 5.5) return "5-6위";
+      if (rank === 7.5) return "7-8위";
+      if (rank === 9.5) return "9-10위";
+      if (rank === 11.5) return "11-12위";
+      return rank + "위";
+    }
+
+    // --- 3. 글로벌 탭 제어 ---
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+
+      ['exchange', 'portfolio', 'admin'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (t === tabId) {
+          btn.className = "px-4 py-2 rounded font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm";
+        } else {
+          btn.className = "px-4 py-2 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200";
+        }
+      });
+
+      if (tabId === 'exchange') {
+        renderStockList();
+        renderSelectedStock();
+      } else if (tabId === 'portfolio') {
+        renderPortfolioTab();
+      } else if (tabId === 'admin') {
+        renderAdminTab();
+        switchAdminSubTab(activeAdminSubTab);
+      }
+    }
+
+    // --- 3-2. 어드민 내부 서브탭 전환 제어 ---
+    function switchAdminSubTab(subTabId) {
+      activeAdminSubTab = subTabId;
+      document.querySelectorAll('.admin-sub-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('admin-panel-' + subTabId).classList.remove('hidden');
+
+      ['match', 'stocks', 'season', 'system'].forEach(t => {
+        const btn = document.getElementById('admin-subtab-' + t);
+        if (t === subTabId) {
+          btn.className = "flex-1 py-2 text-xs font-bold rounded transition-all bg-white text-indigo-600 shadow-sm border border-slate-200/50";
+        } else {
+          btn.className = "flex-1 py-2 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50";
+        }
+      });
+
+      if (subTabId === 'match') {
+        initAdminDropdowns(); 
+        loadRosters();
+      } else if (subTabId === 'stocks') {
+        populateDropdownOptions();
+      } else if (subTabId === 'season') {
+        renderSeasonEndTab(); 
+      } else if (subTabId === 'system') {
+        renderAdminTags();
+        populateTagEditDropdown();
+        renderDelistControls();
+      }
+    }
+
+    // --- 4. 가상 거래소 내부 모듈 ---
+    function setStockTypeFilter(type) {
+      filterStockType = type;
+      ['all', 'team', 'player'].forEach(t => {
+        const btn = document.getElementById('btn-filter-' + t);
+        if (t === type) {
+          btn.className = "flex-1 py-1 text-xs font-bold rounded bg-indigo-600 text-white";
+        } else {
+          btn.className = "flex-1 py-1 text-xs font-bold rounded bg-slate-100 text-slate-600 border border-slate-200";
+        }
+      });
+      renderStockList();
+    }
+
+    function renderStockList() {
+      const container = document.getElementById('stock-list-container');
+      container.innerHTML = '';
+      const keyword = document.getElementById('search-input').value.toLowerCase();
+
+      let list = [];
+      if (filterStockType === 'all' || filterStockType === 'team') {
+        for (let id in state.teams) {
+          if (!state.teams[id].delisted) list.push({ ...state.teams[id], type: 'team' });
+        }
+      }
+      if (filterStockType === 'all' || filterStockType === 'player') {
+        for (let id in state.players) {
+          if (!state.players[id].delisted) list.push({ ...state.players[id], type: 'player' });
+        }
+      }
+
+      list = list.filter(item => item.name.toLowerCase().includes(keyword) || item.id.toLowerCase().includes(keyword));
+      list.sort((a, b) => b.currentPrice - a.currentPrice);
+
+      list.forEach(stock => {
+        const changePercent = ((stock.currentPrice - stock.prevPrice) / stock.prevPrice * 100).toFixed(2);
+        const changeText = changePercent >= 0 ? `+${changePercent}%` : `${changePercent}%`;
+        const colorClass = changePercent > 0 ? 'text-red-500' : (changePercent < 0 ? 'text-blue-500' : 'text-slate-500');
+
+        const isLFT = stock.type === 'player' && stock.tagId === 'lft';
+        const activeBorder = selectedStockId === stock.id ? 'border-indigo-600 bg-indigo-50/50 shadow-sm' : 'border-slate-200 hover:bg-slate-50';
+        const lftStyle = isLFT ? 'opacity-50 grayscale bg-slate-100/50' : 'bg-white';
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded border ${activeBorder} ${lftStyle} cursor-pointer transition-all flex justify-between items-center text-xs`;
+        card.onclick = () => selectStock(stock.id, stock.type);
+
+        const tag = state.tags[stock.tagId] || { name: 'LFT', bg: '#f1f5f9', text: '#475569' };
+
+        // [] 대괄호 글자를 완벽히 제거하고 이미지의 순수 색상 배지 형태로 표시
+        const tagBadgeHtml = `<span style="background-color: ${tag.bg}; color: ${tag.text};" class="px-2 py-0.5 rounded font-extrabold text-[9px] mr-1.5 shadow-sm border border-slate-200/50">${tag.name}</span>`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-1 flex-wrap">
+              ${tagBadgeHtml}
+              <span class="font-bold text-slate-800 text-sm">${stock.name}</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1 text-[10px] text-slate-400">
+              <span>${stock.type === 'team' ? '랭킹: ' + formatRank(stock.rank) : '구단 소속'}</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-slate-800 text-sm">${stock.currentPrice.toLocaleString()}원</div>
+            <div class="font-bold ${colorClass}">${changeText}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectStock(id, type) {
+      selectedStockId = id;
+      selectedStockType = type;
+      renderStockList();
+      renderSelectedStock();
+      setOrderType('buy');
+    }
+
+    function renderSelectedStock() {
+      const stock = selectedStockType === 'team' ? state.teams[selectedStockId] : state.players[selectedStockId];
+      if (!stock) return;
+
+      const tag = state.tags[stock.tagId] || { name: 'LFT', bg: '#f1f5f9', text: '#475569' };
+      const isLFT = selectedStockType === 'player' && stock.tagId === 'lft';
+
+      // 상단 배지 대괄호 기호 완전 삭제
+      const tagContainer = document.getElementById('detail-tags-container');
+      tagContainer.innerHTML = `<span style="background-color: ${tag.bg}; color: ${tag.text};" class="text-xs px-2.5 py-1 rounded font-bold border border-slate-200 shadow-sm">${tag.name}</span>`;
+      if (selectedStockType === 'team') {
+        const rankBadge = document.createElement('span');
+        rankBadge.className = "text-xs px-2.5 py-1 rounded font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm";
+        rankBadge.innerText = `${formatRank(stock.rank)}`;
+        tagContainer.appendChild(rankBadge);
+      }
+
+      document.getElementById('detail-name').innerText = stock.name;
+      document.getElementById('detail-desc').innerText = selectedStockType === 'team' ? `${stock.name} 공식 구단.` : `${isLFT ? '소속 구단 없음 (LFT)' : tag.name + ' 소속'} 프로게이머. 기대지표: ${stock.expectedValue.toFixed(2)}`;
+
+      const changePercent = ((stock.currentPrice - stock.prevPrice) / stock.prevPrice * 100).toFixed(2);
+      const diffVal = stock.currentPrice - stock.prevPrice;
+      const sign = diffVal >= 0 ? '+' : '';
+      const colorClass = diffVal > 0 ? 'text-red-500' : (diffVal < 0 ? 'text-blue-500' : 'text-slate-500');
+
+      document.getElementById('detail-price').innerText = stock.currentPrice.toLocaleString() + '원';
+      document.getElementById('detail-change').className = `text-sm font-bold ${colorClass}`;
+      document.getElementById('detail-change').innerText = `${sign}${diffVal.toLocaleString()}원 (${sign}${changePercent}%)`;
+
+      const evContainer = document.getElementById('detail-ev-container');
+      if (selectedStockType === 'player' && stock.baseStats) {
+        evContainer.classList.remove('hidden');
+        document.getElementById('ev-total').innerText = stock.expectedValue.toFixed(2);
+        document.getElementById('ev-acs').innerText = stock.baseStats.acs;
+        document.getElementById('ev-kd').innerText = stock.baseStats.kd;
+        document.getElementById('ev-kast').innerText = stock.baseStats.kast;
+      } else {
+        evContainer.classList.add('hidden');
+      }
+
+      // LFT 차단 제어
+      const orderPanel = document.getElementById('order-box-panel');
+      const orderBtn = document.getElementById('order-submit-btn');
+      const qtyInput = document.getElementById('order-qty');
+      const maxBtn = document.getElementById('order-max-btn');
+      const warnBanner = document.getElementById('lft-warning-banner');
+      const statusBadge = document.getElementById('lft-status-badge');
+
+      if (isLFT) {
+        orderPanel.classList.add('opacity-50', 'bg-slate-50', 'pointer-events-none');
+        orderBtn.disabled = true;
+        qtyInput.disabled = true;
+        maxBtn.disabled = true;
+        warnBanner.classList.remove('hidden');
+        statusBadge.classList.remove('hidden');
+      } else {
+        orderPanel.classList.remove('opacity-50', 'bg-slate-50', 'pointer-events-none');
+        orderBtn.disabled = false;
+        qtyInput.disabled = false;
+        maxBtn.disabled = false;
+        warnBanner.classList.add('hidden');
+        statusBadge.classList.add('hidden');
+      }
+
+      updateStockHoldingInfo();
+      calculateTotalOrderCost();
+      renderChart(stock.priceHistory);
+    }
+
+    function updateStockHoldingInfo() {
+      const userHas = state.portfolio[selectedStockId] || { qty: 0, avgPrice: 0 };
+      const stock = selectedStockType === 'team' ? state.teams[selectedStockId] : state.players[selectedStockId];
+      const panel = document.getElementById('selected-stock-holding');
+
+      document.getElementById('order-user-has').innerText = `${state.cash.toLocaleString()}원 / ${userHas.qty}주`;
+
+      if (userHas.qty > 0) {
+        const val = userHas.qty * stock.currentPrice;
+        const profitRatio = ((stock.currentPrice - userHas.avgPrice) / userHas.avgPrice * 100).toFixed(2);
+        const profitAmt = (stock.currentPrice - userHas.avgPrice) * userHas.qty;
+        const colorClass = profitRatio >= 0 ? 'text-red-500' : 'text-blue-500';
+
+        panel.innerHTML = `
+          <div class="flex justify-between py-1"><span>보유 수량</span><span class="font-bold text-slate-800">${userHas.qty} 주</span></div>
+          <div class="flex justify-between py-1"><span>평균 매수가</span><span class="font-bold text-slate-800">${userHas.avgPrice.toLocaleString()} 원</span></div>
+          <div class="flex justify-between py-1"><span>평가 금액</span><span class="font-bold text-indigo-600">${val.toLocaleString()} 원</span></div>
+          <div class="flex justify-between border-t border-slate-200 pt-2 mt-2">
+            <span>평가 손익</span>
+            <span class="font-bold ${colorClass}">${profitAmt >= 0 ? '+' : ''}${profitAmt.toLocaleString()}원 (${profitRatio}%)</span>
+          </div>
+        `;
+      } else {
+        panel.innerHTML = `<div class="text-xs text-slate-400 text-center py-12">현재 해당 종목의 보유 지분이 없습니다.</div>`;
+      }
+    }
+
+    // --- 5. 주문 처리 로직 ---
+    function setOrderType(type) {
+      orderType = type;
+      const btnBuy = document.getElementById('btn-order-buy');
+      const btnSell = document.getElementById('btn-order-sell');
+      const submitBtn = document.getElementById('order-submit-btn');
+
+      if (type === 'buy') {
+        btnBuy.className = "flex-1 py-2 rounded font-bold text-center bg-red-600 text-white shadow-sm";
+        btnSell.className = "flex-1 py-2 rounded font-bold text-slate-600 bg-slate-100 hover:bg-slate-200";
+        submitBtn.className = "w-full py-3 rounded font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm";
+        submitBtn.innerText = "매수 주문 전송";
+      } else {
+        btnBuy.className = "flex-1 py-2 rounded font-bold text-slate-600 bg-slate-100 hover:bg-slate-200";
+        btnSell.className = "flex-1 py-2 rounded font-bold text-center bg-blue-600 text-white shadow-sm";
+        submitBtn.className = "w-full py-3 rounded font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm";
+        submitBtn.innerText = "매도 주문 전송";
+      }
+      calculateTotalOrderCost();
+    }
+
+    function calculateTotalOrderCost() {
+      const qty = parseInt(document.getElementById('order-qty').value) || 0;
+      const stock = selectedStockType === 'team' ? state.teams[selectedStockId] : state.players[selectedStockId];
+      if (!stock) return;
+
+      const total = qty * stock.currentPrice;
+      document.getElementById('order-total-cost').innerText = total.toLocaleString() + ' 원';
+    }
+
+    function setOrderMax() {
+      const stock = selectedStockType === 'team' ? state.teams[selectedStockId] : state.players[selectedStockId];
+      if (!stock) return;
+
+      if (orderType === 'buy') {
+        const maxQty = Math.floor(state.cash / stock.currentPrice);
+        document.getElementById('order-qty').value = maxQty > 0 ? maxQty : 1;
+      } else {
+        const has = state.portfolio[selectedStockId] || { qty: 0 };
+        document.getElementById('order-qty').value = has.qty > 0 ? has.qty : 1;
+      }
+      calculateTotalOrderCost();
+    }
+
+    function executeOrder() {
+      const qty = parseInt(document.getElementById('order-qty').value) || 0;
+      if (qty <= 0) {
+        alert("수량은 1주 이상 입력해야 합니다.");
+        return;
+      }
+
+      const stock = selectedStockType === 'team' ? state.teams[selectedStockId] : state.players[selectedStockId];
+      if (!stock) return;
+
+      const orderCost = qty * stock.currentPrice;
+
+      if (orderType === 'buy') {
+        if (state.cash < orderCost) {
+          alert("예수금이 부족합니다.");
+          return;
+        }
+        state.cash -= orderCost;
+        if (!state.portfolio[selectedStockId]) {
+          state.portfolio[selectedStockId] = { qty: 0, avgPrice: 0 };
+        }
+        
+        const currentHolding = state.portfolio[selectedStockId];
+        const newTotalQty = currentHolding.qty + qty;
+        const newAvgPrice = Math.round(((currentHolding.avgPrice * currentHolding.qty) + orderCost) / newTotalQty);
+        
+        state.portfolio[selectedStockId].qty = newTotalQty;
+        state.portfolio[selectedStockId].avgPrice = newAvgPrice;
+
+      } else {
+        const currentHolding = state.portfolio[selectedStockId] || { qty: 0 };
+        if (currentHolding.qty < qty) {
+          alert("보유하고 있는 주식 수량보다 주문량이 많습니다.");
+          return;
         }
 
-        // 차트 드로잉 (실제 주가 역사만 100% 매핑)
-        function renderChart(historyData) {
-            const chartCanvas = document.getElementById('stockChart');
-            if(!chartCanvas) return;
-            const ctx = chartCanvas.getContext('2d');
-            if (chartInstance) chartInstance.destroy();
+        state.cash += orderCost;
+        state.portfolio[selectedStockId].qty -= qty;
 
-            const labels = historyData.map((_, index) => index === 0 ? "상장가" : `${index}회차 변동`);
+        if (state.portfolio[selectedStockId].qty === 0) {
+          delete state.portfolio[selectedStockId];
+        }
+      }
 
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: historyData,
-                        borderColor: '#2563eb', 
-                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                        borderWidth: 2.5,
-                        tension: 0.1,
-                        fill: true,
-                        pointRadius: historyData.length === 1 ? 6 : 4,
-                        pointBackgroundColor: '#2563eb'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
-                        y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: { size: 9 } } }
-                    }
-                }
-            });
+      saveState();
+      updateGlobalStatus();
+      updateStockHoldingInfo();
+      alert("성공적으로 주문이 완료되었습니다.");
+    }
+
+    // --- 6. 포트폴리오 탭 구현 ---
+    function renderPortfolioTab() {
+      const tableBody = document.getElementById('portfolio-table-body');
+      tableBody.innerHTML = '';
+
+      let totalStockVal = 0;
+      let totalPurchaseVal = 0;
+
+      for (let id in state.portfolio) {
+        const item = state.portfolio[id];
+        if (item.qty <= 0) continue;
+
+        const isTeam = state.teams[id] ? true : false;
+        const stock = isTeam ? state.teams[id] : state.players[id];
+        if (!stock) continue;
+
+        const currentVal = item.qty * stock.currentPrice;
+        const purchaseVal = item.qty * item.avgPrice;
+        const profitAmt = currentVal - purchaseVal;
+        const profitRatio = ((stock.currentPrice - item.avgPrice) / item.avgPrice * 100).toFixed(2);
+
+        totalStockVal += currentVal;
+        totalPurchaseVal += purchaseVal;
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 text-xs text-slate-800';
+        
+        const badgeClass = isTeam ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200';
+        const badgeText = isTeam ? 'TEAM' : 'PLAY';
+        const profitColor = profitAmt >= 0 ? 'text-red-500' : 'text-blue-500';
+
+        row.innerHTML = `
+          <td class="p-3"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${badgeClass}">${badgeText}</span></td>
+          <td class="p-3 font-bold text-slate-900">${stock.name}</td>
+          <td class="p-3 text-right font-medium">${item.qty.toLocaleString()} 주</td>
+          <td class="p-3 text-right">${item.avgPrice.toLocaleString()} 원</td>
+          <td class="p-3 text-right font-bold">${stock.currentPrice.toLocaleString()} 원</td>
+          <td class="p-3 text-right font-bold text-indigo-600">${currentVal.toLocaleString()} 원</td>
+          <td class="p-3 text-right font-bold ${profitColor}">
+            ${profitAmt >= 0 ? '+' : ''}${profitAmt.toLocaleString()}원<br>
+            <span class="text-[10px] font-semibold">${profitRatio}%</span>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      }
+
+      const totalAssets = state.cash + totalStockVal;
+      document.getElementById('port-total-assets').innerText = totalAssets.toLocaleString() + '원';
+      document.getElementById('port-cash').innerText = state.cash.toLocaleString() + '원';
+      document.getElementById('port-stock-val').innerText = totalStockVal.toLocaleString() + '원';
+
+      const totalProfitRatio = totalPurchaseVal > 0 ? ((totalStockVal - totalPurchaseVal) / totalPurchaseVal * 100).toFixed(2) : '0.00';
+      const profitContainer = document.getElementById('port-total-profit');
+      profitContainer.innerText = `${totalProfitRatio}%`;
+      profitContainer.className = `text-2xl font-black mt-1 ${totalProfitRatio >= 0 ? 'text-red-500' : 'text-blue-500'}`;
+    }
+
+    // --- 7. 어드민 경기 등록용 맵핑 빌더 ---
+    function getDynamicRoster(teamId) {
+      const targetTagId = teamId + '_tag';
+      const roster = [];
+      for (let pId in state.players) {
+        if (state.players[pId].tagId === targetTagId) {
+          roster.push(pId);
+        }
+      }
+      return roster;
+    }
+
+    function initAdminDropdowns() {
+      const selectA = document.getElementById('admin-team-a');
+      const selectB = document.getElementById('admin-team-b');
+      
+      if (!selectA || !selectB) return; 
+
+      selectA.innerHTML = '';
+      selectB.innerHTML = '';
+
+      for (let id in state.teams) {
+        const optionA = document.createElement('option');
+        optionA.value = id;
+        optionA.text = `${state.teams[id].name} (${id})`;
+        selectA.add(optionA);
+
+        const optionB = document.createElement('option');
+        optionB.value = id;
+        optionB.text = `${state.teams[id].name} (${id})`;
+        selectB.add(optionB);
+      }
+
+      selectA.value = "PRX";
+      selectB.value = "FS";
+    }
+
+    function loadRosters() {
+      const selectA = document.getElementById('admin-team-a');
+      const selectB = document.getElementById('admin-team-b');
+      if (!selectA || !selectB) return;
+
+      const teamA = selectA.value;
+      const teamB = selectB.value;
+
+      document.getElementById('roster-title-a').innerText = `${state.teams[teamA] ? state.teams[teamA].name : '홈팀'} 로스터`;
+      document.getElementById('roster-title-b').innerText = `${state.teams[teamB] ? state.teams[teamB].name : '어웨이팀'} 로스터`;
+
+      renderRosterForm(teamA, 'roster-container-a', 'a');
+      renderRosterForm(teamB, 'roster-container-b', 'b');
+      
+      updateCheckedCount('a');
+      updateCheckedCount('b');
+    }
+
+    function renderRosterForm(teamCode, containerId, teamPrefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      
+      const rosterList = getDynamicRoster(teamCode);
+
+      rosterList.forEach((pId, index) => {
+        const player = state.players[pId];
+        if (!player) return;
+
+        const isMain = index < 5; 
+        const card = document.createElement('div');
+        card.className = "bg-white border border-slate-200 rounded p-3 space-y-2 text-xs transition-all shadow-sm";
+        card.id = `admin-player-card-${pId}`;
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-200">
+            <label class="flex items-center gap-2 font-bold cursor-pointer">
+              <input type="checkbox" id="${teamPrefix}-check-${pId}" ${isMain ? 'checked' : ''} 
+                onchange="togglePlayerInput('${pId}', '${teamPrefix}')" 
+                class="${teamPrefix}-player-checkbox rounded text-indigo-600 focus:ring-0">
+              <span class="${player.delisted ? 'line-through text-slate-400' : 'text-slate-800'}">${player.name}</span>
+            </label>
+            <span class="text-[10px] text-slate-400 font-bold">기대 EV: ${player.expectedValue.toFixed(1)}</span>
+          </div>
+          <div id="stats-fields-${pId}" class="${isMain ? '' : 'hidden'} grid grid-cols-3 gap-1.5 pt-1">
+            <div>
+              <span class="text-[9px] text-slate-500 block font-semibold">ACS</span>
+              <input type="number" id="stats-acs-${pId}" value="${player.baseStats.acs}" class="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+            </div>
+            <div>
+              <span class="text-[9px] text-slate-500 block font-semibold">K/D</span>
+              <input type="number" id="stats-kd-${pId}" value="${player.baseStats.kd}" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+            </div>
+            <div>
+              <span class="text-[9px] text-slate-500 block font-semibold">KAST (%)</span>
+              <input type="number" id="stats-kast-${pId}" value="${player.baseStats.kast}" class="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function togglePlayerInput(pId, teamPrefix) {
+      const checkbox = document.getElementById(`${teamPrefix}-check-${pId}`);
+      const checkedBoxes = document.querySelectorAll(`.${teamPrefix}-player-checkbox:checked`);
+
+      if (checkbox.checked && checkedBoxes.length > 5) {
+        alert("주전은 팀당 최대 5명까지만 구성할 수 있습니다.");
+        checkbox.checked = false;
+        return;
+      }
+
+      const statsDiv = document.getElementById(`stats-fields-${pId}`);
+      if (checkbox.checked) {
+        statsDiv.classList.remove('hidden');
+      } else {
+        statsDiv.classList.add('hidden');
+      }
+
+      updateCheckedCount(teamPrefix);
+    }
+
+    function updateCheckedCount(teamPrefix) {
+      const count = document.querySelectorAll(`.${teamPrefix}-player-checkbox:checked`).length;
+      document.getElementById(`active-count-${teamPrefix}`).innerText = `선택: ${count} / 5`;
+    }
+
+    function adjustScoreLimits() {
+      const format = document.getElementById('match-format').value;
+      const scoreA = document.getElementById('score-a');
+      const scoreB = document.getElementById('score-b');
+      if (format === 'Bo3') {
+        scoreA.max = 2; scoreB.max = 2;
+        scoreA.value = 2; scoreB.value = 0;
+      } else {
+        scoreA.max = 3; scoreB.max = 3;
+        scoreA.value = 3; scoreB.value = 0;
+      }
+    }
+
+    function renderAdminTab() {
+      initAdminDropdowns(); 
+      loadRosters();
+      renderDelistControls();
+      renderAdminTags();
+      populateDropdownOptions();
+    }
+
+    // 리그 및 소속팀 드롭다운 구성 동기화 (CRUD 전용)
+    function populateDropdownOptions() {
+      const addTagSelect = document.getElementById('add-stock-tag');
+      const editTagSelect = document.getElementById('edit-stock-tag');
+      const editSelect = document.getElementById('edit-stock-select');
+
+      addTagSelect.innerHTML = '';
+      editTagSelect.innerHTML = '';
+      editSelect.innerHTML = '<option value="">-- 종목 선택 --</option>';
+
+      for (let id in state.teams) {
+        editSelect.add(new Option(`[TEAM] ${state.teams[id].name} (${id})`, 'team_' + id));
+      }
+      for (let id in state.players) {
+        editSelect.add(new Option(`[PLAYER] ${state.players[id].name} (${id})`, 'player_' + id));
+      }
+
+      for (let id in state.tags) {
+        const t = state.tags[id];
+        addTagSelect.add(new Option(t.name, id));
+        editTagSelect.add(new Option(t.name, id));
+      }
+
+      adjustAddForm();
+    }
+
+    function adjustAddForm() {
+      const type = document.getElementById('add-stock-type').value;
+      const rankField = document.getElementById('add-team-rank-field');
+      const playerStats = document.getElementById('add-player-stats');
+
+      if (type === 'team') {
+        rankField.classList.remove('hidden');
+        playerStats.classList.add('hidden');
+      } else {
+        rankField.classList.add('hidden');
+        playerStats.classList.remove('hidden');
+      }
+    }
+
+    function addNewStock() {
+      const type = document.getElementById('add-stock-type').value;
+      const id = document.getElementById('add-stock-id').value.trim();
+      const name = document.getElementById('add-stock-name').value.trim();
+      const tagId = document.getElementById('add-stock-tag').value;
+      const price = parseInt(document.getElementById('add-stock-price').value) || 10000;
+
+      if (!id || !name) {
+        alert("ID와 종목명을 입력하십시오.");
+        return;
+      }
+
+      if (type === 'team') {
+        if (state.teams[id]) { alert("이미 존재하는 구단 ID입니다."); return; }
+        const rank = parseFloat(document.getElementById('add-stock-rank').value) || 12;
+        state.teams[id] = { id, name, currentPrice: price, prevPrice: price, priceHistory: [price], rank, delisted: false, tagId };
+        teamRosters[id] = [];
+      } else {
+        if (state.players[id]) { alert("이미 존재하는 선수 ID입니다."); return; }
+        const acs = parseFloat(document.getElementById('add-p-acs').value) || 200;
+        const kd = parseFloat(document.getElementById('add-p-kd').value) || 1.0;
+        const kast = parseFloat(document.getElementById('add-p-kast').value) || 70;
+
+        const ev = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
+
+        state.players[id] = { id, name, team: "CUSTOM", expectedValue: ev, currentPrice: price, prevPrice: price, priceHistory: [price], baseStats: { acs, kd, kast }, delisted: false, tagId };
+      }
+
+      saveState();
+      populateDropdownOptions();
+      alert("신규 종목이 상장 등록되었습니다.");
+    }
+
+    function loadStockToEdit() {
+      const selected = document.getElementById('edit-stock-select').value;
+      const statsDiv = document.getElementById('edit-player-stats-div');
+      const rankField = document.getElementById('edit-rank-field-div');
+
+      if (!selected) return;
+
+      const [type, id] = selected.split('_');
+
+      if (type === 'team') {
+        const team = state.teams[id];
+        document.getElementById('edit-stock-name').value = team.name;
+        document.getElementById('edit-stock-price').value = team.currentPrice;
+        document.getElementById('edit-stock-tag').value = team.tagId;
+        document.getElementById('edit-stock-rank').value = team.rank;
+        
+        rankField.classList.remove('hidden');
+        statsDiv.classList.add('hidden');
+      } else {
+        const player = state.players[id];
+        document.getElementById('edit-stock-name').value = player.name;
+        document.getElementById('edit-stock-price').value = player.currentPrice;
+        document.getElementById('edit-stock-tag').value = player.tagId;
+
+        rankField.classList.add('hidden');
+        statsDiv.classList.remove('hidden');
+
+        document.getElementById('edit-p-acs').value = player.baseStats.acs;
+        document.getElementById('edit-p-kd').value = player.baseStats.kd;
+        document.getElementById('edit-p-kast').value = player.baseStats.kast;
+      }
+    }
+
+    function updateExistingStock() {
+      const selected = document.getElementById('edit-stock-select').value;
+      if (!selected) { alert("대상을 지정해 주십시오."); return; }
+
+      const [type, id] = selected.split('_');
+      const name = document.getElementById('edit-stock-name').value.trim();
+      const price = parseInt(document.getElementById('edit-stock-price').value) || 0;
+      const tagId = document.getElementById('edit-stock-tag').value;
+
+      if (type === 'team') {
+        const team = state.teams[id];
+        team.name = name;
+        team.currentPrice = price;
+        team.tagId = tagId;
+        team.rank = parseFloat(document.getElementById('edit-stock-rank').value) || team.rank;
+      } else {
+        const player = state.players[id];
+        player.name = name;
+        player.currentPrice = price;
+        player.tagId = tagId;
+
+        const acs = parseFloat(document.getElementById('edit-p-acs').value) || 200;
+        const kd = parseFloat(document.getElementById('edit-p-kd').value) || 1.0;
+        const kast = parseFloat(document.getElementById('edit-p-kast').value) || 70;
+
+        player.baseStats = { acs, kd, kast };
+        player.expectedValue = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
+      }
+
+      saveState();
+      populateDropdownOptions();
+      alert("종목 정보가 업데이트되었습니다.");
+    }
+
+    // --- 9. 유니버설 태그 CRUD 전용 패널 제어장치 ---
+    function renderAdminTags() {
+      const cont = document.getElementById('admin-tags-list');
+      cont.innerHTML = '';
+      for (let id in state.tags) {
+        const tag = state.tags[id];
+        const span = document.createElement('span');
+        span.style.backgroundColor = tag.bg;
+        span.style.color = tag.text;
+        span.className = "px-2.5 py-0.5 rounded text-[10px] font-bold border border-slate-200/50 shadow-sm";
+        span.innerText = tag.name; 
+        cont.appendChild(span);
+      }
+    }
+
+    function populateTagEditDropdown() {
+      const select = document.getElementById('edit-tag-select-choice');
+      select.innerHTML = '<option value="">-- 신규 생성 --</option>';
+      for (let id in state.tags) {
+        select.add(new Option(state.tags[id].name, id));
+      }
+      loadTagToEdit();
+    }
+
+    function loadTagToEdit() {
+      const selectedId = document.getElementById('edit-tag-select-choice').value;
+      const deleteBtn = document.getElementById('tag-delete-btn');
+      const submitBtn = document.getElementById('tag-submit-btn');
+
+      if (!selectedId) {
+        document.getElementById('add-tag-name').value = '';
+        document.getElementById('add-tag-bg').value = '#e0e7ff';
+        document.getElementById('add-tag-text').value = '#4338ca';
+        deleteBtn.classList.add('hidden');
+        submitBtn.innerText = "신규 태그 등록";
+      } else {
+        const tag = state.tags[selectedId];
+        document.getElementById('add-tag-name').value = tag.name;
+        document.getElementById('add-tag-bg').value = tag.bg;
+        document.getElementById('add-tag-text').value = tag.text;
+        deleteBtn.classList.remove('hidden');
+        submitBtn.innerText = "태그 속성 변경 저장";
+      }
+    }
+
+    function createNewTag() {
+      const selectedId = document.getElementById('edit-tag-select-choice').value;
+      const name = document.getElementById('add-tag-name').value.trim();
+      const bg = document.getElementById('add-tag-bg').value;
+      const text = document.getElementById('add-tag-text').value;
+
+      if (!name) { alert("이름을 기입하세요."); return; }
+
+      if (!selectedId) {
+        const id = 'tag_' + Date.now();
+        state.tags[id] = { id, name, bg, text };
+        alert("유니버설 태그가 신설되었습니다.");
+      } else {
+        state.tags[selectedId].name = name;
+        state.tags[selectedId].bg = bg;
+        state.tags[selectedId].text = text;
+        alert("태그 전역 일괄 변경되었습니다.");
+      }
+
+      saveState();
+      renderAdminTags();
+      populateTagEditDropdown();
+    }
+
+    function deleteSelectedTag() {
+      const selectedId = document.getElementById('edit-tag-select-choice').value;
+      if (!selectedId) return;
+
+      if (selectedId === 'pacific' || selectedId === 'lft') {
+        alert("기본 지정 디폴트 태그는 삭제할 수 없습니다.");
+        return;
+      }
+
+      if (confirm("삭제된 태그를 지닌 구단/선수의 태그가 'LFT'로 안전 전환됩니다. 삭제하시겠습니까?")) {
+        for (let tId in state.teams) {
+          if (state.teams[tId].tagId === selectedId) state.teams[tId].tagId = 'pacific';
+        }
+        for (let pId in state.players) {
+          if (state.players[pId].tagId === selectedId) state.players[pId].tagId = 'lft';
         }
 
-        // 거래 프로세스
-        function setTradeMode(mode) {
-            tradeMode = mode;
-            const btnBuy = document.getElementById('btn-trade-buy');
-            const btnSell = document.getElementById('btn-trade-sell');
-            const btnExec = document.getElementById('btn-execute-trade');
+        delete state.tags[selectedId];
+        saveState();
+        renderAdminTags();
+        populateTagEditDropdown();
+      }
+    }
 
-            if (mode === 'buy') {
-                btnBuy.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-red text-white shadow-sm";
-                btnSell.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800 ml-2";
-                btnExec.className = "w-full py-3 bg-upbit-red text-white rounded-lg font-bold text-sm mt-2 shadow-sm";
-                btnExec.innerText = "매수 체결 실행";
-            } else {
-                btnBuy.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg text-slate-500 bg-slate-100 hover:text-slate-800";
-                btnSell.className = "w-1/2 py-2 text-center text-sm font-bold rounded-lg bg-upbit-blue text-white ml-2 shadow-sm";
-                btnExec.className = "w-full py-3 bg-upbit-blue text-white rounded-lg font-bold text-sm mt-2 shadow-sm";
-                btnExec.innerText = "매도 체결 실행";
-            }
-            calculateTradeTotal();
+    // --- 9-2. 시즌 종료 최종 순위 보정 탭 렌더링 및 공동 순위 일원화 처리 ---
+    function renderSeasonEndTab() {
+      const tbody = document.getElementById('season-adjustment-table-body');
+      tbody.innerHTML = '';
+
+      const teamList = Object.values(state.teams);
+      teamList.sort((a, b) => a.rank - b.rank);
+
+      // 공동 순위 묶음 옵션 배열화 정의
+      const rankOptions = [
+        { val: 1, label: "1위" },
+        { val: 2, label: "2위" },
+        { val: 3, label: "3위" },
+        { val: 4, label: "4위" },
+        { val: 5.5, label: "5-6위" },
+        { val: 7.5, label: "7-8위" },
+        { val: 9.5, label: "9-10위" },
+        { val: 11.5, label: "11-12위" }
+      ];
+
+      teamList.forEach(team => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 text-xs transition-colors';
+
+        const optionsHtml = rankOptions.map(opt => 
+          `<option value="${opt.val}" ${opt.val === team.rank ? 'selected' : ''}>${opt.label}</option>`
+        ).join('');
+
+        row.innerHTML = `
+          <td class="p-3 font-bold text-slate-800">${team.name} (${team.id})</td>
+          <td class="p-3 text-slate-500 font-semibold">${formatRank(team.rank)}</td>
+          <td class="p-3 text-slate-500">${team.currentPrice.toLocaleString()} 원</td>
+          <td class="p-3">
+            <select id="season-new-rank-${team.id}" onchange="calculateLiveSeasonPreview('${team.id}')" class="bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none font-bold text-slate-800">
+              ${optionsHtml}
+            </select>
+          </td>
+          <td class="p-3" id="season-base-rate-${team.id}">0%</td>
+          <td class="p-3" id="season-special-rate-${team.id}">0%</td>
+          <td class="p-3 text-right font-bold text-slate-700" id="season-total-rate-${team.id}">0.00%</td>
+          <td class="p-3 text-right font-black text-indigo-600" id="season-est-price-${team.id}">${team.currentPrice.toLocaleString()} 원</td>
+        `;
+        tbody.appendChild(row);
+        calculateLiveSeasonPreview(team.id); 
+      });
+    }
+
+    // 시즌 종료 라이브 프리뷰 단일 연산기 (공동 랭크 계산식 동기화)
+    function calculateLiveSeasonPreview(teamId) {
+      const team = state.teams[teamId];
+      if (!team) return;
+
+      const prevRank = team.rank;
+      const currentRank = parseFloat(document.getElementById(`season-new-rank-${teamId}`).value);
+
+      const baseChangeRate = (prevRank - currentRank) * 5;
+
+      // 일원화된 공동 순위 기반 특수 변동 가산율
+      let specialAdjustment = 0;
+      if (currentRank === 1) specialAdjustment = 20; 
+      else if (currentRank === 2) specialAdjustment = 15;
+      else if (currentRank === 3) specialAdjustment = 10;
+      else if (currentRank === 4) specialAdjustment = 5;
+      else if (currentRank === 5.5 || currentRank === 7.5) specialAdjustment = 0; // 5~8위 구간 0%
+      else if (currentRank === 9.5) specialAdjustment = -10; // 9~10위 구간 -10%
+      else if (currentRank === 11.5) specialAdjustment = -20; // 11~12위 구간 -20%
+
+      const totalChangePercent = baseChangeRate + specialAdjustment;
+      const estPrice = Math.round(team.currentPrice * (1 + (totalChangePercent / 100)));
+
+      const baseEl = document.getElementById(`season-base-rate-${teamId}`);
+      const specialEl = document.getElementById(`season-special-rate-${teamId}`);
+      const totalEl = document.getElementById(`season-total-rate-${teamId}`);
+      const estPriceEl = document.getElementById(`season-est-price-${teamId}`);
+
+      baseEl.innerText = `${baseChangeRate >= 0 ? '+' : ''}${baseChangeRate}%`;
+      specialEl.innerText = `${specialAdjustment >= 0 ? '+' : ''}${specialAdjustment}%`;
+      totalEl.innerText = `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(2)}%`;
+      totalEl.className = `p-3 text-right font-bold ${totalChangePercent >= 0 ? 'text-red-500' : 'text-blue-500'}`;
+      
+      estPriceEl.innerText = `${Math.max(1, estPrice).toLocaleString()} 원`;
+    }
+
+    // 시즌 종료 최종 순위 보정 실행 (데이터셋 반영 및 이관)
+    function executeSeasonEndAdjustment() {
+      if (!confirm("정말 전술한 주가 변동률에 의거해 주식 시장의 시즌 최종 순위 가치를 변동 마감하시겠습니까?")) {
+        return;
+      }
+
+      saveSnapshot();
+
+      for (let id in state.teams) {
+        const team = state.teams[id];
+        const currentRank = parseFloat(document.getElementById(`season-new-rank-${id}`).value);
+
+        const baseChangeRate = (team.rank - currentRank) * 5;
+        
+        let specialAdjustment = 0;
+        if (currentRank === 1) specialAdjustment = 20;
+        else if (currentRank === 2) specialAdjustment = 15;
+        else if (currentRank === 3) specialAdjustment = 10;
+        else if (currentRank === 4) specialAdjustment = 5;
+        else if (currentRank === 5.5 || currentRank === 7.5) specialAdjustment = 0;
+        else if (currentRank === 9.5) specialAdjustment = -10;
+        else if (currentRank === 11.5) specialAdjustment = -20;
+
+        const totalChangePercent = baseChangeRate + specialAdjustment;
+
+        team.prevPrice = team.currentPrice;
+        const rawNext = Math.round(team.currentPrice * (1 + (totalChangePercent / 100)));
+        team.currentPrice = Math.max(1, rawNext);
+        team.priceHistory.push(team.currentPrice);
+
+        team.rank = currentRank;
+      }
+
+      saveState();
+      updateGlobalStatus();
+      alert("전 구단의 시즌 최종 순위 가치 보정 및 신규 랭킹 이관이 완료되었습니다.");
+      renderSeasonEndTab();
+    }
+
+    // --- 10. 경기 결과 처리 및 전산 적용 ---
+    function submitMatchResult() {
+      const teamA = document.getElementById('admin-team-a').value;
+      const teamB = document.getElementById('admin-team-b').value;
+      
+      if (teamA === teamB) { alert("양 구단이 동일합니다."); return; }
+
+      const countA = document.querySelectorAll('.a-player-checkbox:checked').length;
+      const countB = document.querySelectorAll('.b-player-checkbox:checked').length;
+
+      if (countA !== 5 || countB !== 5) {
+        alert("경기 처리를 위해 주전 5인을 모두 배정하여 체크해야 제출할 수 있습니다.");
+        return;
+      }
+
+      const scoreA = parseInt(document.getElementById('score-a').value);
+      const scoreB = parseInt(document.getElementById('score-b').value);
+      
+      const winnerOdds = parseFloat(document.getElementById('odds-winner').value) || 1.0;
+      const format = document.getElementById('match-format').value;
+
+      const maxScore = format === 'Bo3' ? 2 : 3;
+      if (scoreA !== maxScore && scoreB !== maxScore) {
+        alert(`${format} 경기 결과 완성 조건 불충족`);
+        return;
+      }
+
+      saveSnapshot();
+
+      const teamAWon = scoreA > scoreB;
+      const winnerCode = teamAWon ? teamA : teamB;
+      const loserCode = teamAWon ? teamB : teamA;
+      const winnerScore = teamAWon ? scoreA : scoreB;
+      const loserScore = teamAWon ? scoreB : scoreA;
+
+      const baseChangeRate = winnerOdds * 0.08;
+      let scoreModifier = 1.0;
+      if (format === 'Bo3') {
+        if (winnerScore === 2 && loserScore === 0) scoreModifier = 1.05;
+        if (winnerScore === 2 && loserScore === 1) scoreModifier = 0.95;
+      } else if (format === 'Bo5') {
+        if (winnerScore === 3 && loserScore === 0) scoreModifier = 1.10;
+        if (winnerScore === 3 && loserScore === 1) scoreModifier = 1.00;
+        if (winnerScore === 3 && loserScore === 2) scoreModifier = 0.90;
+      }
+
+      const winRatePercent = baseChangeRate * scoreModifier;
+      const loseRatePercent = -baseChangeRate * scoreModifier;
+
+      const wTeam = state.teams[winnerCode];
+      wTeam.prevPrice = wTeam.currentPrice;
+      const wNext = Math.round(wTeam.currentPrice * (1 + winRatePercent));
+      wTeam.currentPrice = Math.max(1, wNext);
+      wTeam.priceHistory.push(wTeam.currentPrice);
+
+      const lTeam = state.teams[loserCode];
+      lTeam.prevPrice = lTeam.currentPrice;
+      const lNext = Math.round(lTeam.currentPrice * (1 + loseRatePercent));
+      lTeam.currentPrice = Math.max(1, lNext);
+      lTeam.priceHistory.push(lTeam.currentPrice);
+
+      const processPlayer = (pId, prefix) => {
+        const checkbox = document.getElementById(`${prefix}-check-${pId}`);
+        if (checkbox && checkbox.checked) {
+          const acs = parseFloat(document.getElementById(`stats-acs-${pId}`).value) || 0;
+          const kd = parseFloat(document.getElementById(`stats-kd-${pId}`).value) || 0;
+          const kast = parseFloat(document.getElementById(`stats-kast-${pId}`).value) || 0;
+
+          const rScore = kd * 100;
+          const kScore = kast;
+          const aScore = acs * 0.5;
+
+          const finalMatchScore = (rScore * 0.4) + (kScore * 0.3) + (aScore * 0.3);
+          const player = state.players[pId];
+          const diff = finalMatchScore - player.expectedValue;
+          
+          const sensitivity = 0.01;
+          const rate = diff * sensitivity;
+
+          player.prevPrice = player.currentPrice;
+          const rawPrice = Math.round(player.currentPrice * (1 + rate));
+          
+          const maxDownLimit = Math.round(player.prevPrice * 0.001); 
+          player.currentPrice = Math.max(1, rawPrice, maxDownLimit);
+          player.priceHistory.push(player.currentPrice);
         }
+      };
 
-        function calculateTradeTotal() {
-            if (!selectedItem) return;
-            const qtyInput = document.getElementById('trade-quantity');
-            const totalDisplay = document.getElementById('trade-total-display');
-            if(!qtyInput || !totalDisplay) return;
+      getDynamicRoster(teamA).forEach(pId => processPlayer(pId, 'a'));
+      getDynamicRoster(teamB).forEach(pId => processPlayer(pId, 'b'));
 
-            const qty = parseInt(qtyInput.value) || 0;
-            const total = selectedItem.data.price * qty;
-            totalDisplay.innerText = `${total.toLocaleString()} 원`;
+      saveState();
+      updateGlobalStatus();
+      alert("경기가 정상 반영되었습니다.");
+      renderAdminTab();
+    }
+
+    // --- 11. Undo 메모리 제어 모듈 ---
+    function saveSnapshot() {
+      if (state.historyStack.length >= 5) state.historyStack.shift();
+      state.historyStack.push(JSON.parse(JSON.stringify({
+        cash: state.cash,
+        portfolio: state.portfolio,
+        teams: state.teams,
+        players: state.players
+      })));
+    }
+
+    function undoLastAction() {
+      if (state.historyStack.length === 0) { alert("되돌릴 이전 기록이 없습니다."); return; }
+      const prev = state.historyStack.pop();
+      state.cash = prev.cash;
+      state.portfolio = prev.portfolio;
+      state.teams = prev.teams;
+      state.players = prev.players;
+
+      saveState();
+      updateGlobalStatus();
+      alert("가치가 원복되었습니다.");
+      renderAdminTab();
+    }
+
+    // 전체 로컬 저장소 클리어 및 재생성을 보장하는 완전 초기화 연계
+    function resetExchangeData() {
+      if (confirm("정말 전체 거래소 및 투자금 내역을 공장 초기 상태로 리셋하시겠습니까?")) {
+        localStorage.clear(); 
+        location.reload();
+      }
+    }
+
+    function renderDelistControls() {
+      const teamListCont = document.getElementById('delist-team-list');
+      teamListCont.innerHTML = '';
+      for (let id in state.teams) {
+        const team = state.teams[id];
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center py-1 border-b border-slate-100';
+        row.innerHTML = `
+          <span class="font-bold text-slate-800">${team.name}</span>
+          <button onclick="toggleDelist('team', '${id}')" class="px-2 py-0.5 rounded font-bold text-[10px] ${team.delisted ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
+            ${team.delisted ? '상폐 정지' : '정상 거래'}
+          </button>
+        `;
+        teamListCont.appendChild(row);
+      }
+
+      const playerListCont = document.getElementById('delist-player-list');
+      playerListCont.innerHTML = '';
+      for (let id in state.players) {
+        const player = state.players[id];
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center py-1 border-b border-slate-100';
+        row.innerHTML = `
+          <span class="font-bold text-slate-800">${player.name} (${player.team})</span>
+          <button onclick="toggleDelist('player', '${id}')" class="px-2 py-0.5 rounded font-bold text-[10px] ${player.delisted ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
+            ${player.delisted ? '상폐 정지' : '정상 거래'}
+          </button>
+        `;
+        playerListCont.appendChild(row);
+      }
+    }
+
+    function toggleDelist(type, id) {
+      if (type === 'team') {
+        state.teams[id].delisted = !state.teams[id].delisted;
+      } else {
+        state.players[id].delisted = !state.players[id].delisted;
+      }
+      saveState();
+      renderDelistControls();
+    }
+
+    // --- 12. 차트 모듈 ---
+    function renderChart(historyData) {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const labels = historyData.map((_, i) => `${i}회차`);
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '가치 추이 (원)',
+            data: historyData,
+            borderColor: '#4f46e5',
+            borderWidth: 2,
+            backgroundColor: 'rgba(79, 70, 229, 0.05)',
+            fill: true,
+            tension: 0.15,
+            pointRadius: 3,
+            pointBackgroundColor: '#6366f1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: '#e2e8f0' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            },
+            y: {
+              grid: { color: '#e2e8f0' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            }
+          }
         }
-
-        function executeTrade() {
-            if (!selectedItem) return;
-            if (selectedItem.data.status !== 'active') {
-                alert("상장 폐지 처리되어 거래가 불가한 종목입니다.");
-                return;
-            }
-
-            const qtyInput = document.getElementById('trade-quantity');
-            if(!qtyInput) return;
-            const qty = parseInt(qtyInput.value) || 0;
-            if (qty <= 0) {
-                alert("체결 수량을 확인해주십시오.");
-                return;
-            }
-
-            const totalCost = selectedItem.data.price * qty;
-            const id = selectedItem.data.id;
-
-            if (tradeMode === 'buy') {
-                if (db.cash < totalCost) {
-                    alert("가용 원화 예수금이 부족합니다.");
-                    return;
-                }
-                db.cash -= totalCost;
-
-                if (!db.holdings[id]) {
-                    db.holdings[id] = { qty: 0, avgPrice: 0 };
-                }
-
-                const hold = db.holdings[id];
-                const newQty = hold.qty + qty;
-                const newAvg = Math.round(((hold.qty * hold.avgPrice) + totalCost) / newQty);
-
-                hold.qty = newQty;
-                hold.avgPrice = newAvg;
-            } else {
-                if (!db.holdings[id] || db.holdings[id].qty < qty) {
-                    alert("매도하려는 수량이 보유 잔고보다 많습니다.");
-                    return;
-                }
-                db.cash += totalCost;
-                db.holdings[id].qty -= qty;
-
-                if (db.holdings[id].qty === 0) {
-                    delete db.holdings[id];
-                }
-            }
-
-            saveToLocalStorage();
-            renderPortfolio();
-            selectItem(selectedItem.type, selectedItem.data.id);
-            alert("주문이 체결 완료되었습니다.");
-        }
-
-        function renderPortfolio() {
-            const userCashEl = document.getElementById('user-cash');
-            if(userCashEl) {
-                userCashEl.innerText = db.cash.toLocaleString();
-            }
-            const listEl = document.getElementById('portfolio-list');
-            if(!listEl) return;
-            listEl.innerHTML = "";
-
-            let totalBuy = 0;
-            let totalEval = 0;
-
-            const keys = Object.keys(db.holdings);
-            if (keys.length === 0) {
-                listEl.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center font-sans">체결 완료 내역이 존재하지 않습니다.</div>`;
-            } else {
-                keys.forEach(id => {
-                    const hold = db.holdings[id];
-                    if (hold.qty <= 0) return;
-
-                    const stock = db.players.find(p => p.id === id) || db.teams.find(t => t.id === id);
-                    if (!stock) return;
-
-                    const buyAmt = hold.avgPrice * hold.qty;
-                    const evalAmt = stock.price * hold.qty;
-                    totalBuy += buyAmt;
-                    totalEval += evalAmt;
-
-                    const diff = evalAmt - buyAmt;
-                    const pct = buyAmt !== 0 ? ((diff / buyAmt) * 100).toFixed(2) : 0;
-                    const isUp = diff >= 0;
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = "py-3 flex justify-between items-center text-xs font-mono border-b border-slate-100";
-                    itemDiv.innerHTML = `
-                        <div>
-                            <div class="font-bold text-slate-800">${stock.name}</div>
-                            <div class="text-slate-400 text-[10px]">${hold.qty}개 | 평단 ${hold.avgPrice.toLocaleString()}원</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-slate-800">${evalAmt.toLocaleString()}원</div>
-                            <div class="${isUp ? 'text-upbit-red' : 'text-upbit-blue'} font-bold">${isUp ? '+' : ''}${pct}%</div>
-                        </div>
-                    `;
-                    listEl.appendChild(itemDiv);
-                });
-            }
-
-            const pfoTotalBuyEl = document.getElementById('pfo-total-buy');
-            const pfoTotalValEl = document.getElementById('pfo-total-val');
-            if(pfoTotalBuyEl) pfoTotalBuyEl.innerText = `${totalBuy.toLocaleString()} 원`;
-            if(pfoTotalValEl) pfoTotalValEl.innerText = `${totalEval.toLocaleString()} 원`;
-
-            const diffAmt = totalEval - totalBuy;
-            const pctVal = totalBuy !== 0 ? ((diffAmt / totalBuy) * 100).toFixed(2) : "0.00";
-            const profitEl = document.getElementById('pfo-total-profit');
-
-            if (profitEl) {
-                if (diffAmt >= 0) {
-                    profitEl.innerText = `+${diffAmt.toLocaleString()} 원 (+${pctVal}%)`;
-                    profitEl.className = "font-bold text-upbit-red text-sm";
-                } else {
-                    profitEl.innerText = `${diffAmt.toLocaleString()} 원 (${pctVal}%)`;
-                    profitEl.className = "font-bold text-upbit-blue text-sm";
-                }
-            }
-        }
-
-
-        // ==================== [ADMIN] 세부 관리 업무 제어 ====================
-
-        function switchAdminTab(tab) {
-            adminTab = tab;
-            const tabs = {
-                'match-update': 'btn-adm-tab-match',
-                'listing': 'btn-adm-tab-listing',
-                'tag-manage': 'btn-adm-tab-tag'
-            };
-
-            Object.keys(tabs).forEach(k => {
-                const btn = document.getElementById(tabs[k]);
-                const sec = document.getElementById(`adm-sec-${k}`);
-                if (k === tab) {
-                    btn.className = "px-4 py-2 text-slate-800 bg-white border border-slate-300 shadow-sm rounded";
-                    sec.classList.remove('hidden');
-                } else {
-                    btn.className = "px-4 py-2 text-slate-500 hover:text-slate-855 rounded";
-                    sec.classList.add('hidden');
-                }
-            });
-
-            if (tab === 'listing') {
-                renderAdminListingTable();
-                loadMasterList();
-            } else if (tab === 'tag-manage') {
-                renderAdminTagList();
-                resetTagForm();
-            }
-        }
-
-        // 셀렉터 및 Bo3 / Bo5 분기 설정
-        function initAdminSelectors() {
-            const pSel = document.getElementById('admin-player-select');
-            if(pSel) {
-                pSel.innerHTML = "";
-                db.players.forEach(p => {
-                    pSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-                });
-            }
-
-            const tSel = document.getElementById('admin-team-select');
-            if(tSel) {
-                tSel.innerHTML = "";
-                db.teams.forEach(t => {
-                    tSel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                });
-            }
-        }
-
-        function updateSetScoreOptions() {
-            const formatEl = document.getElementById('admin-team-match-format');
-            const select = document.getElementById('admin-team-set-result');
-            if(!formatEl || !select) return;
-
-            const format = formatEl.value;
-            select.innerHTML = "";
-
-            if (format === 'bo3') {
-                select.innerHTML = `
-                    <option value="bo3_2_0">2:0 승리 (가중치 1.2)</option>
-                    <option value="bo3_2_1">2:1 승리 (가중치 1.0)</option>
-                    <option value="bo3_1_2">1:2 패배 (가중치 1.0)</option>
-                    <option value="bo3_0_2">0:2 패배 (가중치 1.2)</option>
-                `;
-            } else {
-                select.innerHTML = `
-                    <option value="bo5_3_0">3:0 승리 (가중치 1.3)</option>
-                    <option value="bo5_3_1">3:1 승리 (가중치 1.1)</option>
-                    <option value="bo5_3_2">3:2 승리 (가중치 0.9)</option>
-                    <option value="bo5_2_3">2:3 패배 (가중치 0.8)</option>
-                    <option value="bo5_1_3">1:3 패배 (가중치 1.0)</option>
-                    <option value="bo5_0_3">0:3 패배 (가중치 1.3)</option>
-                `;
-            }
-        }
-
-        // 선수 통계 반영
-        function applyPlayerMatchRecord() {
-            const idSel = document.getElementById('admin-player-select');
-            if(!idSel) return;
-            const id = idSel.value;
-            const p = db.players.find(item => item.id === id);
-            if (!p) return;
-
-            const kdVal = document.getElementById('admin-player-kd').value;
-            const acsVal = document.getElementById('admin-player-acs').value;
-            const kastVal = document.getElementById('admin-player-kast').value;
-
-            if (kdVal === "" || acsVal === "" || kastVal === "") {
-                alert("선수 성적 수치를 빠짐없이 수동 기입해 주십시오.");
-                return;
-            }
-
-            const kd = parseFloat(kdVal);
-            const acs = parseFloat(acsVal);
-            const kast = parseFloat(kastVal);
-
-            pushToHistory();
-
-            const dailyScore = (kd * 0.4) + ((acs / 200) * 0.3) + ((kast / 70) * 0.3);
-            const changeRate = (dailyScore - p.expectation) * 100;
-
-            const newPrice = Math.max(100, Math.round(p.price * (1 + (changeRate / 100))));
-            p.price = newPrice;
-            p.priceHistory.push(newPrice);
-
-            saveToLocalStorage();
-            alert(`[${p.name}] 선수 변동 수치 반영 완료\n- 계산 점수: ${dailyScore.toFixed(3)}\n- 변동률: ${changeRate.toFixed(2)}%\n- 갱신된 주가: ${newPrice.toLocaleString()}원`);
-            
-            document.getElementById('admin-player-kd').value = "";
-            document.getElementById('admin-player-acs').value = "";
-            document.getElementById('admin-player-kast').value = "";
-
-            if (selectedItem && selectedItem.data.id === p.id) selectItem('player', p.id);
-        }
-
-        // 팀 통계 반영
-        function applyTeamMatchRecord() {
-            const idSel = document.getElementById('admin-team-select');
-            if(!idSel) return;
-            const id = idSel.value;
-            const t = db.teams.find(item => item.id === id);
-            if (!t) return;
-
-            const oddsVal = document.getElementById('admin-team-odds').value;
-            if (oddsVal === "") {
-                alert("해외 배당률을 정밀 기입해 주십시오.");
-                return;
-            }
-
-            const odds = parseFloat(oddsVal);
-            const setKey = document.getElementById('admin-team-set-result').value;
-            const weight = setWeights[setKey] || 1.0;
-
-            pushToHistory();
-
-            const isWin = ["bo3_2_0", "bo3_2_1", "bo5_3_0", "bo5_3_1", "bo5_3_2"].includes(setKey);
-            let changeRate = 0;
-
-            if (isWin) {
-                changeRate = (5 * odds) * weight;
-            } else {
-                changeRate = -((5 * (3.0 / odds)) * weight);
-            }
-
-            const newPrice = Math.max(100, Math.round(t.price * (1 + (changeRate / 100))));
-            t.price = newPrice;
-            t.priceHistory.push(newPrice);
-
-            saveToLocalStorage();
-            alert(`[${t.name}] 구단 가중 변동 완료\n- 가중 비율: ${weight}배\n- 주가 변동률: ${changeRate.toFixed(2)}%\n- 결정 주가: ${newPrice.toLocaleString()}원`);
-            
-            document.getElementById('admin-team-odds').value = "";
-
-            if (selectedItem && selectedItem.data.id === t.id) selectItem('team', t.id);
-        }
-
-
-        // ==================== 상장 및 마스터 데이터베이스 제어 (Listing & Mod) ====================
-
-        function toggleListingFormFields() {
-            const mode = document.querySelector('input[name="list-mode"]:checked').value;
-            listingMode = mode;
-            const container = document.getElementById('listing-fields-container');
-            if(!container) return;
-
-            let tagOptions = "";
-            Object.keys(db.tags).forEach(k => {
-                tagOptions += `<option value="${db.tags[k].id}">${db.tags[k].name}</option>`;
-            });
-
-            if (mode === 'player') {
-                container.innerHTML = `
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="col-span-2">
-                            <label class="block text-slate-500 mb-1">선수 이름</label>
-                            <input type="text" id="list-p-name" placeholder="영문 명칭 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1">소속 리그 태그 지정</label>
-                            <select id="list-p-tagId" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800">${tagOptions}</select>
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1">고정 기댓값 (Score)</label>
-                            <input type="number" step="0.01" id="list-p-exp" placeholder="예: 1.05" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-slate-500 mb-1">상장 개시 단가 (KRW)</label>
-                            <input type="number" id="list-p-price" placeholder="원 단위 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
-                        </div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="col-span-2">
-                            <label class="block text-slate-500 mb-1">구단명</label>
-                            <input type="text" id="list-t-name" placeholder="정식 구단 명칭 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1">소속 권역 태그 지정</label>
-                            <select id="list-t-tagId" class="w-full bg-slate-50 border border-slate-300 p-2.5 rounded text-slate-800">${tagOptions}</select>
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1">상장 개시 단가 (KRW)</label>
-                            <input type="number" id="list-t-price" placeholder="원 단위 기입" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800 focus:outline-none">
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function executeNewListing() {
-            pushToHistory();
-
-            if (listingMode === 'player') {
-                const name = document.getElementById('list-p-name').value.trim();
-                const tagId = document.getElementById('list-p-tagId').value;
-                const expVal = document.getElementById('list-p-exp').value;
-                const priceVal = document.getElementById('list-p-price').value;
-
-                if (!name || expVal === "" || priceVal === "") {
-                    alert("누락된 정보를 확인해주십시오.");
-                    return;
-                }
-
-                const price = parseInt(priceVal);
-                const exp = parseFloat(expVal);
-
-                const newP = {
-                    id: "p_" + Date.now(),
-                    name, tagId, price, basePrice: price, expectation: exp,
-                    status: "active", priceHistory: [price]
-                };
-                db.players.push(newP);
-                alert(`선수 [${name}] 의 자산 상장 심사가 완료되었습니다.`);
-            } else {
-                const name = document.getElementById('list-t-name').value.trim();
-                const tagId = document.getElementById('list-t-tagId').value;
-                const priceVal = document.getElementById('list-t-price').value;
-
-                if (!name || priceVal === "") {
-                    alert("누락된 정보를 확인해주십시오.");
-                    return;
-                }
-
-                const price = parseInt(priceVal);
-
-                const newT = {
-                    id: "t_" + Date.now(),
-                    name, tagId, price, basePrice: price,
-                    status: "active", priceHistory: [price]
-                };
-                db.teams.push(newT);
-                alert(`구단 [${name}] 의 자산 상장이 완료되었습니다.`);
-            }
-
-            saveToLocalStorage();
-            toggleListingFormFields();
-            initAdminSelectors();
-            loadMasterList();
-            renderMarkets();
-        }
-
-        // 마스터 수정 기능 로드
-        function loadMasterList() {
-            const type = document.getElementById('master-edit-type').value;
-            const select = document.getElementById('master-item-select');
-            if(!select) return;
-            select.innerHTML = "";
-
-            const target = type === 'player' ? db.players : db.teams;
-            target.forEach(item => {
-                select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-            });
-
-            loadMasterDetails();
-        }
-
-        function loadMasterDetails() {
-            const type = document.getElementById('master-edit-type').value;
-            const id = document.getElementById('master-item-select').value;
-            const container = document.getElementById('master-edit-fields-container');
-
-            if (!id || !container) {
-                if(container) container.innerHTML = "";
-                return;
-            }
-
-            let tagOptions = "";
-            Object.keys(db.tags).forEach(k => {
-                tagOptions += `<option value="${db.tags[k].id}">${db.tags[k].name}</option>`;
-            });
-
-            if (type === 'player') {
-                const p = db.players.find(x => x.id === id);
-                if (!p) return;
-                container.innerHTML = `
-                    <div class="col-span-2">
-                        <label class="block text-slate-500 mb-1">선수 이름</label>
-                        <input type="text" id="mst-p-name" value="${p.name}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                    </div>
-                    <div>
-                        <label class="block text-slate-500 mb-1">연동 태그 지정</label>
-                        <select id="mst-p-tagId" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">${tagOptions}</select>
-                    </div>
-                    <div>
-                        <label class="block text-slate-500 mb-1">고정 기댓값 (Score)</label>
-                        <input type="number" step="0.01" id="mst-p-exp" value="${p.expectation}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-slate-500 mb-1">현재 주가 수동 설정 (KRW)</label>
-                        <input type="number" id="mst-p-price" value="${p.price}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                    </div>
-                `;
-                document.getElementById('mst-p-tagId').value = p.tagId;
-            } else {
-                const t = db.teams.find(x => x.id === id);
-                if (!t) return;
-                container.innerHTML = `
-                    <div class="col-span-2">
-                        <label class="block text-slate-500 mb-1">구단명</label>
-                        <input type="text" id="mst-t-name" value="${t.name}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                    </div>
-                    <div>
-                        <label class="block text-slate-500 mb-1">소속 태그 바인딩</label>
-                        <select id="mst-t-tagId" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">${tagOptions}</select>
-                    </div>
-                    <div>
-                        <label class="block text-slate-500 mb-1">현재 주가 수동 설정 (KRW)</label>
-                        <input type="number" id="mst-t-price" value="${t.price}" class="w-full bg-slate-50 border border-slate-300 p-2 rounded text-slate-800">
-                    </div>
-                `;
-                document.getElementById('mst-t-tagId').value = t.tagId;
-            }
-        }
-
-        function updateMasterData() {
-            const type = document.getElementById('master-edit-type').value;
-            const id = document.getElementById('master-item-select').value;
-            if (!id) return;
-
-            pushToHistory();
-
-            if (type === 'player') {
-                const p = db.players.find(x => x.id === id);
-                if (p) {
-                    p.name = document.getElementById('mst-p-name').value.trim();
-                    p.tagId = document.getElementById('mst-p-tagId').value;
-                    p.expectation = parseFloat(document.getElementById('mst-p-exp').value) || p.expectation;
-                    p.price = parseInt(document.getElementById('mst-p-price').value) || p.price;
-                    p.priceHistory[p.priceHistory.length - 1] = p.price;
-                }
-            } else {
-                const t = db.teams.find(x => x.id === id);
-                if (t) {
-                    t.name = document.getElementById('mst-t-name').value.trim();
-                    t.tagId = document.getElementById('mst-t-tagId').value;
-                    t.price = parseInt(document.getElementById('mst-t-price').value) || t.price;
-                    t.priceHistory[t.priceHistory.length - 1] = t.price;
-                }
-            }
-
-            saveToLocalStorage();
-            alert("지정한 항목 수정 사항이 최종 스펙에 적용되었습니다.");
-            
-            renderMarkets();
-            initAdminSelectors();
-            loadMasterList();
-            if (selectedItem) {
-                selectItem(selectedItem.type, selectedItem.data.id);
-            }
-        }
-
-
-        // ==================== [신설] 독립된 태그 매니저 시스템 ====================
-
-        function renderAdminTagList() {
-            const container = document.getElementById('admin-tag-list');
-            if(!container) return;
-            container.innerHTML = "";
-
-            const keys = Object.keys(db.tags);
-            if (keys.length === 0) {
-                container.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center">태그 데이터베이스가 유실되었거나 비어 있습니다.</div>`;
-                return;
-            }
-
-            keys.forEach(k => {
-                const tag = db.tags[k];
-                const div = document.createElement('div');
-                div.className = "py-3 flex justify-between items-center text-xs border-b border-slate-100";
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="px-2 py-0.5 rounded font-extrabold text-white text-[10px]" style="background-color: ${tag.color}">
-                            ${tag.name}
-                        </span>
-                        <span class="text-slate-400 font-mono">${tag.color}</span>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="editTag('${tag.id}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold shadow-sm">수정</button>
-                        <button onclick="deleteTag('${tag.id}')" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm">삭제</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function saveTag() {
-            const id = document.getElementById('tag-form-id').value;
-            const name = document.getElementById('tag-form-name').value.trim();
-            const color = document.getElementById('tag-form-color-text').value.trim();
-
-            if (!name || !color) {
-                alert("태그 내용 및 백그라운드 색상을 기입해 주십시오.");
-                return;
-            }
-
-            pushToHistory();
-
-            if (id) {
-                if (db.tags[id]) {
-                    db.tags[id].name = name;
-                    db.tags[id].color = color;
-                }
-            } else {
-                const newId = "tag_" + Date.now();
-                db.tags[newId] = {
-                    id: newId,
-                    name: name,
-                    color: color
-                };
-            }
-
-            saveToLocalStorage();
-            resetTagForm();
-            renderAdminTagList();
-            renderMarkets();
-            if (selectedItem) selectItem(selectedItem.type, selectedItem.data.id);
-        }
-
-        function editTag(id) {
-            const tag = db.tags[id];
-            if (!tag) return;
-
-            document.getElementById('tag-form-title').innerText = "● 태그 수정하기";
-            document.getElementById('tag-form-id').value = tag.id;
-            document.getElementById('tag-form-name').value = tag.name;
-            document.getElementById('tag-form-color-picker').value = tag.color;
-            document.getElementById('tag-form-color-text').value = tag.color;
-        }
-
-        function deleteTag(id) {
-            const confirmDel = confirm("해당 식별자 태그를 삭제합니까?\n연결된 종목들의 백그라운드 뱃지는 기본 규격으로 임시 전격 교체됩니다.");
-            if (!confirmDel) return;
-
-            pushToHistory();
-            delete db.tags[id];
-            saveToLocalStorage();
-
-            renderAdminTagList();
-            renderMarkets();
-            if (selectedItem) selectItem(selectedItem.type, selectedItem.data.id);
-        }
-
-        function resetTagForm() {
-            document.getElementById('tag-form-title').innerText = "● 태그 신규 추가";
-            document.getElementById('tag-form-id').value = "";
-            document.getElementById('tag-form-name').value = "";
-            document.getElementById('tag-form-color-picker').value = "#3b82f6";
-            document.getElementById('tag-form-color-text').value = "";
-        }
-
-
-        // ==================== 상장 및 상장폐지 관리판 ====================
-
-        function switchAdminListingTab(type) {
-            adminListingTab = type;
-            const btnP = document.getElementById('btn-admin-list-player');
-            const btnT = document.getElementById('btn-admin-list-team');
-            if (type === 'player') {
-                btnP.className = "px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm";
-                btnT.className = "px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold";
-            } else {
-                btnP.className = "px-3 py-1 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded font-bold";
-                btnT.className = "px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm";
-            }
-            renderAdminListingTable();
-        }
-
-        function renderAdminListingTable() {
-            const tbody = document.getElementById('admin-listing-tbody');
-            if(!tbody) return;
-            tbody.innerHTML = "";
-
-            const targetArray = adminListingTab === 'player' ? db.players : db.teams;
-
-            targetArray.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = "border-b border-slate-100 text-slate-700";
-
-                const tag = db.tags[item.tagId] || { name: "NONE", color: "#64748b" };
-                const tagSpan = `<span class="px-2 py-0.5 rounded font-bold text-white text-[9px]" style="background-color: ${tag.color}">${tag.name}</span>`;
-
-                const statusBadge = item.status === 'active'
-                    ? `<span class="text-emerald-600 font-bold">상장 완료</span>`
-                    : `<span class="text-red-500 font-bold">상장폐지</span>`;
-
-                const actionBtn = item.status === 'active'
-                    ? `<button onclick="toggleListingStatus('${adminListingTab}', '${item.id}')" class="bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded text-[11px] text-white font-bold shadow-sm">상폐 선고</button>`
-                    : `<button onclick="toggleListingStatus('${adminListingTab}', '${item.id}')" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded text-[11px] text-white font-bold shadow-sm">상장 승인</button>`;
-
-                row.innerHTML = `
-                    <td class="py-3 font-bold text-slate-900">${item.name}</td>
-                    <td class="py-3 flex items-center space-x-2">${tagSpan}</td>
-                    <td class="py-3 font-bold font-mono">${item.price.toLocaleString()}원</td>
-                    <td class="py-3">${statusBadge}</td>
-                    <td class="py-3 text-right">${actionBtn}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function toggleListingStatus(type, id) {
-            pushToHistory();
-            const target = type === 'player' ? db.players.find(x => x.id === id) : db.teams.find(x => x.id === id);
-            if (target) {
-                target.status = target.status === 'active' ? 'delisted' : 'active';
-                alert(`[${target.name}]의 상태가 정상 전환되었습니다.`);
-                saveToLocalStorage();
-                renderAdminListingTable();
-                renderMarkets();
-            }
-        }
-
-        // Undo / 롤백 시스템
-        function rollbackPrice() {
-            if (db.history.length === 0) {
-                alert("복구 조치를 수행할 수 있는 이전 변경 내역 보관 지점이 없습니다.");
-                return;
-            }
-
-            const restore = confirm("마지막의 변동 사항들을 취소하고 1단계 이전으로 스냅샷을 롤백하시겠습니까?");
-            if (!restore) return;
-
-            const lastState = JSON.parse(db.history.pop());
-            db.players = lastState.players;
-            db.teams = lastState.teams;
-            db.tags = lastState.tags;
-
-            saveToLocalStorage();
-            alert("롤백 전표 처리가 완료되었습니다.");
-            
-            renderMarkets();
-            initAdminSelectors();
-            loadMasterList();
-            renderAdminTagList();
-            if (selectedItem) {
-                selectItem(selectedItem.type, selectedItem.data.id);
-            }
-        }
-
-        function resetExchangeData() {
-            const reset = confirm("시스템의 데이터 테이블을 전체 제거하고 기초 적재 데이터셋으로 귀환시킵니까?");
-            if (!reset) return;
-
-            localStorage.removeItem('vct_stock_db_v3_light');
-            location.reload();
-        }
-
-        window.onload = initApp;
-    </script>
+      });
+    }
+  </script>
 </body>
 </html>
