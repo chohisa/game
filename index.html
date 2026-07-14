@@ -33,7 +33,7 @@
 </head>
 <body class="h-screen overflow-hidden flex flex-col select-none">
 
-    <!-- 🔔 [추가] 실시간 금융 체결 인앱 토스트 알림창 컨테이너 -->
+  <!-- 🔔 실시간 금융 체결 인앱 토스트 알림창 컨테이너 -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- 상단 네비게이션 헤더 (MTS/HTS 전용) -->
@@ -47,6 +47,7 @@
     <!-- 탭 내비게이션 -->
     <nav class="flex gap-2">
       <button onclick="switchTab('exchange')" id="tab-exchange" class="px-4 py-1.5 rounded font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm">📈 주식 거래소</button>
+      <button onclick="switchTab('analysis')" id="tab-analysis" class="px-4 py-1.5 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">📊 시장 분석</button>
       <button onclick="switchTab('portfolio')" id="tab-portfolio" class="px-4 py-1.5 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">💼 내 포트폴리오</button>
       <button onclick="switchTab('admin')" id="tab-admin" class="px-4 py-1.5 rounded font-bold text-sm transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">⚙️ 관리자 설정</button>
     </nav>
@@ -58,10 +59,10 @@
     </div>
   </header>
 
-  <!-- 메인 컨텐츠 영역 (PC 버전 100vh 스크롤 고정형 레이아웃 탑재) -->
+  <!-- 메인 컨텐츠 영역 -->
   <main class="flex-1 overflow-hidden p-4 max-w-7xl w-full mx-auto flex flex-col">
 
-    <!-- 1. 가상 거래소 탭 (MTS 모바일용 하위 탭 구조 분기 및 데스크톱 고정형 그리드 적용) -->
+    <!-- 1. 가상 거래소 탭 -->
     <section id="view-exchange" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-4 h-full overflow-hidden">
       
       <!-- 모바일 화면용 서브 탭 네비게이션 (MTS 스위처) -->
@@ -71,21 +72,17 @@
         <button onclick="switchMtsSubTab('news')" id="mts-btn-news" class="flex-1 py-1.5 text-xs font-bold rounded text-slate-600">속보/공시</button>
       </div>
 
-      <!-- 종목 상세 및 차트/거래 영역 (좌측 8열 - HTS 고정 높이 내부 스크롤 스펙 적용) -->
+      <!-- 종목 상세 및 차트/거래 영역 (좌측 8열) -->
       <div id="mts-panel-chart-trade" class="mts-panel lg:col-span-8 flex flex-col gap-4 h-full overflow-hidden">
         
         <!-- 종목 상세 헤더 및 요약 -->
         <div id="exchange-detail-panel" class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex-shrink-0">
           <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
-              <!-- 구단 로고 및 선수 아바타 동적 바인딩 원형 홀더 -->
-              <div id="detail-image-frame" class="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 flex-shrink-0 shadow-inner">
-                <!-- 이미지 소스 또는 SVG 디폴트 드로잉 자동 생성 부 -->
-              </div>
+              <div id="detail-image-frame" class="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 flex-shrink-0 shadow-inner"></div>
               <div>
                 <div class="flex gap-1.5 items-center flex-wrap" id="detail-tags-container"></div>
                 <h2 id="detail-name" class="text-xl sm:text-2xl font-black mt-1 text-slate-900">종목을 선택해주세요</h2>
-                
               </div>
             </div>
             <div class="text-right">
@@ -96,16 +93,19 @@
           
           <!-- 기대값 세부 분석 (선수 전용) -->
           <div id="detail-ev-container" class="hidden bg-slate-50 p-2.5 rounded border border-slate-200 mt-3 text-[11px] grid grid-cols-4 gap-1.5 text-slate-700">
-
+            <div>기대 EV: <span id="ev-total" class="font-bold text-indigo-600">-</span></div>
+            <div>ACS: <span id="ev-acs" class="font-bold">-</span></div>
+            <div>K/D: <span id="ev-kd" class="font-bold">-</span></div>
+            <div>KAST: <span id="ev-kast" class="font-bold">-</span>%</div>
           </div>
 
-          <!-- 차트 영역 (불필요한 자산변동 차트 토글 전면 배제 완료) -->
-          <div class="mt-4 bg-slate-50 p-3 rounded border border-slate-200 h-[260px] md:h-[280px] flex items-center justify-center">
+          <!-- 차트 영역 (높이 h-[310px] md:h-[340px]로 확장형 적용) -->
+          <div class="mt-4 bg-slate-50 p-3 rounded border border-slate-200 h-[310px] md:h-[340px] flex items-center justify-center">
             <canvas id="priceChart" class="w-full h-full"></canvas>
           </div>
         </div>
 
-        <!-- 거래 주문창 (좌: 보유 현황, 우: 거래 주문) -->
+        <!-- 거래 주문창 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 overflow-y-auto pr-1">
           <!-- 내 보유 현황 -->
           <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex flex-col justify-between h-fit md:h-full">
@@ -155,7 +155,7 @@
         </div>
       </div>
 
-      <!-- 종목 리스트 및 속보/공시 피드 패널 (우측 4열 배치 - HTS 고정 높이) -->
+      <!-- 종목 리스트 및 속보/공시 피드 패널 (우측 4열 배치) -->
       <div id="mts-panel-watchlist" class="mts-panel hidden lg:flex lg:col-span-4 flex-col gap-4 h-full overflow-hidden">
         
         <!-- 종목 리스트 박스 -->
@@ -163,29 +163,54 @@
           <div class="mb-3">
             <input type="text" id="search-input" oninput="renderStockList()" placeholder="종목명, 팀, 태그, 리그약어 검색..." class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500">
           </div>
-          <div class="flex gap-1 mb-3 text-xs">
+          
+          <!-- 1단: 종목 타입 필터 버튼 -->
+          <div class="flex gap-1 mb-2 text-xs">
             <button onclick="setStockTypeFilter('all')" id="btn-filter-all" class="flex-1 py-1 text-[11px] font-bold rounded bg-indigo-600 text-white">전체</button>
             <button onclick="setStockTypeFilter('team')" id="btn-filter-team" class="flex-1 py-1 text-[11px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">팀 주식</button>
             <button onclick="setStockTypeFilter('player')" id="btn-filter-player" class="flex-1 py-1 text-[11px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">선수 주식</button>
           </div>
+
+          <!-- 2단: 알약형 리그 단추 필터 라인 -->
+          <div class="flex gap-1 mb-3 text-xs" id="league-filter-row">
+            <button onclick="toggleLeagueFilter('americas')" id="btn-league-americas" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">AMER</button>
+            <button onclick="toggleLeagueFilter('china')" id="btn-league-china" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">CN</button>
+            <button onclick="toggleLeagueFilter('emea')" id="btn-league-emea" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">EMEA</button>
+            <button onclick="toggleLeagueFilter('pacific')" id="btn-league-pacific" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">PAC</button>
+          </div>
+
           <div id="stock-list-container" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
         </div>
 
-        <!-- ⚡ 실시간 가상 속보 및 공시 피드창 (MTS 탭 연동) -->
+        <!-- 실시간 가상 속보 및 공시 피드창 -->
         <div id="mts-panel-news" class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm h-[180px] flex flex-col flex-shrink-0 overflow-hidden">
           <h3 class="font-black text-xs text-slate-700 border-b border-slate-100 pb-2 flex items-center gap-1.5">
             <span class="text-amber-500 animate-pulse">⚡</span> VCT 실시간 속보 및 시장 공시
           </h3>
-          <div id="live-news-feed" class="flex-1 overflow-y-auto space-y-2 mt-2 pr-1 text-[11px] text-slate-600">
-            <!-- 가상 실시간 속보 데이터 적재 영역 -->
-          </div>
+          <div id="live-news-feed" class="flex-1 overflow-y-auto space-y-2 mt-2 pr-1 text-[11px] text-slate-600"></div>
         </div>
 
       </div>
 
     </section>
 
-    <!-- 2. 내 포트폴리오 탭 (보유 리스트 및 상세 가상 체결 로그 누적) -->
+    <!-- 2. 시장 분석 탭 (메인 탭 및 하위 6대 섹션 탑재) -->
+    <section id="view-analysis" class="tab-content hidden flex flex-col gap-4 h-full overflow-hidden">
+      <!-- 6단 내부 서브 섹션 제어 바 -->
+      <div class="bg-slate-100 p-1 rounded-lg flex flex-wrap border border-slate-200 gap-1 shadow-sm flex-shrink-0">
+        <button onclick="switchAnalysisSection('main')" id="sec-btn-main" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded bg-white text-indigo-600 shadow-sm">🏠 메인</button>
+        <button onclick="switchAnalysisSection('rank')" id="sec-btn-rank" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50">🏆 전체 순위</button>
+        <button onclick="switchAnalysisSection('amer')" id="sec-btn-amer" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50">AMERICAS</button>
+        <button onclick="switchAnalysisSection('cn')" id="sec-btn-cn" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50">CN</button>
+        <button onclick="switchAnalysisSection('emea')" id="sec-btn-emea" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50">EMEA</button>
+        <button onclick="switchAnalysisSection('pac')" id="sec-btn-pac" class="flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50">PACIFIC</button>
+      </div>
+
+      <!-- 분석 대시보드 내부 컨텐츠 스크롤 뷰 -->
+      <div id="analysis-content-container" class="flex-1 overflow-y-auto pr-1 text-slate-800"></div>
+    </section>
+
+    <!-- 3. 내 포트폴리오 탭 -->
     <section id="view-portfolio" class="tab-content hidden space-y-4 h-full overflow-y-auto pr-1">
       <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
         <div class="p-3.5 bg-slate-50 rounded border border-slate-200">
@@ -222,12 +247,12 @@
                 <th class="p-2.5 text-right">평가 손익</th>
               </tr>
             </thead>
-            <tbody id="portfolio-table-body" class="divide-y divide-slate-200"></tbody>
+            <tbody id="portfolio-table-body" class="divide-y divide-slate-200 text-slate-700"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- 📜 [신규 보완 추가] 가상 주식 실시간 체결 일지 대장 -->
+      <!-- 가상 주식 실시간 체결 일지 대장 -->
       <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm">
         <h3 class="font-bold text-sm text-slate-800 mb-3">📜 거래 로그</h3>
         <div class="overflow-x-auto max-h-[200px]">
@@ -242,15 +267,13 @@
                 <th class="p-2.5 text-right">총 체결 금액</th>
               </tr>
             </thead>
-            <tbody id="transaction-log-tbody" class="divide-y divide-slate-200 text-slate-700">
-              <!-- 거래 데이터 동적 적재 영역 -->
-            </tbody>
+            <tbody id="transaction-log-tbody" class="divide-y divide-slate-200 text-slate-700"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- 3. 관리자 도구 탭 (내부 5단 서브탭 전면 구성 완료) -->
+    <!-- 4. 관리자 도구 탭 -->
     <section id="view-admin" class="tab-content hidden space-y-4 h-full overflow-y-auto pr-1">
       
       <!-- 어드민 전용 5단 내부 서브탭 내비게이션 바 -->
@@ -270,6 +293,17 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 대결 리그 선택 드롭다운 선행 필터 -->
+          <div class="space-y-1 col-span-1 md:col-span-2">
+            <label class="text-[11px] font-bold text-slate-500">대결 리그 선택</label>
+            <select id="admin-match-league-filter" onchange="filterMatchTeamsDropdown()" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+              <option value="all">모든 리그</option>
+              <option value="pacific">VCT Pacific</option>
+              <option value="emea">VCT EMEA</option>
+              <option value="china">VCT China</option>
+              <option value="americas">VCT Americas</option>
+            </select>
+          </div>
           <div class="space-y-1">
             <label class="text-[11px] font-bold text-slate-500">홈 팀 (승리구단)</label>
             <select id="admin-team-a" onchange="loadRosters()" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:outline-none"></select>
@@ -320,7 +354,6 @@
           </div>
         </div>
 
-        <!-- ⚡ [보완 2-1] 중복/다중클릭 예방용 ID 지정 -->
         <button id="admin-match-submit-btn" onclick="submitMatchResult()" class="w-full py-3 rounded font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors text-xs shadow-sm">💾 경기 데이터 제출 및 시세 변동 반영</button>
       </div>
 
@@ -331,6 +364,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+          
           <!-- 상장 추가 -->
           <div class="space-y-3">
             <h4 class="font-bold text-xs text-indigo-600 flex items-center gap-1">➕ 새 구단/선수 신규 등록</h4>
@@ -349,10 +383,9 @@
                 </div>
               </div>
 
-              <!-- 이미지 바인딩용 URL 추가 필드 -->
               <div class="grid grid-cols-1 gap-2">
                 <div>
-                  <label class="block mb-1 text-slate-500">이미지 URL 주소 (로고/인물사진)</label>
+                  <label class="block mb-1 text-slate-500">이미지 URL 주소</label>
                   <input type="text" id="add-stock-img" placeholder="https://..." class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
                 </div>
               </div>
@@ -370,7 +403,7 @@
 
               <div id="player-classification-container" class="hidden grid grid-cols-1 gap-2">
                 <div>
-                  <label class="block mb-1 text-slate-500">선수 계약 분류 (기준가 자동 차등화)</label>
+                  <label class="block mb-1 text-slate-500">선수 계약 분류</label>
                   <select id="add-player-class" onchange="updateCalculatedIpoPrice()" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none font-bold">
                     <option value="standard">1부 기존 리그 선수 (기준가: 10,000원)</option>
                     <option value="rookie">신인 및 2군 콜업 선수 (기준가: 8,000원)</option>
@@ -385,13 +418,12 @@
                   <input type="number" id="add-stock-price" oninput="updateCalculatedIpoPrice()" value="10000" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
                 </div>
                 <div id="add-team-private-tag-field" class="hidden">
-                  <label class="block mb-1 text-slate-500">비공개 구단 식별 태그 (로고색상 연계)</label>
-                  <select id="add-stock-private-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
-                  </select>
+                  <label class="block mb-1 text-slate-500">비공개 구단 식별 태그</label>
+                  <select id="add-stock-private-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none"></select>
                 </div>
 
                 <div id="add-team-rank-field">
-                  <label class="block mb-1 text-slate-500">시즌 최초 순위 (팀 전용)</label>
+                  <label class="block mb-1 text-slate-500">시즌 최초 순위</label>
                   <select id="add-stock-rank" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
                     <option value="1">1위</option>
                     <option value="2">2위</option>
@@ -424,6 +456,12 @@
                   <label class="block text-[9px] text-slate-500 mb-1">기본 KAST (%)</label>
                   <input type="number" id="add-p-kast" value="70" oninput="updateCalculatedIpoPrice()" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
                 </div>
+              </div>
+
+              <!-- 상장 폐지(Delisted) 체크박스 내장 -->
+              <div class="flex items-center gap-2 mt-2 bg-slate-50 p-2 rounded border border-slate-200">
+                <input type="checkbox" id="add-stock-delisted" class="rounded text-indigo-600 focus:ring-0">
+                <label for="add-stock-delisted" class="text-xs font-bold text-slate-700">상장 폐지 상태로 등록 (Delisted)</label>
               </div>
 
               <button onclick="addNewStock()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs shadow-sm">상장 및 거래 대상 추가</button>
@@ -459,13 +497,12 @@
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label id="edit-tag-label" class="block mb-1 text-slate-500">연계 지정 태그 (구단/이적)</label>
+                  <label id="edit-tag-label" class="block mb-1 text-slate-500">연계 지정 태그</label>
                   <select id="edit-stock-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none"></select>
                 </div>
                 <div id="edit-team-private-tag-field" class="hidden">
                   <label class="block mb-1 text-slate-500">비공개 구단 식별 태그 수정</label>
-                  <select id="edit-stock-private-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
-                  </select>
+                  <select id="edit-stock-private-tag" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none"></select>
                 </div>
                 <div id="edit-rank-field-div">
                   <label class="block mb-1 text-slate-500">랭킹 순위</label>
@@ -498,25 +535,41 @@
                 </div>
               </div>
 
+              <!-- 상장 폐지(Delisted) 체크박스 내장 -->
+              <div class="flex items-center gap-2 mt-2 bg-slate-50 p-2 rounded border border-slate-200">
+                <input type="checkbox" id="edit-stock-delisted" class="rounded text-indigo-600 focus:ring-0">
+                <label for="edit-stock-delisted" class="text-xs font-bold text-slate-700">상장 폐지 상태 적용 (Delisted)</label>
+              </div>
+
               <button onclick="updateExistingStock()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs shadow-sm">소속 정보 변경 및 종목 업데이트 완료</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 🏃 [어드민 신규 서브탭 3] 주전 로스터 엔트리 설정 제어기 (완벽 기획 병합) -->
+      <!-- [어드민 서브탭 3] 주전 로스터 엔트리 설정 제어기 (리그 pre-filter 추가) -->
       <div id="admin-panel-roster" class="admin-sub-content hidden bg-white rounded-lg p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="border-b border-slate-200 pb-2 flex justify-between items-center">
           <h3 class="font-extrabold text-sm text-slate-800">🏃 구단 주전 엔트리 실시간 설정 및 동화</h3>
-          <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">팀별 정확히 5인 주전 규정 가드 작동</span>
+          <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">팀별 정확히 5인 주전 규정 작동</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-slate-50 p-3 rounded-lg border border-slate-200">
           <div class="space-y-1 col-span-1">
-            <label class="text-[11px] font-bold text-slate-500">배정 구단 선택</label>
-            <select id="roster-manage-team-select" onchange="loadRosterManager()" class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none"></select>
+            <label class="text-[11px] font-bold text-slate-500 block">리그 선택 (필터)</label>
+            <select id="roster-manage-league-filter" onchange="filterRosterTeamsDropdown()" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:outline-none font-bold text-slate-800">
+              <option value="all">모든 리그</option>
+              <option value="pacific">VCT Pacific</option>
+              <option value="emea">VCT EMEA</option>
+              <option value="china">VCT China</option>
+              <option value="americas">VCT Americas</option>
+            </select>
           </div>
-          <div class="col-span-2 text-xs text-slate-400 leading-relaxed pt-3 md:pt-0">
+          <div class="space-y-1 col-span-1">
+            <label class="text-[11px] font-bold text-slate-500 block">배정 구단 선택</label>
+            <select id="roster-manage-team-select" onchange="loadRosterManager()" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:outline-none font-bold text-slate-800"></select>
+          </div>
+          <div class="col-span-2 text-xs text-slate-500 leading-relaxed pt-3 md:pt-0">
             * 여기서 활성화된 5인의 가치 평균이 실시간으로 해당 구단의 <strong>'로스터 지수 (Roster Index)'</strong>를 형성하게 됩니다.
           </div>
         </div>
@@ -526,9 +579,7 @@
             <h4 class="font-black text-xs text-slate-700" id="roster-manage-title">- 구단 소속 전체 목록</h4>
             <span id="roster-manage-counter" class="text-xs text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">현재 주전 지정 수량: 0 / 5</span>
           </div>
-          <div id="roster-manage-list-box" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <!-- 소속 선수들의 주전/후보 라디오 및 체크 복제 영역 -->
-          </div>
+          <div id="roster-manage-list-box" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
         </div>
 
         <button onclick="saveActiveRosterSettings()" class="w-full py-3 rounded font-bold text-white bg-indigo-600 hover:bg-indigo-500 text-xs shadow-sm">🏃 주전 라인업 정보 최종 저장 및 로스터 지수 동기화</button>
@@ -543,7 +594,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           <!-- 태그 추가 및 편집실 -->
-          <div class="lg:col-span-5 space-y-4">
+          <div class="lg:col-span-6 space-y-4">
             <h4 class="font-bold text-sm text-slate-700 flex items-center gap-1.5">🏷️ 시스템 태그 생성 및 자유 편집</h4>
             <div class="space-y-3 text-xs">
               <div class="grid grid-cols-2 gap-2">
@@ -559,7 +610,6 @@
                 </div>
               </div>
               
-              <!-- [신규 보완 추가] 약어/검색어 추가 설정란 -->
               <div>
                 <label class="block mb-1 text-slate-500">검색용 약어/약칭 목록 (콤마 , 로 구분해 다중 등록 가능)</label>
                 <input type="text" id="add-tag-aliases" placeholder="예: PAC, Pacific, 팩" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
@@ -587,8 +637,8 @@
             </div>
           </div>
 
-          <!-- 가상 뉴스 속보 다중 종목 개별 연동 패널 [완벽 보완 추가] -->
-          <div class="lg:col-span-4 border-l border-slate-100 lg:pl-6 space-y-3">
+          <!-- 가상 뉴스 속보 다중 종목 개별 연동 패널 -->
+          <div class="lg:col-span-6 border-l border-slate-100 lg:pl-6 space-y-3">
             <h4 class="font-bold text-sm text-slate-700">📢 뉴스 속보 발행</h4>
             <div class="space-y-3 text-xs">
               <div>
@@ -596,45 +646,50 @@
                 <input type="text" id="news-headline-input" placeholder="예: primmie 손목 부상 결장 루머" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none">
               </div>
               
-              <!-- 동적 연동 종목 추가 필드 박스 -->
               <div class="space-y-1.5">
                 <div class="flex justify-between items-center">
                   <label class="text-[10px] text-slate-400 font-bold">수동 주가 연동 변동 설정 (선택사항)</label>
                   <button onclick="addNewNewsTargetRow()" class="text-[10px] text-indigo-600 font-bold bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded hover:bg-indigo-100">+ 종목 연결</button>
                 </div>
-                <div id="news-targets-container" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                  <!-- 동적 연관 종목 로우 렌더링 -->
-                </div>
+                <div id="news-targets-container" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1"></div>
               </div>
 
-              <!-- ⚡ [보완 2-2] 중복/다중클릭 예방용 ID 지정 -->
               <button id="admin-news-submit-btn" onclick="publishCustomNews()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-[11px] shadow-sm">📢 속보 전송 및 가격 변동 실행</button>
-            </div>
-          </div>
-
-          <!-- 가상 서버 복구 센터 -->
-          <div class="lg:col-span-3 border-l border-slate-100 lg:pl-6 space-y-4">
-            <h4 class="font-bold text-sm text-slate-700">⚙️ 서버 초기화 및 Undo</h4>
-            <div class="space-y-2">
-              <button onclick="undoLastAction()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 rounded font-bold text-xs text-slate-700 border border-slate-200">↩️ 마지막 매치 무르기 (Undo)</button>
-              <button onclick="resetExchangeData()" class="w-full py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded font-bold text-xs text-red-700">⚠️ 전체 거래소 초기화 (Reset)</button>
+              
+              <div class="pt-4 border-t border-slate-100 space-y-2">
+                <h4 class="font-bold text-xs text-slate-700">⚙️ 서버 초기화 및 Undo</h4>
+                <div class="grid grid-cols-2 gap-2">
+                  <button onclick="undoLastAction()" class="py-2 bg-slate-100 hover:bg-slate-200 rounded font-bold text-xs text-slate-700 border border-slate-200">↩️ 이전 무르기 (Undo)</button>
+                  <button onclick="resetExchangeData()" class="py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded font-bold text-xs text-red-700">⚠️ 전체 초기화 (Reset)</button>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
       </div>
 
-      <!-- [어드민 서브탭 5] 시즌 종료 공동 순위 변동 보정 제어실 (공동 그룹 선택으로 전면 일원화 완료) -->
+      <!-- [어드민 서브탭 5] 시즌 종료 거시적 순위 변동 보정 제어실 -->
       <div id="admin-panel-season" class="admin-sub-content hidden bg-white rounded-lg p-6 border border-slate-200 shadow-sm space-y-6">
         <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
-          <h3 class="font-extrabold text-base text-slate-800">🏆 [5] 시즌 종료 후 거시적 순위 변동 보정 (연 1회 전산 반영)</h3>
-          <span class="text-xs text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">공동 등수 그룹화 연산 일원화</span>
+          <h3 class="font-extrabold text-base text-slate-800">🏆 시즌 종료 후 거시적 순위 변동 보정 (연 1회 전산 반영)</h3>
         </div>
 
-        <div class="bg-slate-50 p-4 rounded border border-slate-200 text-xs text-slate-600 leading-relaxed">
-          <strong>💡 공동 순위 일원화 처리 규칙 (기획 3단계 완벽 수용):</strong><br>
-          • 1위: +20% / 2위: +15% / 3위: +10% / 4위: +5% / <strong>5-6위 (수치 5.5): 0%</strong> / 7-8위 (수치 7.5): 0% / 9-10위 (수치 9.5): -10% / 11-12위 (수치 11.5): -20%<br>
-          • 기본 순위 변동률: (전 시즌 순위 수치 - 현재 시즌 순위 수치) × 5%<br>
+        <div class="bg-slate-50 p-4 rounded border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1">
+          <div><strong>💡 공동 순위 일원화 처리 규칙 (기획 3단계 완벽 수용):</strong></div>
+          <div>• 1위: +20% / 2위: +15% / 3위: +10% / 4위: +5% / <strong>5-6위 (수치 5.5): 0%</strong> / 7-8위 (수치 7.5): 0% / 9-10위 (수치 9.5): -10% / 11-12위 (수치 11.5): -20%</div>
+          <div>• 기본 순위 변동률: (전 시즌 순위 수치 - 현재 시즌 순위 수치) × 5%</div>
+        </div>
+
+        <!-- 보정 리그 선택 드롭다운 선행 필터 -->
+        <div class="flex items-center gap-2 bg-slate-50 p-3 rounded border border-slate-200">
+          <label class="text-xs font-bold text-slate-700">보정할 리그 선택:</label>
+          <select id="admin-season-league-filter" onchange="renderSeasonEndTab()" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-800">
+            <option value="pacific" selected>VCT Pacific</option>
+            <option value="emea">VCT EMEA</option>
+            <option value="china">VCT China</option>
+            <option value="americas">VCT Americas</option>
+          </select>
         </div>
 
         <div class="overflow-x-auto">
@@ -655,7 +710,6 @@
           </table>
         </div>
 
-        <!-- ⚡ [보완 2-3] 중복/다중클릭 예방용 ID 지정 -->
         <button id="admin-season-submit-btn" onclick="executeSeasonEndAdjustment()" class="w-full py-4 rounded font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors text-sm shadow-md">🏆 시즌 최종 순위 주가 전산 일괄 반영 및 마감</button>
       </div>
 
@@ -663,13 +717,53 @@
 
   </main>
 
-  <footer class="bg-white text-slate-400 text-center py-2.5 border-t border-slate-200 text-[11px] flex-shrink-0">
-    ⚡ VCT 주식 거래소
-  </footer>
-
   <script>
-    // --- 1. 기초 데이터셋 구성 (공동 순위 수치 일원화 완료) ---
+    // --- 1. 기초 데이터셋 구성 (공동 순위 수치 일원화 및 4대 글로벌 구단/선수 완벽 확충) ---
     const initialTeams = {
+      // Americas 대표 구단
+      "G2": { id: "TH", name: "G2 Esports", currentPrice: 140000, prevPrice: 140000, priceHistory: [140000], rank: 1, delisted: false, tagId: "americas", teamTagId: "G2_tag", imageUrl: "" },
+      "LEV": { id: "LEV", name: "Leviatán", currentPrice: 130000, prevPrice: 130000, priceHistory: [130000], rank: 2, delisted: false, tagId: "americas", teamTagId: "LEV_tag", imageUrl: "" },
+      "NRG": { id: "NRG", name: "NRG Esports", currentPrice: 120000, prevPrice: 120000, priceHistory: [120000], rank: 3, delisted: false, tagId: "americas", teamTagId: "NRG_tag", imageUrl: "" },
+      "100T": { id: "100T", name: "100 Thieves", currentPrice: 110000, prevPrice: 110000, priceHistory: [110000], rank: 4, delisted: false, tagId: "americas", teamTagId: "100T_tag", imageUrl: "" },
+      "KRÜ": { id: "KRÜ", name: "KRÜ Esports", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "americas", teamTagId: "KRÜ_tag", imageUrl: "" },
+      "MIBR": { id: "MIBR", name: "Made in Brazil", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "americas", teamTagId: "MIBR_tag", imageUrl: "" },
+      "FUR": { id: "FUR", name: "FURIA", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "americas", teamTagId: "FUR_tag", imageUrl: "" },
+      "LOUD": { id: "LOUD", name: "LOUD", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "americas", teamTagId: "LOUD_tag", imageUrl: "" },
+      "NV": { id: "NV", name: "ENVY", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "americas", teamTagId: "NV_tag", imageUrl: "" },
+      "SEN": { id: "SEN", name: "Sentinels", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "americas", teamTagId: "SEN_tag", imageUrl: "" },
+      "C9": { id: "C9", name: "Cloud9", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "americas", teamTagId: "C9_tag", imageUrl: "" },
+      "EG": { id: "EG", name: "Evil Geniuses", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "americas", teamTagId: "EG_tag", imageUrl: "" },
+     
+      // China 대표 구단
+      "EDG": { id: "EDG", name: "Edward Gaming", currentPrice: 140000, prevPrice: 140000, priceHistory: [140000], rank: 1, delisted: false, tagId: "china", teamTagId: "EDG_tag", imageUrl: "" },
+      "XLG": { id: "XLG", name: "Xi Lai Gaming", currentPrice: 130000, prevPrice: 130000, priceHistory: [130000], rank: 2, delisted: false, tagId: "china", teamTagId: "XLG_tag", imageUrl: "" },
+      "DRG": { id: "DRG", name: "Dragon Ranger Gaming", currentPrice: 120000, prevPrice: 120000, priceHistory: [120000], rank: 3, delisted: false, tagId: "china", teamTagId: "DRG_tag", imageUrl: "" },
+      "AG": { id: "AG", name: "All Gamers", currentPrice: 110000, prevPrice: 110000, priceHistory: [110000], rank: 4, delisted: false, tagId: "china", teamTagId: "AG_tag", imageUrl: "" },
+      "JDG": { id: "JDG", name: "JD Gaming", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "china", teamTagId: "JDG_tag", imageUrl: "" },
+      "TYL": { id: "TYL", name: "TYLOO Gaming", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "china", teamTagId: "TYL_tag", imageUrl: "" },
+      "TEC": { id: "TEC", name: "Titan Esports Club", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "china", teamTagId: "TEC_tag", imageUrl: "" },
+      "TE": { id: "TE", name: "Trace Esports", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "china", teamTagId: "TE_tag", imageUrl: "" },
+      "BLG": { id: "BLG", name: "Bilibili Gaming", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "china", teamTagId: "BLG_tag", imageUrl: "" },
+      "NOVA": { id: "NOVA", name: "Nova Esports", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "china", teamTagId: "NOVA_tag", imageUrl: "" },
+      "FPX": { id: "FPX", name: "FunPlus Phoenix", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "china", teamTagId: "FPX_tag", imageUrl: "" },
+      "WOL": { id: "WOL", name: "Wolves Esports", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "china", teamTagId: "WOL_tag", imageUrl: "" },
+
+      // EMEA 대표 구단
+      "TH": { id: "TH", name: "Team Heretics", currentPrice: 140000, prevPrice: 140000, priceHistory: [140000], rank: 1, delisted: false, tagId: "emea", teamTagId: "TH_tag", imageUrl: "" },
+      "VIT": { id: "VIT", name: "Team Vitality", currentPrice: 130000, prevPrice: 130000, priceHistory: [130000], rank: 2, delisted: false, tagId: "emea", teamTagId: "VIT_tag", imageUrl: "" },
+      "FUT": { id: "FUT", name: "FUT Esports", currentPrice: 120000, prevPrice: 120000, priceHistory: [120000], rank: 3, delisted: false, tagId: "emea", teamTagId: "FUT_tag", imageUrl: "" },
+      "EF": { id: "EF", name: "Eternal Fire", currentPrice: 110000, prevPrice: 110000, priceHistory: [110000], rank: 4, delisted: false, tagId: "emea", teamTagId: "EF_tag", imageUrl: "" },
+      "FNC": { id: "FNC", name: "Fnatic", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "emea", teamTagId: "FNC_tag", imageUrl: "" },
+      "M8": { id: "M8", name: "Gentle Mates", currentPrice: 100000, prevPrice: 100000, priceHistory: [100000], rank: 5.5, delisted: false, tagId: "emea", teamTagId: "M8_tag", imageUrl: "" },
+      "TL": { id: "TL", name: "Team Liquid", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "emea", teamTagId: "TL_tag", imageUrl: "" },
+      "BBL": { id: "BBL", name: "BBL Esports", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "emea", teamTagId: "BBL_tag", imageUrl: "" },
+      "NAVI": { id: "NAVI", name: "Natus Vincere", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "emea", teamTagId: "NAVI_tag", imageUrl: "" },
+      "GX": { id: "GX", name: "GIANTX", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "emea", teamTagId: "GX_tag", imageUrl: "" },
+      "KC": { id: "KC", name: "Karmine Crop", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "emea", teamTagId: "KC_tag", imageUrl: "" },
+      "PCF": { id: "PCF", name: "PCIFIC Esports", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "emea", teamTagId: "PCF_tag", imageUrl: "" },
+
+
+      // Pacific 대표 구단
       "PRX": { id: "PRX", name: "Paper Rex", currentPrice: 140000, prevPrice: 140000, priceHistory: [140000], rank: 1, delisted: false, tagId: "pacific", teamTagId: "PRX_tag", imageUrl: "" },
       "FS": { id: "FS", name: "Full Sense", currentPrice: 130000, prevPrice: 130000, priceHistory: [130000], rank: 2, delisted: false, tagId: "pacific", teamTagId: "FS_tag", imageUrl: "" },
       "GE": { id: "GE", name: "Global Esports", currentPrice: 120000, prevPrice: 120000, priceHistory: [120000], rank: 3, delisted: false, tagId: "pacific", teamTagId: "GE_tag", imageUrl: "" },
@@ -680,11 +774,18 @@
       "NS": { id: "NS", name: "Nongshim RedForce", currentPrice: 90000, prevPrice: 90000, priceHistory: [90000], rank: 7.5, delisted: false, tagId: "pacific", teamTagId: "NS_tag", imageUrl: "" },
       "TS": { id: "TS", name: "Team Secret", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "pacific", teamTagId: "TS_tag", imageUrl: "" },
       "ZETA": { id: "ZETA", name: "ZETA DIVISION", currentPrice: 80000, prevPrice: 80000, priceHistory: [80000], rank: 9.5, delisted: false, tagId: "pacific", teamTagId: "ZETA_tag", imageUrl: "" },
-      "GEN": { id: "GEN", name: "Gen.G Esports", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "pacific", teamTagId: "GEN_tag", imageUrl: "" },
+      "GEN": { id: "GEN", name: "Gen.G", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "pacific", teamTagId: "GEN_tag", imageUrl: "" },
       "VL": { id: "VL", name: "VARREL", currentPrice: 70000, prevPrice: 70000, priceHistory: [70000], rank: 11.5, delisted: false, tagId: "pacific", teamTagId: "VL_tag", imageUrl: "" }
     };
 
     const initialPlayers = {
+      // 🇺🇸 Americas 선수단 (대표 5인)
+
+      // 🇨🇳 China 선수단 (대표 5인)
+
+      // 🇪🇺 EMEA 선수단 (대표 5인)
+
+      // ⚡ Pacific 대표 구단 선수단 (동일 유지)
       "primmie": { id: "primmie", name: "primmie", team: "FS", expectedValue: 114.41, currentPrice: 12818, prevPrice: 12818, priceHistory: [12818], baseStats: { acs: 265.4, kd: 1.31, kast: 74 }, delisted: false, tagId: "FS_tag", imageUrl: "", isActive: true },
       "something": { id: "something", name: "something", team: "PRX", expectedValue: 113.59, currentPrice: 12725, prevPrice: 12725, priceHistory: [12725], baseStats: { acs: 235.9, kd: 1.4, kast: 74 }, delisted: false, tagId: "PRX_tag", imageUrl: "", isActive: true },
       "Jinggg": { id: "Jinggg", name: "Jinggg", team: "PRX", expectedValue: 109.04, currentPrice: 12216, prevPrice: 12216, priceHistory: [12216], baseStats: { acs: 239.6, kd: 1.25, kast: 77 }, delisted: false, tagId: "PRX_tag", imageUrl: "", isActive: true },
@@ -751,25 +852,68 @@
       "Hermes": { id: "Hermes", name: "Hermes", team: "KRX", expectedValue: 65.25, currentPrice: 7310, prevPrice: 7310, priceHistory: [7310], baseStats: { acs: 143, kd: 0.63, kast: 62 }, delisted: false, tagId: "KRX_tag", imageUrl: "", isActive: false }
     };
 
-    // VCT 글로벌 공식 4대 리그 태그 및 약어(aliases) 연계 완료
+    // 리그별 반투명 테마 색표 대장 (AMER=rgba(255, 87, 12, 0.15), CN=rgba(252, 38, 89, 0.15), EMEA=rgba(212, 255, 29, 0.25), PAC=rgba(1, 210, 215, 0.15))
     const initialTags = {
-      "pacific": { id: "pacific", name: "VCT Pacific", bg: "#00c4cc", text: "#ffffff", aliases: "PAC, Pacific, 퍼시픽", type: "league" },
-      "emea": { id: "emea", name: "VCT EMEA", bg: "#f97316", text: "#ffffff", aliases: "EMEA, 에메아, 유럽", type: "league" },
-      "americas": { id: "americas", name: "VCT Americas", bg: "#16a34a", text: "#ffffff", aliases: "AMER, Americas, 아메리카", type: "league" },
-      "china": { id: "china", name: "VCT China", bg: "#dc2626", text: "#ffffff", aliases: "CN, China, 차이나, 중국", type: "league" },
+      "pacific": { id: "pacific", name: "VCT Pacific", bg: "#01D2D7", text: "#FFFFFF", aliases: "PAC, Pacific, 퍼시픽", type: "league" },
+      "emea": { id: "emea", name: "VCT EMEA", bg: "#D4FF1D", text: "#373563", aliases: "EMEA, 에메아, 유럽", type: "league" },
+      "americas": { id: "americas", name: "VCT Americas", bg: "#FF570C", text: "#FFFFFF", aliases: "AMER, Americas, 아메리카", type: "league" },
+      "china": { id: "china", name: "VCT CN", bg: "#FC2659", text: "#FFFFFF", aliases: "CN, China, 차이나, 중국", type: "league" },
+
+      "PRX_tag": { id: "PRX_tag", name: "PRX", bg: "#FF0066", text: "#ffffff", aliases: "Paper Rex, 페이퍼렉스", type: "team", parentLeagueId: "pacific" },
+      "FS_tag": { id: "FS_tag", name: "FS", bg: "#FF4100", text: "#ffffff", aliases: "Full Sense, 풀센스", type: "team", parentLeagueId: "pacific" },
+      "GE_tag": { id: "GE_tag", name: "GE", bg: "#ED1C24", text: "#ffffff", aliases: "Global Esports, 글로벌", type: "team", parentLeagueId: "pacific" },
+      "T1_tag": { id: "T1_tag", name: "T1", bg: "#E4002B", text: "#ffffff", aliases: "티원, T1", type: "team", parentLeagueId: "pacific" },
+      "RRQ_tag": { id: "RRQ_tag", name: "RRQ", bg: "#F3AA36", text: "#000000", aliases: "Rex Regum Qeon", type: "team", parentLeagueId: "pacific" },
+      "KRX_tag": { id: "KRX_tag", name: "KRX", bg: "#001C58", text: "#ffffff", aliases: "Kiwoom DRX, 디알엑스", type: "team", parentLeagueId: "pacific" },
+      "DFM_tag": { id: "DFM_tag", name: "DFM", bg: "#2568FC", text: "#ffffff", aliases: "DetonatioN FocusMe, 데토네이션", type: "team", parentLeagueId: "pacific" },
+      "NS_tag": { id: "NS_tag", name: "NS", bg: "#DE2027", text: "#ffffff", aliases: "Nongshim RedForce, 농심, 레드포스", type: "team", parentLeagueId: "pacific" },
+      "TS_tag": { id: "TS_tag", name: "TS", bg: "#000000", text: "#FFFFFF", aliases: "Team Secret, 시크릿", type: "team", parentLeagueId: "pacific" },
+      "ZETA_tag": { id: "ZETA_tag", name: "ZETA", bg: "#DDFD02", text: "#000000", aliases: "ZETA DIVISION, 제타", type: "team", parentLeagueId: "pacific" },
+      "GEN_tag": { id: "GEN_tag", name: "GEN", bg: "#CFB887", text: "#000000", aliases: "Gen.G, 젠지", type: "team", parentLeagueId: "pacific" },
+      "VL_tag": { id: "VL_tag", name: "VL", bg: "#144546", text: "#b89f75", aliases: "VARREL, 바렐", type: "team", parentLeagueId: "pacific" },
+
+      "TH_tag": { id: "TH_tag", name: "TH", bg: "#CE9340", text: "#000000", aliases: "TH", type: "team", parentLeagueId: "emea" },
+      "VIT_tag": { id: "VIT_tag", name: "VIT", bg: "#FFFF00", text: "#000000", aliases: "Vit", type: "team", parentLeagueId: "emea" },
+      "FUT_tag": { id: "FUT_tag", name: "FUT", bg: "#121824", text: "#EC1A39", aliases: "FUT", type: "team", parentLeagueId: "emea" },
+      "EF_tag": { id: "EF_tag", name: "EF", bg: "#8C7D5B", text: "#ffffff", aliases: "EF", type: "team", parentLeagueId: "emea" },
+      "FNC_tag": { id: "FNC_tag", name: "FNC", bg: "#FF5900", text: "#ffffff", aliases: "FNC", type: "team", parentLeagueId: "emea" },
+      "M8_tag": { id: "M8_tag", name: "M8", bg: "#B8F600", text: "#000000", aliases: "M8", type: "team", parentLeagueId: "emea" },
+      "TL_tag": { id: "TL_tag", name: "TL", bg: "#041536", text: "#ffffff", aliases: "TL", type: "team", parentLeagueId: "emea" },
+      "BBL_tag": { id: "BBL_tag", name: "BBL", bg: "#2A0C44", text: "#ffffff", aliases: "BBL", type: "team", parentLeagueId: "emea" },
+      "NAVI_tag": { id: "NAVI_tag", name: "NAVI", bg: "#FFEE00", text: "#000000", aliases: "NAVI", type: "team", parentLeagueId: "emea" },
+      "GX_tag": { id: "GX_tag", name: "GX", bg: "#007FEA", text: "#000000", aliases: "GX", type: "team", parentLeagueId: "emea" },
+      "KC_tag": { id: "KC_tag", name: "KC", bg: "#01CCFE", text: "#000000", aliases: "KC", type: "team", parentLeagueId: "emea" },
+      "PCF_tag": { id: "PCF_tag", name: "PCF", bg: "#42C1DD", text: "#ffffff", aliases: "PCF", type: "team", parentLeagueId: "emea" },
+
+
+      "G2_tag": { id: "G2_tag", name: "G2", bg: "#000000", text: "#ffffff", aliases: "G2", type: "team", parentLeagueId: "americas" },
+      "LEV_tag": { id: "LEV_tag", name: "LEV", bg: "#69ABDC", text: "#ffffff", aliases: "LEV", type: "team", parentLeagueId: "americas" },
+      "NRG_tag": { id: "NRG_tag", name: "NRG", bg: "#F63D0A", text: "#ffffff", aliases: "NRG", type: "team", parentLeagueId: "americas" },
+      "100T_tag": { id: "100T_tag", name: "100T", bg: "#000000", text: "#D2171C", aliases: "100T", type: "team", parentLeagueId: "americas" },
+      "KRÜ_tag": { id: "KRÜ_tag", name: "KRÜ", bg: "#FF1493", text: "#000000", aliases: "KRÜ", type: "team", parentLeagueId: "americas" },
+      "MIBR_tag": { id: "MIBR_tag", name: "MIBR", bg: "#0f183f", text: "#ffffff", aliases: "MIBR", type: "team", parentLeagueId: "americas" },
+      "FUR_tag": { id: "FUR_tag", name: "FUR", bg: "#000000", text: "#ffffff", aliases: "FUR", type: "team", parentLeagueId: "americas" },
+      "LOUD_tag": { id: "LOUD_tag", name: "LOUD", bg: "#00FF3C", text: "#000000", aliases: "LOUD", type: "team", parentLeagueId: "americas" },
+      "NV_tag": { id: "NV_tag", name: "NV", bg: "#000000", text: "#ffffff", aliases: "NV", type: "team", parentLeagueId: "americas" },
+      "SEN_tag": { id: "SEN_tag", name: "SEN", bg: "#E5062F", text: "#ffffff", aliases: "SEN", type: "team", parentLeagueId: "americas" },
+      "C9_tag": { id: "C9_tag", name: "C9", bg: "#00AEEE", text: "#ffffff", aliases: "C9", type: "team", parentLeagueId: "americas" },
+      "EG_tag": { id: "EG_tag", name: "EG", bg: "#030B54  ", text: "#ffffff", aliases: "EG", type: "team", parentLeagueId: "americas" },
+
+
+      "EDG_tag": { id: "EDG_tag", name: "EDG", bg: "#000000", text: "#ffffff", aliases: "EDG", type: "team", parentLeagueId: "china" },
+      "XLG_tag": { id: "XLG_tag", name: "XLG", bg: "#0927BD", text: "#05F1C1", aliases: "XLG", type: "team", parentLeagueId: "china" },
+      "DRG_tag": { id: "DRG_tag", name: "DRG", bg: "#2E60F9", text: "#ffffff", aliases: "DRG", type: "team", parentLeagueId: "china" },
+      "AG_tag": { id: "AG_tag", name: "AG", bg: "#DA251C", text: "#ffffff", aliases: "AG", type: "team", parentLeagueId: "china" },
+      "JDG_tag": { id: "JDG_tag", name: "JDG", bg: "#000000", text: "#C9102E", aliases: "JDG", type: "team", parentLeagueId: "china" },
+      "TYL_tag": { id: "TYL_tag", name: "TYL", bg: "#D20023", text: "#ffffff", aliases: "TYL", type: "team", parentLeagueId: "china" },
+      "TEC_tag": { id: "TEC_tag", name: "TEC", bg: "#DB2B1A", text: "#ffffff", aliases: "TEC", type: "team", parentLeagueId: "china" },
+      "TE_tag": { id: "TE_tag", name: "TE", bg: "#5980C5", text: "#FEBE00", aliases: "TE", type: "team", parentLeagueId: "china" },
+      "BLG_tag": { id: "BLG_tag", name: "BLG", bg: "#37D0F5", text: "#ffffff", aliases: "BLG", type: "team", parentLeagueId: "china" },
+      "NOVA_tag": { id: "NOVA_tag", name: "NOVA", bg: "#B04EC4", text: "#ffffff", aliases: "NOVA", type: "team", parentLeagueId: "china" },
+      "FPX_tag": { id: "FPX_tag", name: "FPX", bg: "#FA0F00", text: "#000000", aliases: "FPX", type: "team", parentLeagueId: "china" },
+      "WOL_tag": { id: "WOL_tag", name: "WOL", bg: "#FCB917", text: "#000000", aliases: "WOL", type: "team", parentLeagueId: "china" },
+
       
-      "PRX_tag": { id: "PRX_tag", name: "PRX", bg: "#ff007f", text: "#ffffff", aliases: "Paper Rex, 페이퍼렉스", type: "team" },
-      "FS_tag": { id: "FS_tag", name: "FS", bg: "#ff4e00", text: "#ffffff", aliases: "Full Sense, 풀센스", type: "team" },
-      "GE_tag": { id: "GE_tag", name: "GE", bg: "#ffffff", text: "#1b559d", aliases: "Global Esports, 글로벌", type: "team" },
-      "T1_tag": { id: "T1_tag", name: "T1", bg: "#dc0024", text: "#ffffff", aliases: "티원, T1", type: "team" },
-      "RRQ_tag": { id: "RRQ_tag", name: "RRQ", bg: "#f5a623", text: "#1e293b", aliases: "Rex Regum Qeon", type: "team" },
-      "KRX_tag": { id: "KRX_tag", name: "KRX", bg: "#0d235c", text: "#ffffff", aliases: "Kiwoom DRX, 디알엑스", type: "team" },
-      "DFM_tag": { id: "DFM_tag", name: "DFM", bg: "#1f62f1", text: "#ffffff", aliases: "DetonatioN FocusMe, 데토네이션", type: "team" },
-      "NS_tag": { id: "NS_tag", name: "NS", bg: "#e02020", text: "#ffffff", aliases: "Nongshim RedForce, 농심, 레드포스", type: "team" },
-      "TS_tag": { id: "TS_tag", name: "TS", bg: "#000000", text: "#00d4cc", aliases: "Team Secret, 시크릿", type: "team" },
-      "ZETA_tag": { id: "ZETA_tag", name: "ZETA", bg: "#d2f500", text: "#000000", aliases: "ZETA DIVISION, 제타", type: "team" },
-      "GEN_tag": { id: "GEN_tag", name: "GEN", bg: "#cca87a", text: "#000000", aliases: "Gen.G, 젠지", type: "team" },
-      "VL_tag": { id: "VL_tag", name: "VL", bg: "#154240", text: "#f9ee73", aliases: "VARREL, 바렐", type: "team" },
       "lft": { id: "lft", name: "LFT", bg: "#ebf1f5", text: "#4c6270", aliases: "LFT, 무소속, 자유계약", type: "team" }
     };
 
@@ -779,9 +923,9 @@
       teams: JSON.parse(JSON.stringify(initialTeams)),
       players: JSON.parse(JSON.stringify(initialPlayers)),
       tags: JSON.parse(JSON.stringify(initialTags)),
-      netWorthHistory: [10000000], // 사용자 자산 누적 변동 그래프용 히스토리
-      transactions: [], // 상세 주식 거래 내역 로그
-      newsFeed: [], // 가상 공시 뉴스 적재함
+      netWorthHistory: [10000000],
+      transactions: [],
+      newsFeed: [],
       historyStack: [] 
     };
 
@@ -789,19 +933,19 @@
     let selectedStockId = 'PRX'; 
     let selectedStockType = 'team'; 
     let filterStockType = 'all'; 
+    let activeLeagueFilter = null; 
     let orderType = 'buy'; 
     let chartInstance = null;
 
     let activeAdminSubTab = 'match'; 
-    let activeMtsSubTab = 'chart-trade'; // MTS 모바일용 서브탭
+    let activeMtsSubTab = 'chart-trade'; 
+    let activeAnalysisSection = 'main'; 
 
-    // ⚡ 중복/더블클릭 연속 적용 예방을 위한 연산 가드 변수 선언
     let isMatchSubmitting = false;
     let isNewsSubmitting = false;
     let isSeasonSubmitting = false;
 
     window.onload = function() {
-      // ⚡ [버그 2 해결] 세이브 키와 로드 키를 vct_state_store_v10으로 전면 일치시킵니다.
       if (localStorage.getItem('vct_state_store_v10')) {
         try {
           state = JSON.parse(localStorage.getItem('vct_state_store_v10'));
@@ -818,7 +962,6 @@
     };
 
     function saveState() {
-      // ⚡ [버그 2 해결] v10 통합 세이브 키로 전산 유지
       localStorage.setItem('vct_state_store_v10', JSON.stringify(state));
     }
 
@@ -826,10 +969,6 @@
       document.getElementById('header-cash').innerText = state.cash.toLocaleString() + '원';
       const totalVal = calculateTotalAssets();
       document.getElementById('header-total').innerText = totalVal.toLocaleString() + '원';
-      
-      calculateMarketIndices();
-      
-      // ⚡ [버그 1 연동 보완] 전역 업데이트 주기에서 뉴스 피드를 상시 드로잉 연동시킵니다.
       renderNewsFeed();
     }
 
@@ -845,41 +984,49 @@
       return state.cash + stockValue;
     }
 
-    // 종합 시장 주가지수 (PAC 및 선택 구단 Roster 지수) 계산기
-    function calculateMarketIndices() {
-      const pacTeams = Object.values(state.teams).filter(t => t.tagId === 'pacific' && !t.delisted);
-      let pacAvg = 0;
-      if (pacTeams.length > 0) {
-        const sum = pacTeams.reduce((acc, t) => sumTeamsAndRosters(acc, t.currentPrice), 0);
-        pacAvg = Math.round(sum / pacTeams.length);
-      }
-      document.getElementById('market-idx-pac').innerText = pacAvg.toLocaleString() + 'p';
-
-      // 현재 선택된 구단의 주전 로스터 지수 계산
-      let targetTeamId = selectedStockId;
-      if (selectedStockType === 'player') {
-        const player = state.players[selectedStockId];
-        // 플레이어의 tagId에서 '_tag'를 떼어내서 팀 ID 획득
-        targetTeamId = player.tagId.replace('_tag', '');
-      }
-
-      const activePlayers = Object.values(state.players).filter(p => p.tagId === targetTeamId + '_tag' && p.isActive && !p.delisted);
-      let rosterAvg = 0;
-      if (activePlayers.length > 0) {
-        const sum = activePlayers.reduce((acc, p) => sumTeamsAndRosters(acc, p.currentPrice), 0);
-        rosterAvg = Math.round(sum / activePlayers.length);
-      }
-
-      const teamName = state.teams[targetTeamId] ? state.teams[targetTeamId].name : 'ROSTER';
-      document.getElementById('market-idx-roster-label').innerText = `${teamName.toUpperCase()} ROSTER:`;
-      document.getElementById('market-idx-roster').innerText = rosterAvg.toLocaleString() + 'p';
+    // --- 수식 연산 유틸리티 공식 엔진 ---
+    // 리그 지수 계산: 해당 리그 소속 구단 가격의 단순 총합 (Sum)
+    function getLeagueIndex(leagueId) {
+      const filtered = Object.values(state.teams).filter(t => t.tagId === leagueId && !t.delisted);
+      return filtered.reduce((acc, t) => acc + t.currentPrice, 0);
     }
 
-    function sumTeamsAndRosters(acc, price) {
-      return acc + price;
+    // 팀별 로스터 지수 계산: 구단 내 활성화 주전 5인 현재가의 합 (Sum)
+    function getTeamRosterIndex(teamId) {
+      const targetTag = teamId + '_tag';
+      const activePlayers = Object.values(state.players).filter(p => p.tagId === targetTag && p.isActive && !p.delisted);
+      return activePlayers.reduce((acc, p) => acc + p.currentPrice, 0);
     }
 
-    // 순위 수치를 한국어 표기 포맷터
+    // [보완 이식] 소속 리그 내부 범위 몸값 순위 산출식
+    function getRosterValueRank(teamId) {
+      const team = state.teams[teamId];
+      if (!team) return 1;
+      const leagueId = team.tagId;
+      const leagueTeams = Object.values(state.teams).filter(t => t.tagId === leagueId && !t.delisted);
+      
+      const mapped = leagueTeams.map(t => ({ id: t.id, val: getTeamRosterIndex(t.id) }));
+      mapped.sort((a, b) => b.val - a.val);
+      return mapped.findIndex(x => x.id === teamId) + 1;
+    }
+
+    // [보완 이식] 투자 대비 성적 가성비 효율 순위 계산식 (소속 리그 내부 범위 대조 적용)
+    function getRosterEfficiencyGap(teamId) {
+      const team = state.teams[teamId];
+      if (!team) return 0;
+      const rosterRank = getRosterValueRank(teamId);
+      const actualRank = team.rank;
+      return rosterRank - actualRank;
+    }
+
+    // 투자 효율격차 마크업 포맷터 (descriptive 단어 전면 제거 및 ----- 기호 반영 완료)
+    function formatEfficiencyGap(gap) {
+      const rounded = Math.round(gap);
+      if (rounded > 0) return `<span class="text-red-500 font-bold">▲${rounded}</span>`;
+      if (rounded < 0) return `<span class="text-blue-500 font-bold">▼${Math.abs(rounded)}</span>`;
+      return `<span class="text-slate-400 font-semibold">-----</span>`;
+    }
+
     function formatRank(rank) {
       if (rank === 1) return "1위";
       if (rank === 2) return "2위";
@@ -892,14 +1039,30 @@
       return rank + "위";
     }
 
+    // --- 2. 선수의 소속 리그 자동 판별 유틸리티 함수 ---
+    function getPlayerLeague(player) {
+      if (!player || player.tagId === 'lft') return '';
+      const pTag = state.tags[player.tagId];
+      if (pTag && pTag.parentLeagueId) {
+        return pTag.parentLeagueId;
+      }
+      const parentTeamId = player.tagId.replace('_tag', '');
+      const team = state.teams[parentTeamId];
+      if (team) {
+        return team.tagId;
+      }
+      return '';
+    }
+
     // --- 3. 글로벌 탭 제어 ---
     function switchTab(tabId) {
       activeTab = tabId;
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById('view-' + tabId).classList.remove('hidden');
 
-      ['exchange', 'portfolio', 'admin'].forEach(t => {
+      ['exchange', 'analysis', 'portfolio', 'admin'].forEach(t => {
         const btn = document.getElementById('tab-' + t);
+        if (!btn) return;
         if (t === tabId) {
           btn.className = "px-4 py-1.5 rounded font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm";
         } else {
@@ -911,6 +1074,8 @@
         renderStockList();
         renderSelectedStock();
         switchMtsSubTab(activeMtsSubTab);
+      } else if (tabId === 'analysis') {
+        switchAnalysisSection(activeAnalysisSection);
       } else if (tabId === 'portfolio') {
         renderPortfolioTab();
       } else if (tabId === 'admin') {
@@ -953,19 +1118,378 @@
 
       if (subTabId === 'match') {
         initAdminDropdowns(); 
+        filterMatchTeamsDropdown();
         loadRosters();
       } else if (subTabId === 'stocks') {
         populateDropdownOptions();
       } else if (subTabId === 'roster') {
         initRosterManagerDropdown();
-        loadRosterManager();
       } else if (subTabId === 'season') {
         renderSeasonEndTab(); 
       } else if (subTabId === 'system') {
         renderAdminTags();
         populateTagEditDropdown();
-        renderDelistControls();
         initNewsTargetDropdownRow();
+      }
+    }
+
+    // --- 5. [신설] 시장 분석 탭 6단 대시보드 렌더링 엔진 ---
+    function switchAnalysisSection(secId) {
+      activeAnalysisSection = secId;
+      
+      const sections = ['main', 'rank', 'amer', 'cn', 'emea', 'pac'];
+      sections.forEach(s => {
+        const btn = document.getElementById('sec-btn-' + s);
+        if (!btn) return;
+        if (s === secId) {
+          btn.className = "flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded bg-indigo-600 text-white shadow-sm transition-all";
+        } else {
+          btn.className = "flex-1 min-w-[70px] py-1.5 text-xs font-bold rounded text-slate-600 hover:bg-white/50 transition-all";
+        }
+      });
+
+      renderAnalysisContent();
+    }
+
+    function renderAnalysisContent() {
+      const container = document.getElementById('analysis-content-container');
+      container.innerHTML = '';
+
+      // 반투명 파스텔톤 배경색 + 선명한 본문 글자색 연계 테이블 이식 완료
+      const leagueColors = {
+        americas: { bg: '#FF570C', text: '#FFFFFF' },
+        china: { bg: '#FC2659', text: '#FFFFFF' },
+        emea: { bg: '#D4FF1D', text: '#373563' },
+        pacific: { bg: '#01D2D7', text: '#FFFFFF' }
+      };
+
+      if (activeAnalysisSection === 'main') {
+        // [섹션 1. 메인] 상단 1x4 대표 리그 대형 카드 배치 + 하단 1x3 금융 요약 슬림 카드 배치 (위하향 스왑 완료)
+        const wrapper = document.createElement('div');
+        wrapper.className = "space-y-6";
+
+        // --- 1. [상단] 원래 핵심 메인인 4대 리그 대형 1x4 카드 배치 (1위 구단 시인성 강조 적용) ---
+        const leagueGrid = document.createElement('div');
+        leagueGrid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+
+        const leagues = [
+          { id: 'americas', name: 'VCT Americas', flag: '', defaultOrder: 1 },
+          { id: 'china', name: 'VCT China', flag: '', defaultOrder: 2 },
+          { id: 'emea', name: 'VCT EMEA', flag: '', defaultOrder: 3 },
+          { id: 'pacific', name: 'VCT Pacific', flag: '', defaultOrder: 4 }
+        ];
+
+        // 리그지수 순 내림차순 정렬 (동치일 경우 AMER -> CN -> EMEA -> PAC 순 정위)
+        leagues.sort((a, b) => {
+          const idxA = getLeagueIndex(a.id);
+          const idxB = getLeagueIndex(b.id);
+          if (idxB !== idxA) {
+            return idxB - idxA;
+          }
+          return a.defaultOrder - b.defaultOrder;
+        });
+
+        leagues.forEach(l => {
+          const lIndex = getLeagueIndex(l.id);
+          const colors = leagueColors[l.id];
+          
+          const teamsInLeague = Object.values(state.teams).filter(t => t.tagId === l.id && !t.delisted);
+          teamsInLeague.sort((a, b) => getTeamRosterIndex(b.id) - getTeamRosterIndex(a.id));
+          const topTeams = teamsInLeague.slice(0, 3);
+
+          const card = document.createElement('div');
+          // 볼륨감 극대화를 위해 padding p-6 상향 및 크기 확장
+          card.className = "bg-white p-6 rounded-xl border border-slate-200 shadow-md flex flex-col justify-between hover:shadow-lg transition-all min-h-[340px]";
+          
+          let topTeamsHtml = '';
+          if (topTeams.length > 0) {
+            topTeams.forEach((t, i) => {
+              const rosterVal = getTeamRosterIndex(t.id);
+              if (i === 0) {
+                // 1위 구단: 왕관 배지 부착 및 텍스트/서체 가시성 전면 강조
+                topTeamsHtml += `
+                  <div class="flex justify-between items-center text-xs py-2.5 border-b border-slate-100 font-black text-slate-900">
+                    <span>👑 ${t.name}</span>
+                    <span>${rosterVal.toLocaleString()}원</span>
+                  </div>
+                `;
+              } else {
+                // 2, 3위 구단: 조밀하고 명확한 크기로 배치해 확실한 위계 달성
+                topTeamsHtml += `
+  <div class="flex justify-between items-center text-xs py-2 border-b border-slate-100 last:border-b-0 text-slate-600 font-semibold">
+    <span>${i + 1}위 ${t.name}</span>
+    <span>${rosterVal.toLocaleString()}원</span>
+  </div>
+`;
+              }
+            });
+          } else {
+            topTeamsHtml = '<div class="text-xs text-slate-400 text-center py-6">등록된 구단이 없습니다.</div>';
+          }
+
+          card.innerHTML = `
+            <div class="space-y-4">
+              <div style="background-color: ${colors.bg};" class="p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-inner border border-slate-200/10">
+                <span class="text-lg font-black tracking-wide" style="color: ${colors.text};">${l.flag} ${l.name}</span>
+                <span class="text-sm font-black mt-1" style="color: ${colors.text};">${lIndex.toLocaleString()} 원</span>
+              </div>
+              <div class="space-y-2 mt-6">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">🏆 실시간 대표 로스터 총합 가치 TOP 3</span>
+                <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/50">${topTeamsHtml}</div>
+              </div>
+            </div>
+          `;
+          leagueGrid.appendChild(card);
+        });
+
+        wrapper.appendChild(leagueGrid);
+
+        // --- 2. [하단] 금융 요약 카드 3종 세트 (1위 대형 노출 + 2/3위 순차적 세로 하향 나열) ---
+        const allTeams = Object.values(state.teams).filter(t => !t.delisted);
+        
+        // ① 최고의 머니볼 (가성비 격차 순)
+        const sortedEff = [...allTeams].sort((a, b) => getRosterEfficiencyGap(b.id) - getRosterEfficiencyGap(a.id));
+        const top3Eff = sortedEff.slice(0, 3);
+
+        // ② 황제 스쿼드 (로스터 몸값 순)
+        const sortedSquad = [...allTeams].sort((a, b) => getTeamRosterIndex(b.id) - getTeamRosterIndex(a.id));
+        const top3Squad = sortedSquad.slice(0, 3);
+
+        // ③ 최근 최고 상승 구단 (주가 상승률 순)
+        const sortedGainer = [...allTeams].sort((a, b) => {
+          const rateA = ((a.currentPrice - a.prevPrice) / a.prevPrice) * 100;
+          const rateB = ((b.currentPrice - b.prevPrice) / b.prevPrice) * 100;
+          return rateB - rateA;
+        });
+        const top3Gainer = sortedGainer.slice(0, 3);
+
+        const highlightGrid = document.createElement('div');
+        highlightGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-4";
+
+        // 가성비 3순위 수직 나열 렌더러
+        let effHtml = '';
+        if (top3Eff.length > 0) {
+          top3Eff.forEach((t, idx) => {
+            const gap = getRosterEfficiencyGap(t.id);
+            if (idx === 0) {
+              effHtml += `
+                <div class="pb-2 border-b border-amber-200/40">
+                  <span class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">RANK 1ST</span>
+                  <div class="text-sm font-black text-slate-800 mt-0.5">${t.name}</div>
+                  <div class="text-xs text-slate-500 mt-0.5">효율 격차: ${formatEfficiencyGap(gap)}</div>
+                </div>
+              `;
+            } else {
+              effHtml += `
+  <div class="flex justify-between items-center text-xs py-1.5 border-b border-amber-100/20 last:border-b-0 text-slate-700 font-semibold">
+    <span>${idx + 1}위 ${t.name}</span>
+    <span>${formatEfficiencyGap(gap)}</span>
+  </div>
+`;;
+            }
+          });
+        }
+
+        // 황제 스쿼드 3순위 수직 나열 렌더러
+        let squadHtml = '';
+        if (top3Squad.length > 0) {
+          top3Squad.forEach((t, idx) => {
+            const rIndex = getTeamRosterIndex(t.id);
+            if (idx === 0) {
+              squadHtml += `
+                <div class="pb-2 border-b border-indigo-200/40">
+                  <span class="text-[10px] font-extrabold text-indigo-700 uppercase tracking-wider">RANK 1ST</span>
+                  <div class="text-sm font-black text-slate-800 mt-0.5">${t.name}</div>
+                  <div class="text-xs text-indigo-600 font-extrabold mt-0.5">${rIndex.toLocaleString()} 원</div>
+                </div>
+              `;
+            } else {
+              squadHtml += `
+                <div class="flex justify-between items-center text-xs py-1.5 border-b border-amber-100/20 last:border-b-0 text-slate-700 font-semibold">
+                  <span>${idx + 1}위 ${t.name}</span>
+                  <span class="font-bold">${rIndex.toLocaleString()}원</span>
+                </div>
+              `;
+            }
+          });
+        }
+
+        // 최고 상승 구단 3순위 수직 나열 렌더러
+        let gainerHtml = '';
+        if (top3Gainer.length > 0) {
+          top3Gainer.forEach((t, idx) => {
+            const rate = ((t.currentPrice - t.prevPrice) / t.prevPrice) * 100;
+            if (idx === 0) {
+              gainerHtml += `
+                <div class="pb-2 border-b border-rose-200/40">
+                  <span class="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider">RANK 1ST</span>
+                  <div class="text-sm font-black text-slate-800 mt-0.5">${t.name}</div>
+                  <div class="text-xs text-rose-600 font-extrabold mt-0.5">+${rate.toFixed(1)}% 상승</div>
+                </div>
+              `;
+            } else {
+              gainerHtml += `
+                <div class="flex justify-between items-center text-xs py-1.5 border-b border-amber-100/20 last:border-b-0 text-slate-700 font-semibold">
+                  <span>${idx + 1}위 ${t.name}</span>
+                  <span class="font-bold text-rose-500">+${rate.toFixed(1)}%</span>
+                </div>
+              `;
+            }
+          });
+        }
+
+        highlightGrid.innerHTML = `
+          <!-- 최고의 머니볼 카드 -->
+          <div class="bg-amber-50/50 border border-amber-200/60 p-4 rounded-xl flex flex-col justify-between shadow-sm space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">🦊</span>
+              <span class="text-xs font-black text-amber-800">최고의 머니볼 구단</span>
+            </div>
+            <div class="space-y-2">${effHtml}</div>
+          </div>
+
+          <!-- 황제 스쿼드 카드 -->
+          <div class="bg-indigo-50/50 border border-indigo-200/60 p-4 rounded-xl flex flex-col justify-between shadow-sm space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">👑</span>
+              <span class="text-xs font-black text-indigo-800">최고 몸값 황제 스쿼드</span>
+            </div>
+            <div class="space-y-2">${squadHtml}</div>
+          </div>
+
+          <!-- 금주 최고 상승 구단 -->
+          <div class="bg-rose-50/50 border border-rose-200/60 p-4 rounded-xl flex flex-col justify-between shadow-sm space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">📈</span>
+              <span class="text-xs font-black text-rose-800">최고 상승 구단</span>
+            </div>
+            <div class="space-y-2">${gainerHtml}</div>
+          </div>
+        `;
+        wrapper.appendChild(highlightGrid);
+
+        container.appendChild(wrapper);
+
+      } else if (activeAnalysisSection === 'rank') {
+        // [섹션 2. 전체 순위] 모든 구단 로스터 가치 내림차순 및 가성비 격차 이식
+        // Sticky Header 연계를 위해 max-h 제한 박스 마킹
+        const tableCard = document.createElement('div');
+        tableCard.className = "bg-white rounded-lg border border-slate-200 shadow-sm p-5 flex flex-col overflow-hidden";
+        
+        const allTeams = Object.values(state.teams).filter(t => !t.delisted);
+        allTeams.sort((a, b) => getTeamRosterIndex(b.id) - getTeamRosterIndex(a.id));
+
+        let trHtml = '';
+        allTeams.forEach((t, i) => {
+          const lTag = state.tags[t.tagId] || { name: t.tagId, bg: '#cbd5e1', text: '#334155' };
+          const rIndex = getTeamRosterIndex(t.id);
+          const efficiencyGap = getRosterEfficiencyGap(t.id);
+
+          trHtml += `
+            <tr class="hover:bg-slate-50 transition-colors text-xs text-slate-800">
+              <td class="p-3 font-bold text-slate-900">${i + 1}위</td>
+              <td class="p-3"><span style="background-color: ${lTag.bg}; color: ${lTag.text};" class="px-2 py-0.5 rounded text-[9px] font-extrabold">${lTag.name}</span></td>
+              <td class="p-3 font-bold text-slate-800">${t.name}</td>
+              <td class="p-3 text-right font-black text-indigo-600">${rIndex.toLocaleString()} 원</td>
+              <td class="p-3 text-right text-slate-500">${t.currentPrice.toLocaleString()} 원</td>
+              <td class="p-3 text-right">${formatEfficiencyGap(efficiencyGap)}</td>
+            </tr>
+          `;
+        });
+
+        tableCard.innerHTML = `
+  <h3 class="font-extrabold text-sm text-slate-800 mb-3 flex-shrink-0">🏆 전체 구단 로스터 지수 실시간 랭킹</h3>
+  <!-- 이 부분에 세로 높이 제한 및 세로 스크롤바 제어 속성을 직접 주입합니다 -->
+  <div class="overflow-x-auto overflow-y-auto max-h-[700px] border border-slate-100 rounded-lg">
+    <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
+      <!-- Sticky Header (고정 테이블 머리글 줄) -->
+      <thead>
+        <tr class="border-b border-slate-200 text-slate-500 font-bold text-[11px]">
+          <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">순위</th>
+          <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">소속 리그</th>
+          <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">구단명</th>
+          <th class="p-3 text-right text-indigo-600 sticky top-0 bg-slate-50 z-10 shadow-sm">팀별 로스터 지수 (합)</th>
+          <th class="p-3 text-right sticky top-0 bg-slate-50 z-10 shadow-sm">구단 주가</th>
+          <th class="p-3 text-right sticky top-0 bg-slate-50 z-10 shadow-sm">투자 대비 성적 효율 (격차)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">${trHtml}</tbody>
+    </table>
+  </div>
+`;
+        container.appendChild(tableCard);
+
+      } else {
+        // [섹션 3, 4, 5, 6] 개별 리그 분석 패널 (AMER, CN, EMEA, PAC)
+        const leagueMap = {
+          'amer': { id: 'americas', name: 'VCT Americas', flag: '' },
+          'cn': { id: 'china', name: 'VCT China', flag: '' },
+          'emea': { id: 'emea', name: 'VCT EMEA', flag: '' },
+          'pac': { id: 'pacific', name: 'VCT Pacific', flag: '' }
+        };
+
+        const target = leagueMap[activeAnalysisSection];
+        if (!target) return;
+
+        const lIndex = getLeagueIndex(target.id);
+        const colors = leagueColors[target.id];
+        const teams = Object.values(state.teams).filter(t => t.tagId === target.id && !t.delisted);
+        teams.sort((a, b) => getTeamRosterIndex(b.id) - getTeamRosterIndex(a.id));
+
+        const lCard = document.createElement('div');
+        lCard.className = "space-y-4";
+
+        let trHtml = '';
+        if (teams.length > 0) {
+          teams.forEach((t, i) => {
+            const rIndex = getTeamRosterIndex(t.id);
+            const efficiencyGap = getRosterEfficiencyGap(t.id);
+            trHtml += `
+              <tr class="hover:bg-slate-50 transition-colors text-xs text-slate-800">
+                <td class="p-3 font-bold text-slate-900">${i + 1}위</td>
+                <td class="p-3 font-bold text-slate-800">${t.name}</td>
+                <td class="p-3 text-right font-black text-indigo-600">${rIndex.toLocaleString()} 원</td>
+                <td class="p-3 text-right text-slate-500">${t.currentPrice.toLocaleString()} 원</td>
+                <td class="p-3 text-right">${formatEfficiencyGap(efficiencyGap)}</td>
+              </tr>
+            `;
+          });
+        } else {
+          trHtml = `<tr><td colspan="5" class="p-8 text-center text-slate-400">이 리그에 소속구단 정보가 존재하지 않습니다.</td></tr>`;
+        }
+
+        lCard.innerHTML = `
+          <div style="background-color: ${colors.bg}; border-color: ${colors.bg};" class="border rounded-lg p-5 flex justify-between items-center shadow-sm">
+            <div>
+              <span class="text-xs uppercase font-extrabold tracking-wider opacity-85" style="color: ${colors.text};">VCT 글로벌 대표 리그</span>
+              <h3 class="text-xl font-black mt-1" style="color: ${colors.text};">${target.flag} ${target.name}</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs uppercase font-extrabold tracking-wider opacity-85" style="color: ${colors.text};">실시간 리그 지수</span>
+              <div class="text-lg font-black mt-1" style="color: ${colors.text};">${lIndex.toLocaleString()} 원</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm  overflow-y-auto">
+            <h4 class="font-extrabold text-xs text-slate-500 mb-3 uppercase tracking-wider">📋 소속 구단별 스쿼드 가치 실시간 랭킹</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs whitespace-nowrap">
+                <thead>
+  <tr class="text-slate-500 font-bold text-[11px]">
+    <!-- 각 열 셀에 개별적으로 고정 테이프(sticky top-0 bg-slate-50 z-10)를 부착합니다 -->
+    <th class="p-3 sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">순위</th>
+    <th class="p-3 sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">소속 리그</th>
+    <th class="p-3 sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">구단명</th>
+    <th class="p-3 text-right text-indigo-600 sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">팀별 로스터 지수 (합)</th>
+    <th class="p-3 text-right sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">구단 주가</th>
+    <th class="p-3 text-right sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-sm">투자 대비 성적 효율 (격차)</th>
+  </tr>
+</thead>
+                <tbody class="divide-y divide-slate-100">${trHtml}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        container.appendChild(lCard);
       }
     }
 
@@ -983,6 +1507,41 @@
       renderStockList();
     }
 
+    function toggleLeagueFilter(leagueId) {
+      if (activeLeagueFilter === leagueId) {
+        activeLeagueFilter = null; 
+      } else {
+        activeLeagueFilter = leagueId; 
+      }
+      updateLeagueFilterButtonsUI();
+      renderStockList();
+    }
+
+    function updateLeagueFilterButtonsUI() {
+      // 지정 주신 고유 색상 및 글자 가독성 테이블 매핑 연동
+      const leagues = {
+        americas: { bg: '#FF570C', text: '#FFFFFF', btnId: 'btn-league-americas' },
+        china: { bg: '#FC2659', text: '#FFFFFF', btnId: 'btn-league-china' },
+        emea: { bg: '#D4FF1D', text: '#373563', btnId: 'btn-league-emea' },
+        pacific: { bg: '#01D2D7', text: '#FFFFFF', btnId: 'btn-league-pacific' }
+      };
+
+      for (let key in leagues) {
+        const l = leagues[key];
+        const btn = document.getElementById(l.btnId);
+        if (!btn) continue;
+        if (activeLeagueFilter === key) {
+          btn.style.backgroundColor = l.bg;
+          btn.style.color = l.text;
+          btn.className = "flex-1 py-1 text-[10px] font-bold rounded shadow-sm border-transparent transition-all";
+        } else {
+          btn.style.backgroundColor = '';
+          btn.style.color = '';
+          btn.className = "flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors";
+        }
+      }
+    }
+
     function renderStockList() {
       const container = document.getElementById('stock-list-container');
       container.innerHTML = '';
@@ -998,6 +1557,16 @@
         for (let id in state.players) {
           if (!state.players[id].delisted) list.push({ ...state.players[id], type: 'player' });
         }
+      }
+
+      if (activeLeagueFilter) {
+        list = list.filter(stock => {
+          if (stock.type === 'team') {
+            return stock.tagId === activeLeagueFilter;
+          } else {
+            return getPlayerLeague(stock) === activeLeagueFilter;
+          }
+        });
       }
 
       list = list.filter(stock => {
@@ -1108,7 +1677,6 @@
       }
 
       document.getElementById('detail-name').innerText = stock.name;
-
 
       const changePercent = ((stock.currentPrice - stock.prevPrice) / stock.prevPrice * 100).toFixed(2);
       const diffVal = stock.currentPrice - stock.prevPrice;
@@ -1284,11 +1852,10 @@
       state.transactions.unshift(logEntry);
 
       saveNetWorthPoint();
-
       saveState();
       updateGlobalStatus();
       updateStockHoldingInfo();
-      showToast("성공적으로 주문이 체결되었습니다.","buy");
+      showToast("성공적으로 주문이 체결되었습니다.", orderType);
     }
 
     // --- 6. 포트폴리오 탭 구현 ---
@@ -1386,28 +1953,49 @@
     }
 
     function initAdminDropdowns() {
+      const selectLeague = document.getElementById('admin-match-league-filter');
+      if (selectLeague) {
+        selectLeague.value = "all";
+      }
+    }
+
+    function filterMatchTeamsDropdown() {
+      const league = document.getElementById('admin-match-league-filter').value;
       const selectA = document.getElementById('admin-team-a');
       const selectB = document.getElementById('admin-team-b');
-      
-      if (!selectA || !selectB) return; 
+      if (!selectA || !selectB) return;
+
+      const valA = selectA.value;
+      const valB = selectB.value;
 
       selectA.innerHTML = '';
       selectB.innerHTML = '';
 
       for (let id in state.teams) {
-        const optionA = document.createElement('option');
-        optionA.value = id;
-        optionA.text = `${state.teams[id].name} (${id})`;
-        selectA.add(optionA);
-
-        const optionB = document.createElement('option');
-        optionB.value = id;
-        optionB.text = `${state.teams[id].name} (${id})`;
-        selectB.add(optionB);
+        const team = state.teams[id];
+        if (league === 'all' || team.tagId === league) {
+          const optA = new Option(`${team.name} (${id})`, id);
+          const optB = new Option(`${team.name} (${id})`, id);
+          selectA.add(optA);
+          selectB.add(optB);
+        }
       }
 
-      selectA.value = "PRX";
-      selectB.value = "FS";
+      if (selectA.querySelector(`option[value="${valA}"]`)) {
+        selectA.value = valA;
+      } else if (selectA.options.length > 0) {
+        selectA.selectedIndex = 0;
+      }
+      
+      if (selectB.querySelector(`option[value="${valB}"]`)) {
+        selectB.value = valB;
+      } else if (selectB.options.length > 1) {
+        selectB.selectedIndex = 1;
+      } else if (selectB.options.length > 0) {
+        selectB.selectedIndex = 0;
+      }
+
+      loadRosters();
     }
 
     function loadRosters() {
@@ -1513,13 +2101,12 @@
 
     function renderAdminTab() {
       initAdminDropdowns(); 
-      loadRosters();
-      renderDelistControls();
+      filterMatchTeamsDropdown();
       renderAdminTags();
       populateDropdownOptions();
     }
 
-    // 리그 및 소속팀 드롭다운 구성 동기화 (CRUD 전용)
+    // 소속팀 드롭다운 구성 동기화 (CRUD 전용)
     function populateDropdownOptions() {
       const addTagSelect = document.getElementById('add-stock-tag');
       const addPrivateTagSelect = document.getElementById('add-stock-private-tag'); 
@@ -1575,7 +2162,6 @@
       }
     }
 
-    // 신인 등급별 시초가 실시간 계산기 및 순수신인 연동부
     function updateCalculatedIpoPrice() {
       const type = document.getElementById('add-stock-type').value;
       if (type !== 'player') return;
@@ -1620,6 +2206,7 @@
       const teamTagId = document.getElementById('add-stock-private-tag').value; 
       const imageUrl = document.getElementById('add-stock-img').value.trim();
       const price = parseInt(document.getElementById('add-stock-price').value) || 10000;
+      const isDelisted = document.getElementById('add-stock-delisted').checked;
 
       if (!id || !name) {
         showToast("ID와 종목명을 입력하십시오.","warn");
@@ -1629,13 +2216,12 @@
       if (type === 'team') {
         if (state.teams[id]) { showToast("이미 존재하는 구단 ID입니다.","warn"); return; }
         const rank = parseFloat(document.getElementById('add-stock-rank').value) || 12;
-        state.teams[id] = { id, name, currentPrice: price, prevPrice: price, priceHistory: [price], rank, delisted: false, tagId, teamTagId, imageUrl };
-        teamRosters[id] = [];
+        state.teams[id] = { id, name, currentPrice: price, prevPrice: price, priceHistory: [price], rank, delisted: isDelisted, tagId, teamTagId, imageUrl };
       } else {
         if (state.players[id]) { showToast("이미 존재하는 선수 ID입니다.","warn"); return; }
         const pClass = document.getElementById('add-player-class').value;
         
-        let price = 5000;
+        let calculatedPrice = price;
         let ev = 75.0; 
         let acs = 0, kd = 0, kast = 0;
 
@@ -1646,10 +2232,12 @@
           ev = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
 
           const basePrice = pClass === 'standard' ? 10000 : 8000;
-          price = Math.round(basePrice * (ev / 89.26));
+          calculatedPrice = Math.round(basePrice * (ev / 89.26));
+        } else {
+          calculatedPrice = 5000;
         }
 
-        state.players[id] = { id, name, team: "CUSTOM", expectedValue: ev, currentPrice: price, prevPrice: price, priceHistory: [price], baseStats: { acs, kd, kast }, delisted: false, tagId, imageUrl, isActive: false };
+        state.players[id] = { id, name, team: "CUSTOM", expectedValue: ev, currentPrice: calculatedPrice, prevPrice: calculatedPrice, priceHistory: [calculatedPrice], baseStats: { acs, kd, kast }, delisted: isDelisted, tagId, imageUrl, isActive: false };
       }
 
       saveState();
@@ -1675,6 +2263,7 @@
         document.getElementById('edit-stock-private-tag').value = team.teamTagId || "PRX_tag"; 
         document.getElementById('edit-stock-rank').value = team.rank;
         document.getElementById('edit-stock-img').value = team.imageUrl || "";
+        document.getElementById('edit-stock-delisted').checked = !!team.delisted;
         
         rankField.classList.remove('hidden');
         privateTagField.classList.remove('hidden'); 
@@ -1685,6 +2274,7 @@
         document.getElementById('edit-stock-price').value = player.currentPrice;
         document.getElementById('edit-stock-tag').value = player.tagId;
         document.getElementById('edit-stock-img').value = player.imageUrl || "";
+        document.getElementById('edit-stock-delisted').checked = !!player.delisted;
 
         rankField.classList.add('hidden');
         privateTagField.classList.add('hidden'); 
@@ -1706,6 +2296,7 @@
       const tagId = document.getElementById('edit-stock-tag').value;
       const teamTagId = document.getElementById('edit-stock-private-tag').value; 
       const imageUrl = document.getElementById('edit-stock-img').value.trim();
+      const isDelisted = document.getElementById('edit-stock-delisted').checked;
 
       if (type === 'team') {
         const team = state.teams[id];
@@ -1714,6 +2305,7 @@
         team.tagId = tagId;
         team.teamTagId = teamTagId; 
         team.imageUrl = imageUrl;
+        team.delisted = isDelisted;
         team.rank = parseFloat(document.getElementById('edit-stock-rank').value) || team.rank;
       } else {
         const player = state.players[id];
@@ -1721,6 +2313,7 @@
         player.currentPrice = price;
         player.tagId = tagId;
         player.imageUrl = imageUrl;
+        player.delisted = isDelisted;
 
         if (player.baseStats && player.baseStats.acs !== 0) {
           const acs = parseFloat(document.getElementById('edit-p-acs').value) || 200;
@@ -1734,7 +2327,7 @@
 
       saveState();
       populateDropdownOptions();
-      showToast("종목 정보가 업데이트되었습니다.","info");
+      showToast("종목 정보 및 상폐 마크가 업데이트되었습니다.","info");
     }
 
     // --- 9. 유니버설 태그 CRUD 전용 패널 제어장치 ---
@@ -1838,13 +2431,16 @@
       }
     }
 
-    // --- 9-2. 시즌 종료 최종 순위 보정 탭 렌더링 및 공동 순위 일원화 처리 ---
+    // --- 9-2. 시즌 종료 최종 순위 보정 탭 ---
     function renderSeasonEndTab() {
       const tbody = document.getElementById('season-adjustment-table-body');
       tbody.innerHTML = '';
 
+      const leagueFilter = document.getElementById('admin-season-league-filter').value;
       const teamList = Object.values(state.teams);
-      teamList.sort((a, b) => a.rank - b.rank);
+      
+      let filteredTeams = teamList.filter(t => t.tagId === leagueFilter);
+      filteredTeams.sort((a, b) => a.rank - b.rank);
 
       const rankOptions = [
         { val: 1, label: "1위" },
@@ -1857,7 +2453,7 @@
         { val: 11.5, label: "11-12위 (공동)" }
       ];
 
-      teamList.forEach(team => {
+      filteredTeams.forEach(team => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-slate-50 text-xs transition-colors';
 
@@ -1907,18 +2503,19 @@
 
       const baseEl = document.getElementById(`season-base-rate-${teamId}`);
       const specialEl = document.getElementById(`season-special-rate-${teamId}`);
-      const totalEl = document.getElementById(`season-total-rate-${teamId}`);
-      const estPriceEl = document.getElementById(`season-est-price-${teamId}`);
+      const totalEl = document.getElementById('season-total-rate-' + teamId);
+      const estPriceEl = document.getElementById('season-est-price-' + teamId);
 
-      baseEl.innerText = `${baseChangeRate >= 0 ? '+' : ''}${baseChangeRate}%`;
-      specialEl.innerText = `${specialAdjustment >= 0 ? '+' : ''}${specialAdjustment}%`;
-      totalEl.innerText = `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(2)}%`;
-      totalEl.className = `p-3 text-right font-bold ${totalChangePercent >= 0 ? 'text-red-500' : 'text-blue-500'}`;
-      
-      estPriceEl.innerText = `${Math.max(1, estPrice).toLocaleString()} 원`;
+      if (baseEl) baseEl.innerText = `${baseChangeRate >= 0 ? '+' : ''}${baseChangeRate}%`;
+      if (specialEl) specialEl.innerText = `${specialAdjustment >= 0 ? '+' : ''}${specialAdjustment}%`;
+      if (totalEl) {
+        totalEl.innerText = `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(2)}%`;
+        totalEl.className = `p-3 text-right font-bold ${totalChangePercent >= 0 ? 'text-red-500' : 'text-blue-500'}`;
+      }
+      if (estPriceEl) estPriceEl.innerText = `${Math.max(1, estPrice).toLocaleString()} 원`;
     }
 
-    // ⚡ [중복클릭 연산 예방] 시즌 종료 마감 보정 실행 버튼 락킹 장치 추가
+    // 디바운스 가드 적용 및 비활성화 (시즌 종료 전산)
     function executeSeasonEndAdjustment() {
       if (isSeasonSubmitting) return;
 
@@ -1930,15 +2527,17 @@
       const btn = document.getElementById('admin-season-submit-btn');
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "⏳ 전산 가격 일괄 보정 연산 중...";
+        btn.innerText = "⏳ 처리 중...";
       }
 
       saveSnapshot();
 
       for (let id in state.teams) {
         const team = state.teams[id];
-        const currentRank = parseFloat(document.getElementById(`season-new-rank-${id}`).value);
+        const rankSelector = document.getElementById(`season-new-rank-${id}`);
+        if (!rankSelector) continue; 
 
+        const currentRank = parseFloat(rankSelector.value);
         const baseChangeRate = (team.rank - currentRank) * 5;
         
         let specialAdjustment = 0;
@@ -1963,7 +2562,6 @@
       saveNetWorthPoint();
       saveState();
 
-      // 실시간 시세 및 지수 즉시 리빌드
       updateGlobalStatus();
       renderStockList();
       renderSelectedStock();
@@ -1979,9 +2577,9 @@
       }, 1500);
     }
 
-    // --- 10. 경기 결과 처리 및 전산 적용 (⚡ [버그 1 해결] 주가 변동 정상 복구 및 동기화 구현) ---
+    // --- 10. 경기 결과 처리 및 전산 적용 ---
     function submitMatchResult() {
-      if (isMatchSubmitting) return; // ⚡ 마우스 연속 클릭 주가 꼬임 방지 락
+      if (isMatchSubmitting) return; 
 
       const teamA = document.getElementById('admin-team-a').value;
       const teamB = document.getElementById('admin-team-b').value;
@@ -2012,7 +2610,7 @@
       const btn = document.getElementById('admin-match-submit-btn');
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "⏳ 주가 변동 연산 처리 중...";
+        btn.innerText = "⏳ 처리 중...";
       }
 
       saveSnapshot();
@@ -2049,7 +2647,6 @@
       lTeam.currentPrice = Math.max(1, lNext);
       lTeam.priceHistory.push(lTeam.currentPrice);
 
-      // ⚡ 소속 선수들의 주가를 선수별 가산 가중치와 EV 차이를 통해 정확하게 연산합니다.
       const processPlayer = (pId, prefix) => {
         const checkbox = document.getElementById(`${prefix}-check-${pId}`);
         if (checkbox && checkbox.checked) {
@@ -2083,7 +2680,6 @@
       saveNetWorthPoint();
       saveState();
 
-      // 실시간 시세 및 지수 동적 리빌드
       updateGlobalStatus();
       renderStockList();
       renderSelectedStock();
@@ -2107,7 +2703,7 @@
       }
     }
 
-    // --- 11. Undo 메모리 제어 모듈 (전산 무결성 스냅샷 고도화) ---
+    // --- 11. Undo 메모리 제어 모듈 ---
     function saveSnapshot() {
       if (state.historyStack.length >= 5) state.historyStack.shift();
       state.historyStack.push(JSON.stringify({
@@ -2136,61 +2732,18 @@
       updateGlobalStatus();
       renderStockList();
       renderSelectedStock();
-      showToast("가치가 원복되었습니다.","info");
+      showToast("이전 전산 데이터로 되돌렸습니다.","info");
       renderAdminTab();
     }
 
     function resetExchangeData() {
       if (confirm("서버 전체의 투자 원본 데이터 및 거래소 기록이 초기화됩니다.")) {
-        // ⚡ v10 통합 세이브 데이터베이스 공장 초기화
         localStorage.removeItem('vct_state_store_v10'); 
         location.reload();
       }
     }
 
-    function renderDelistControls() {
-      const teamListCont = document.getElementById('delist-team-list');
-      teamListCont.innerHTML = '';
-      for (let id in state.teams) {
-        const team = state.teams[id];
-        const row = document.createElement('div');
-        row.className = 'flex justify-between items-center py-1 border-b border-slate-100';
-        row.innerHTML = `
-          <span class="font-bold text-slate-800">${team.name}</span>
-          <button onclick="toggleDelist('team', '${id}')" class="px-2 py-0.5 rounded font-bold text-[10px] ${team.delisted ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
-            ${team.delisted ? '상폐 정지' : '정상 거래'}
-          </button>
-        `;
-        teamListCont.appendChild(row);
-      }
-
-      const playerListCont = document.getElementById('delist-player-list');
-      playerListCont.innerHTML = '';
-      for (let id in state.players) {
-        const player = state.players[id];
-        const row = document.createElement('div');
-        row.className = 'flex justify-between items-center py-1 border-b border-slate-100';
-        row.innerHTML = `
-          <span class="font-bold text-slate-800">${player.name} (${player.team})</span>
-          <button onclick="toggleDelist('player', '${id}')" class="px-2 py-0.5 rounded font-bold text-[10px] ${player.delisted ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
-            ${player.delisted ? '상폐 정지' : '정상 거래'}
-          </button>
-        `;
-        playerListCont.appendChild(row);
-      }
-    }
-
-    function toggleDelist(type, id) {
-      if (type === 'team') {
-        state.teams[id].delisted = !state.teams[id].delisted;
-      } else {
-        state.players[id].delisted = !state.players[id].delisted;
-      }
-      saveState();
-      renderDelistControls();
-    }
-
-    // --- 12. 차트 모듈 (상승/하락 마감 기준선 버그 완벽 보완 완료) ---
+    // --- 12. 차트 모듈 ---
     function renderChart() {
       const ctx = document.getElementById('priceChart').getContext('2d');
       if (chartInstance) {
@@ -2203,7 +2756,6 @@
       const chartData = stock.priceHistory;
       const labels = chartData.map((_, i) => `${i}회차`);
 
-      // ⚡ [버그 4 해결] 현재 가격이 전 가격 대비 상승했으면 빨간색, 하락했으면 파란색으로 렌더링되도록 완전히 일치시킵니다.
       const isUpTrend = stock.currentPrice >= stock.prevPrice;
       const mainColor = isUpTrend ? '#ef4444' : '#3b82f6'; 
       
@@ -2252,324 +2804,6 @@
       });
     }
 
-    // --- 어드민 서브 모듈 동적 로드 ---
-    function populateDropdownOptions() {
-      const addTagSelect = document.getElementById('add-stock-tag');
-      const addPrivateTagSelect = document.getElementById('add-stock-private-tag'); 
-      const editTagSelect = document.getElementById('edit-stock-tag');
-      const editPrivateTagSelect = document.getElementById('edit-stock-private-tag'); 
-      const editSelect = document.getElementById('edit-stock-select');
-
-      addTagSelect.innerHTML = '';
-      addPrivateTagSelect.innerHTML = ''; 
-      editTagSelect.innerHTML = '';
-      editPrivateTagSelect.innerHTML = ''; 
-      editSelect.innerHTML = '<option value="">-- 종목 선택 --</option>';
-
-      for (let id in state.teams) {
-        editSelect.add(new Option(`[TEAM] ${state.teams[id].name} (${id})`, 'team_' + id));
-      }
-      for (let id in state.players) {
-        editSelect.add(new Option(`[PLAYER] ${state.players[id].name} (${id})`, 'player_' + id));
-      }
-
-      for (let id in state.tags) {
-        const t = state.tags[id];
-        addTagSelect.add(new Option(t.name, id));
-        addPrivateTagSelect.add(new Option(t.name, id)); 
-        editTagSelect.add(new Option(t.name, id));
-        editPrivateTagSelect.add(new Option(t.name, id)); 
-      }
-
-      adjustAddForm();
-    }
-
-    function adjustAddForm() {
-      const type = document.getElementById('add-stock-type').value;
-      const rankField = document.getElementById('add-team-rank-field');
-      const privateTagField = document.getElementById('add-team-private-tag-field'); 
-      const playerStats = document.getElementById('add-player-stats');
-      const playerClass = document.getElementById('player-classification-container');
-      const ipoCalcField = document.getElementById('add-calculated-ipo-field');
-
-      if (type === 'team') {
-        rankField.classList.remove('hidden');
-        privateTagField.classList.remove('hidden'); 
-        playerStats.classList.add('hidden');
-        playerClass.classList.add('hidden');
-        ipoCalcField.classList.add('hidden');
-      } else {
-        rankField.classList.add('hidden');
-        privateTagField.classList.add('hidden'); 
-        playerStats.classList.remove('hidden');
-        playerClass.classList.remove('hidden');
-        ipoCalcField.classList.remove('hidden');
-        updateCalculatedIpoPrice();
-      }
-    }
-
-    function updateCalculatedIpoPrice() {
-      const type = document.getElementById('add-stock-type').value;
-      if (type !== 'player') return;
-
-      const pClass = document.getElementById('add-player-class').value;
-      const priceInput = document.getElementById('add-stock-price');
-      const acsInput = document.getElementById('add-p-acs');
-      const kdInput = document.getElementById('add-p-kd');
-      const kastInput = document.getElementById('add-p-kast');
-
-      if (pClass === 'pure') {
-        acsInput.disabled = true;
-        kdInput.disabled = true;
-        kastInput.disabled = true;
-        priceInput.value = 5000;
-        priceInput.disabled = true;
-        document.getElementById('calculated-ipo-text').innerText = "5,000원 (고정)";
-      } else {
-        acsInput.disabled = false;
-        kdInput.disabled = false;
-        kastInput.disabled = false;
-        priceInput.disabled = false;
-
-        const basePrice = pClass === 'standard' ? 10000 : 8000;
-        priceInput.value = basePrice;
-
-        const acs = parseFloat(acsInput.value) || 200;
-        const kd = parseFloat(kdInput.value) || 1.0;
-        const kast = parseFloat(kastInput.value) || 70;
-
-        const ev = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
-        const finalIpo = Math.round(basePrice * (ev / 89.26));
-        document.getElementById('calculated-ipo-text').innerText = `${finalIpo.toLocaleString()}원`;
-      }
-    }
-
-    function addNewStock() {
-      const type = document.getElementById('add-stock-type').value;
-      const id = document.getElementById('add-stock-id').value.trim();
-      const name = document.getElementById('add-stock-name').value.trim();
-      const tagId = document.getElementById('add-stock-tag').value;
-      const teamTagId = document.getElementById('add-stock-private-tag').value; 
-      const imageUrl = document.getElementById('add-stock-img').value.trim();
-      const price = parseInt(document.getElementById('add-stock-price').value) || 10000;
-
-      if (!id || !name) {
-        showToast("ID와 종목명을 입력하십시오.","warn");
-        return;
-      }
-
-      if (type === 'team') {
-        if (state.teams[id]) { showToast("이미 존재하는 구단 ID입니다.","warn"); return; }
-        const rank = parseFloat(document.getElementById('add-stock-rank').value) || 12;
-        state.teams[id] = { id, name, currentPrice: price, prevPrice: price, priceHistory: [price], rank, delisted: false, tagId, teamTagId, imageUrl };
-        teamRosters[id] = [];
-      } else {
-        if (state.players[id]) { showToast("이미 존재하는 선수 ID입니다.","warn"); return; }
-        const pClass = document.getElementById('add-player-class').value;
-        
-        let price = 5000;
-        let ev = 75.0; 
-        let acs = 0, kd = 0, kast = 0;
-
-        if (pClass !== 'pure') {
-          acs = parseFloat(document.getElementById('add-p-acs').value) || 200;
-          kd = parseFloat(document.getElementById('add-p-kd').value) || 1.0;
-          kast = parseFloat(document.getElementById('add-p-kast').value) || 70;
-          ev = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
-
-          const basePrice = pClass === 'standard' ? 10000 : 8000;
-          price = Math.round(basePrice * (ev / 89.26));
-        }
-
-        state.players[id] = { id, name, team: "CUSTOM", expectedValue: ev, currentPrice: price, prevPrice: price, priceHistory: [price], baseStats: { acs, kd, kast }, delisted: false, tagId, imageUrl, isActive: false };
-      }
-
-      saveState();
-      populateDropdownOptions();
-      showToast("신규 종목이 상장 등록되었습니다.","info");
-    }
-
-    function loadStockToEdit() {
-      const selected = document.getElementById('edit-stock-select').value;
-      const statsDiv = document.getElementById('edit-player-stats-div');
-      const rankField = document.getElementById('edit-rank-field-div');
-      const privateTagField = document.getElementById('edit-team-private-tag-field'); 
-
-      if (!selected) return;
-
-      const [type, id] = selected.split('_');
-
-      if (type === 'team') {
-        const team = state.teams[id];
-        document.getElementById('edit-stock-name').value = team.name;
-        document.getElementById('edit-stock-price').value = team.currentPrice;
-        document.getElementById('edit-stock-tag').value = team.tagId;
-        document.getElementById('edit-stock-private-tag').value = team.teamTagId || "PRX_tag"; 
-        document.getElementById('edit-stock-rank').value = team.rank;
-        document.getElementById('edit-stock-img').value = team.imageUrl || "";
-        
-        rankField.classList.remove('hidden');
-        privateTagField.classList.remove('hidden'); 
-        statsDiv.classList.add('hidden');
-      } else {
-        const player = state.players[id];
-        document.getElementById('edit-stock-name').value = player.name;
-        document.getElementById('edit-stock-price').value = player.currentPrice;
-        document.getElementById('edit-stock-tag').value = player.tagId;
-        document.getElementById('edit-stock-img').value = player.imageUrl || "";
-
-        rankField.classList.add('hidden');
-        privateTagField.classList.add('hidden'); 
-        statsDiv.classList.remove('hidden');
-
-        document.getElementById('edit-p-acs').value = player.baseStats.acs;
-        document.getElementById('edit-p-kd').value = player.baseStats.kd;
-        document.getElementById('edit-p-kast').value = player.baseStats.kast;
-      }
-    }
-
-    function updateExistingStock() {
-      const selected = document.getElementById('edit-stock-select').value;
-      if (!selected) { showToast("대상을 지정해 주십시오.","warn"); return; }
-
-      const [type, id] = selected.split('_');
-      const name = document.getElementById('edit-stock-name').value.trim();
-      const price = parseInt(document.getElementById('edit-stock-price').value) || 0;
-      const tagId = document.getElementById('edit-stock-tag').value;
-      const teamTagId = document.getElementById('edit-stock-private-tag').value; 
-      const imageUrl = document.getElementById('edit-stock-img').value.trim();
-
-      if (type === 'team') {
-        const team = state.teams[id];
-        team.name = name;
-        team.currentPrice = price;
-        team.tagId = tagId;
-        team.teamTagId = teamTagId; 
-        team.imageUrl = imageUrl;
-        team.rank = parseFloat(document.getElementById('edit-stock-rank').value) || team.rank;
-      } else {
-        const player = state.players[id];
-        player.name = name;
-        player.currentPrice = price;
-        player.tagId = tagId;
-        player.imageUrl = imageUrl;
-
-        if (player.baseStats && player.baseStats.acs !== 0) {
-          const acs = parseFloat(document.getElementById('edit-p-acs').value) || 200;
-          const kd = parseFloat(document.getElementById('edit-p-kd').value) || 1.0;
-          const kast = parseFloat(document.getElementById('edit-p-kast').value) || 70;
-
-          player.baseStats = { acs, kd, kast };
-          player.expectedValue = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
-        }
-      }
-
-      saveState();
-      populateDropdownOptions();
-      showToast("종목 정보가 업데이트되었습니다.","info");
-    }
-
-    // --- 9. 유니버설 태그 CRUD 전용 패널 제어장치 ---
-    function renderAdminTags() {
-      const cont = document.getElementById('admin-tags-list');
-      cont.innerHTML = '';
-      for (let id in state.tags) {
-        const tag = state.tags[id];
-        const span = document.createElement('span');
-        span.style.backgroundColor = tag.bg;
-        span.style.color = tag.text;
-        span.className = "px-2.5 py-0.5 rounded text-[10px] font-bold border border-slate-200/50 shadow-sm cursor-pointer";
-        span.innerText = tag.name; 
-        span.onclick = () => {
-          document.getElementById('edit-tag-select-choice').value = id;
-          loadTagToEdit();
-        };
-        cont.appendChild(span);
-      }
-    }
-
-    function populateTagEditDropdown() {
-      const select = document.getElementById('edit-tag-select-choice');
-      select.innerHTML = '<option value="">-- 신규 생성 --</option>';
-      for (let id in state.tags) {
-        select.add(new Option(state.tags[id].name, id));
-      }
-      loadTagToEdit();
-    }
-
-    function loadTagToEdit() {
-      const selectedId = document.getElementById('edit-tag-select-choice').value;
-      const deleteBtn = document.getElementById('tag-delete-btn');
-      const submitBtn = document.getElementById('tag-submit-btn');
-
-      if (!selectedId) {
-        document.getElementById('add-tag-name').value = '';
-        document.getElementById('add-tag-bg').value = '#e0e7ff';
-        document.getElementById('add-tag-text').value = '#4338ca';
-        document.getElementById('add-tag-aliases').value = ''; 
-        deleteBtn.classList.add('hidden');
-        submitBtn.innerText = "신규 태그 등록";
-      } else {
-        const tag = state.tags[selectedId];
-        document.getElementById('add-tag-name').value = tag.name;
-        document.getElementById('add-tag-bg').value = tag.bg;
-        document.getElementById('add-tag-text').value = tag.text;
-        document.getElementById('add-tag-aliases').value = tag.aliases || ""; 
-        deleteBtn.classList.remove('hidden');
-        submitBtn.innerText = "태그 속성 변경 저장";
-      }
-    }
-
-    function createNewTag() {
-      const selectedId = document.getElementById('edit-tag-select-choice').value;
-      const name = document.getElementById('add-tag-name').value.trim();
-      const bg = document.getElementById('add-tag-bg').value;
-      const text = document.getElementById('add-tag-text').value;
-      const aliases = document.getElementById('add-tag-aliases').value.trim(); 
-
-      if (!name) { showToast("이름을 기입하세요.","warn"); return; }
-
-      if (!selectedId) {
-        const id = 'tag_' + Date.now();
-        state.tags[id] = { id, name, bg, text, aliases, type: 'team' };
-        showToast("유니버설 태그가 신설되었습니다.","info");
-      } else {
-        state.tags[selectedId].name = name;
-        state.tags[selectedId].aliases = aliases;
-        state.tags[selectedId].bg = bg;
-        state.tags[selectedId].text = text;
-        showToast("태그 전역 일괄 변경되었습니다.","info");
-      }
-
-      saveState();
-      renderAdminTags();
-      populateTagEditDropdown();
-    }
-
-    function deleteSelectedTag() {
-      const selectedId = document.getElementById('edit-tag-select-choice').value;
-      if (!selectedId) return;
-
-      if (selectedId === 'pacific' || selectedId === 'lft') {
-        showToast("기본 지정 디폴트 태그는 삭제할 수 없습니다.","warn");
-        return;
-      }
-
-      if (confirm("삭제된 태그를 지닌 구단/선수의 태그가 'LFT'로 안전 전환됩니다. 삭제하시겠습니까?")) {
-        for (let tId in state.teams) {
-          if (state.teams[tId].tagId === selectedId) state.teams[tId].tagId = 'pacific';
-        }
-        for (let pId in state.players) {
-          if (state.players[pId].tagId === selectedId) state.players[pId].tagId = 'lft';
-        }
-
-        delete state.tags[selectedId];
-        saveState();
-        renderAdminTags();
-        populateTagEditDropdown();
-      }
-    }
-
     // --- 가상 속보 발행 및 다중 종목 등락 제어기 ---
     function initNewsTargetDropdownRow() {
       const container = document.getElementById('news-targets-container');
@@ -2609,7 +2843,6 @@
       if (row) row.remove();
     }
 
-    // ⚡ [중복클릭 연산 예방] 뉴스 전송 락킹 장치 추가
     function publishCustomNews() {
       if (isNewsSubmitting) return;
 
@@ -2623,7 +2856,7 @@
       const btn = document.getElementById('admin-news-submit-btn');
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "⏳ 속보 배포 및 전산 처리 중...";
+        btn.innerText = "⏳ 처리 중...";
       }
 
       saveSnapshot();
@@ -2661,7 +2894,6 @@
       saveNetWorthPoint();
       saveState();
 
-      // 전산 실시간 즉시 연동 반영
       updateGlobalStatus();
       renderStockList();
       renderSelectedStock();
@@ -2672,20 +2904,19 @@
           btn.disabled = false;
           btn.innerText = "📢 속보 전송 및 가격 변동 실행";
         }
-        showToast("속보가 성공적으로 발행되어 가격 변동이 적용되었습니다.","info");
+        showToast("속보가 배포되어 시장 가격에 적용되었습니다.","info");
         
         document.getElementById('news-headline-input').value = '';
         initNewsTargetDropdownRow();
       }, 1500);
     }
 
-    // 전단 피드 리스트 출력 갱신
     function renderNewsFeed() {
       const cont = document.getElementById('live-news-feed');
       if (!cont) return;
       cont.innerHTML = '';
       if (state.newsFeed.length === 0) {
-        cont.innerHTML = `<div class="py-10 text-center text-slate-400">발행된 전적 뉴스 공시가 없습니다.</div>`;
+        cont.innerHTML = `<div class="py-10 text-center text-slate-400">발행된 실시간 뉴스 공시가 없습니다.</div>`;
         return;
       }
 
@@ -2706,13 +2937,35 @@
 
     // --- 9-3. 주전 로스터 매니저 기능 ---
     function initRosterManagerDropdown() {
-      const select = document.getElementById('roster-manage-team-select');
-      if (!select) return;
-      select.innerHTML = '';
-      for (let id in state.teams) {
-        select.add(new Option(`${state.teams[id].name} (${id})`, id));
+      const selectLeague = document.getElementById('roster-manage-league-filter');
+      if (selectLeague) {
+        selectLeague.value = "all";
       }
-      select.value = "PRX";
+      filterRosterTeamsDropdown();
+    }
+
+    function filterRosterTeamsDropdown() {
+      const league = document.getElementById('roster-manage-league-filter').value;
+      const selectTeam = document.getElementById('roster-manage-team-select');
+      if (!selectTeam) return;
+
+      const prevVal = selectTeam.value;
+      selectTeam.innerHTML = '';
+
+      for (let id in state.teams) {
+        const team = state.teams[id];
+        if (league === 'all' || team.tagId === league) {
+          selectTeam.add(new Option(`${team.name} (${id})`, id));
+        }
+      }
+
+      if (selectTeam.querySelector(`option[value="${prevVal}"]`)) {
+        selectTeam.value = prevVal;
+      } else if (selectTeam.options.length > 0) {
+        selectTeam.selectedIndex = 0;
+      }
+
+      loadRosterManager();
     }
 
     function loadRosterManager() {
@@ -2732,7 +2985,7 @@
       }
 
       if (squad.length === 0) {
-        box.innerHTML = `<div class="col-span-3 text-center text-slate-400 py-6">소속된 선수가 없습니다. 종목 추가를 통해 선수를 영입하십시오.</div>`;
+        box.innerHTML = `<div class="col-span-3 text-center text-slate-400 py-6">소속된 선수가 없습니다. 종목 추가를 통해 선수를 배정하십시오.</div>`;
         updateRosterManageCounter(0);
         return;
       }
@@ -2796,91 +3049,46 @@
       loadRosterManager();
     }
 
-    // 🔔 [추가] HTS 전용 비차단식 세련된 인앱 토스트 알림 발송 엔진
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
+    // 🔔 HTS 전용 비차단식 인앱 토스트 알림 발송 엔진
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
 
-  const toast = document.createElement('div');
-  
-  // 알림 종류(매수, 매도, 단순정보, 경고)에 따른 테마 색감 분기 연산
-  let themeClass = "bg-white border-slate-200 text-slate-800";
-  let iconHtml = "⚡";
-  
-  if (type === 'buy') {
-    themeClass = "bg-red-50 border-red-200 text-red-700 font-bold";
-    iconHtml = "🔴 [매수체결]";
-  } else if (type === 'sell') {
-    themeClass = "bg-blue-50 border-blue-200 text-blue-700 font-bold";
-    iconHtml = "🔵 [매도체결]";
-  } else if (type === 'warn') {
-    themeClass = "bg-amber-50 border-amber-200 text-amber-800 font-semibold";
-    iconHtml = "⚠️ [경고]";
-  } else if (type === 'info') {
-    themeClass = "bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold";
-    iconHtml = "⚙️ [전산공시]";
-  }
+      const toast = document.createElement('div');
+      
+      let themeClass = "bg-white border-slate-200 text-slate-800";
+      let iconHtml = "⚡";
+      
+      if (type === 'buy') {
+        themeClass = "bg-red-50 border-red-200 text-red-700 font-bold";
+        iconHtml = "🔴 [매수체결]";
+      } else if (type === 'sell') {
+        themeClass = "bg-blue-50 border-blue-200 text-blue-700 font-bold";
+        iconHtml = "🔵 [매도체결]";
+      } else if (type === 'warn') {
+        themeClass = "bg-amber-50 border-amber-200 text-amber-800 font-semibold";
+        iconHtml = "⚠️ [경고]";
+      } else if (type === 'info') {
+        themeClass = "bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold";
+        iconHtml = "⚙️ [전산공시]";
+      }
 
-  toast.className = `p-3 rounded-lg border shadow-lg text-xs flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 ${themeClass}`;
-  toast.innerHTML = `<span>${iconHtml}</span> <span>${message}</span>`;
-  
-  container.appendChild(toast);
+      toast.className = `p-3 rounded-lg border shadow-lg text-xs flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 ${themeClass}`;
+      toast.innerHTML = `<span>${iconHtml}</span> <span>${message}</span>`;
+      
+      container.appendChild(toast);
 
-  // 부드럽게 솟아오르는 슬라이드인(Slide-In) 효과
-  setTimeout(() => {
-    toast.classList.remove('translate-y-4', 'opacity-0');
-    toast.classList.add('translate-y-0', 'opacity-100');
-  }, 50);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      }, 50);
 
-  // 2.5초 동안 유지 후 스르륵 사라지는 슬라이드아웃(Slide-Out) 효과
-  setTimeout(() => {
-    toast.classList.remove('translate-y-0', 'opacity-100');
-    toast.classList.add('-translate-y-4', 'opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
-}// 🔔 [추가] HTS 전용 비차단식 세련된 인앱 토스트 알림 발송 엔진
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-
-  const toast = document.createElement('div');
-  
-  // 알림 종류(매수, 매도, 단순정보, 경고)에 따른 테마 색감 분기 연산
-  let themeClass = "bg-white border-slate-200 text-slate-800";
-  let iconHtml = "⚡";
-  
-  if (type === 'buy') {
-    themeClass = "bg-red-50 border-red-200 text-red-700 font-bold";
-    iconHtml = "🔴 [매수체결]";
-  } else if (type === 'sell') {
-    themeClass = "bg-blue-50 border-blue-200 text-blue-700 font-bold";
-    iconHtml = "🔵 [매도체결]";
-  } else if (type === 'warn') {
-    themeClass = "bg-amber-50 border-amber-200 text-amber-800 font-semibold";
-    iconHtml = "⚠️ [경고]";
-  } else if (type === 'info') {
-    themeClass = "bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold";
-    iconHtml = "⚙️ [전산공시]";
-  }
-
-  toast.className = `p-3 rounded-lg border shadow-lg text-xs flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 ${themeClass}`;
-  toast.innerHTML = `<span>${iconHtml}</span> <span>${message}</span>`;
-  
-  container.appendChild(toast);
-
-  // 부드럽게 솟아오르는 슬라이드인(Slide-In) 효과
-  setTimeout(() => {
-    toast.classList.remove('translate-y-4', 'opacity-0');
-    toast.classList.add('translate-y-0', 'opacity-100');
-  }, 50);
-
-  // 2.5초 동안 유지 후 스르륵 사라지는 슬라이드아웃(Slide-Out) 효과
-  setTimeout(() => {
-    toast.classList.remove('translate-y-0', 'opacity-100');
-    toast.classList.add('-translate-y-4', 'opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
-}
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
   </script>
 </body>
 </html>
