@@ -220,68 +220,101 @@
       <div id="analysis-content-container" class="flex-1 overflow-y-auto pr-1 text-slate-800"></div>
     </section>
 
-    <!-- 3. 내 포트폴리오 탭 -->
-    <section id="view-portfolio" class="tab-content hidden space-y-4 h-full overflow-y-auto pr-1">
-      <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
-        <div class="p-3.5 bg-slate-50 rounded border border-slate-200">
-          <div class="text-xs text-slate-500 font-bold">총 평가 자산</div>
-          <div id="port-total-assets" class="text-2xl font-black text-indigo-600 mt-1">0원</div>
-        </div>
-        <div class="p-3.5 bg-slate-50 rounded border border-slate-200">
-          <div class="text-xs text-slate-500 font-bold">보유 가용 예수금</div>
-          <div id="port-cash" class="text-2xl font-black text-slate-800 mt-1">0원</div>
-        </div>
-        <div class="p-3.5 bg-slate-50 rounded border border-slate-200">
-          <div class="text-xs text-slate-500 font-bold">주식 평가 금액</div>
-          <div id="port-stock-val" class="text-2xl font-black text-slate-800 mt-1">0원</div>
-        </div>
-        <div class="p-3.5 bg-slate-50 rounded border border-slate-200">
-          <div class="text-xs text-slate-500 font-bold">평가 손익률</div>
-          <div id="port-total-profit" class="text-2xl font-black text-red-600 mt-1">0.00%</div>
-        </div>
+<!-- 3. 내 포트폴리오 탭 (화면 전체 스크롤 차단 고정 뷰) -->
+<section id="view-portfolio" class="tab-content hidden h-full overflow-hidden flex flex-col lg:flex-row gap-4 min-h-0">
+  
+  <!-- 좌측 정보 판 (부피 40% - lg:w-5/12) -->
+  <div class="lg:w-5/12 flex flex-col gap-3 flex-shrink-0">
+    
+    <!-- [대형] 자산 및 수익률 전광판 -->
+    <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">종합 평가 자산 (Net Worth)</div>
+        <div id="port-total-assets" class="text-3xl font-black text-indigo-600 mt-1">10,000,000원</div>
       </div>
+      <div class="border-t border-slate-100 pt-3 mt-3 flex justify-between items-center">
+        <span class="text-xs text-slate-500 font-bold">원금 대비 총수익률</span>
+        <span id="port-total-profit" class="text-xl font-extrabold text-slate-800">0.00%</span>
+      </div>
+    </div>
 
-      <!-- 보유 주식 상세 내역 (크고 시원하게 배치 - max-h-400px 제한) -->
-      <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm">
-        <h3 class="font-bold text-sm text-slate-800 mb-3">📋 보유 주식 상세 내역</h3>
-        <div class="overflow-x-auto max-h-[415px]">
-          <table class="w-full text-left text-xs whitespace-nowrap">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">구분</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">종목명</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">보유 수량</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">평균 매수가</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">현재가</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">평가 금액</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">평가 손익</th>
-              </tr>
-            </thead>
-            <tbody id="portfolio-table-body" class="divide-y divide-slate-200 text-slate-700"></tbody>
-          </table>
-        </div>
+    <!-- 예수금 및 주식 평가액 상세 카드 -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+        <div class="text-[10px] text-slate-400 font-bold uppercase">보유 가용 예수금</div>
+        <div id="port-cash" class="text-base font-black text-slate-800 mt-0.5">10,000,000원</div>
       </div>
+      <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+        <div class="text-[10px] text-slate-400 font-bold uppercase">주식 평가 금액</div>
+        <div id="port-stock-val" class="text-base font-black text-slate-800 mt-0.5">0원</div>
+      </div>
+    </div>
 
-      <!-- 거래 로그 (하단 작게 배치 - max-h-200px 제한) -->
-      <div class="bg-white rounded-lg p-5 border border-slate-200 shadow-sm">
-        <h3 class="font-bold text-sm text-slate-800 mb-3">📜 거래 로그</h3>
-        <div class="overflow-x-auto max-h-[135px]">
-          <table class="w-full text-left text-xs whitespace-nowrap">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">체결 일시</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">종목명</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">거래 구분</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">체결 수량</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">체결 단가</th>
-                <th class="p-3 sticky top-0 bg-slate-50 z-10 shadow-sm">총 체결 금액</th>
-              </tr>
-            </thead>
-            <tbody id="transaction-log-tbody" class="divide-y divide-slate-200 text-slate-700"></tbody>
-          </table>
+    <!-- [소형] 누적 실적 정산 통계판 -->
+    <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm space-y-3 h-[200px] overflow-y-auto">
+      <h4 class="font-extrabold text-xs text-slate-700 border-b border-slate-100 pb-2">📋 누적 금융 정산 통계</h4>
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-500">총 누적 배당금 수령액</span>
+          <span id="port-accumulated-dividends" class="font-bold text-indigo-600">0원</span>
+        </div>
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-500">누적 실현 손익 (Realized P&L)</span>
+          <span id="port-realized-pnl" class="font-bold text-slate-800">0원</span>
         </div>
       </div>
-    </section>
+    </div>
+         <!-- [소형] 거래 이력 로그 (세로 고정 제한) -->
+    <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col h-[490px] flex-shrink-0 overflow-hidden">
+      <h3 class="font-bold text-xs text-slate-700 mb-2">📜 최근 거래 및 배당 로그</h3>
+      <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0 border border-slate-100 rounded">
+        <table class="w-full text-left text-[11px] whitespace-nowrap border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm">일시</th>
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm">종목명</th>
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm">구분</th>
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">수량</th>
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">단가</th>
+              <th class="p-2 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">총액</th>
+            </tr>
+          </thead>
+          <tbody id="transaction-log-tbody" class="divide-y divide-slate-200 text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+ 
+    
+  <!-- 우측 명세 및 기록 판 (부피 60% - lg:w-7/12) -->
+  <div class="lg:w-7/12 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
+    
+    <!-- [초대형] 보유 주식 상세 내역 표 -->
+    <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+      <h3 class="font-bold text-sm text-slate-800 mb-2">📋 보유 주식 상세 내역</h3>
+      <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0 border border-slate-100 rounded">
+        <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 font-bold bg-slate-50 text-[11px]">
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm">구분</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm">종목명</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">보유 수량</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">평균 매수가</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">현재가</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm text-right">평가 손익률</th>
+              <th class="p-2.5 sticky top-0 bg-slate-50 z-10 shadow-sm text-center">액션</th>
+            </tr>
+          </thead>
+          <tbody id="portfolio-table-body" class="divide-y divide-slate-200 text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+
+  </div>
+</section>
 
     <!-- 4. 관리자 도구 탭 (서브탭 순서 정렬: 경기 입력 ➡️ 주전 설정 ➡️ 시즌 종료 ➡️ 태그/시스템 ➡️ 종목 추가/수정 ➡️ 상장 폐지) -->
     <section id="view-admin" class="tab-content hidden space-y-4 h-full overflow-y-auto pr-1">
@@ -291,6 +324,7 @@
         <button onclick="switchAdminSubTab('match')" id="admin-subtab-match" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all bg-white text-indigo-600 shadow-sm">🎮 경기 입력</button>
         <button onclick="switchAdminSubTab('roster')" id="admin-subtab-roster" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏃 주전 설정</button>
         <button onclick="switchAdminSubTab('season')" id="admin-subtab-season" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏆 시즌 종료 보정</button>
+        <button onclick="switchAdminSubTab('tournament')" id="admin-subtab-tournament" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏆 메이저 결산</button>
         <button onclick="switchAdminSubTab('system')" id="admin-subtab-system" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🏷️ 태그/시스템</button>
         <button onclick="switchAdminSubTab('stocks')" id="admin-subtab-stocks" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">✏️ 종목 추가/수정</button>
         <button onclick="switchAdminSubTab('delist')" id="admin-subtab-delist" class="flex-1 min-w-[90px] py-1.5 text-xs font-bold rounded transition-all text-slate-600 hover:bg-white/50">🚨 상장 폐지</button>
@@ -708,21 +742,26 @@
                 </div>
               </div>
 
-              <!-- 선수 기본 스탯 수정 -->
-              <div id="edit-player-stats-div" class="hidden grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded border border-slate-200 mt-2">
-                <div>
-                  <label class="block text-[9px] text-slate-500 mb-1">기본 ACS</label>
-                  <input type="number" id="edit-p-acs" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-slate-500 mb-1">기본 K/D</label>
-                  <input type="number" id="edit-p-kd" step="0.01" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-slate-500 mb-1">기본 KAST (%)</label>
-                  <input type="number" id="edit-p-kast" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
-                </div>
-              </div>
+<!-- grid-cols-3을 grid-cols-4로 변경하고, 수동 기대치 입력 필드(edit-p-ev)를 추가합니다 -->
+<div id="edit-player-stats-div" class="hidden grid grid-cols-4 gap-2 bg-slate-50 p-2.5 rounded border border-slate-200 mt-2">
+  <div>
+    <label class="block text-[9px] text-slate-500 mb-1">기본 ACS</label>
+    <input type="number" id="edit-p-acs" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+  </div>
+  <div>
+    <label class="block text-[9px] text-slate-500 mb-1">기본 K/D</label>
+    <input type="number" id="edit-p-kd" step="0.01" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+  </div>
+  <div>
+    <label class="block text-[9px] text-slate-500 mb-1">기본 KAST (%)</label>
+    <input type="number" id="edit-p-kast" class="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-center font-bold">
+  </div>
+  <!-- 새로 추가되는 수동 기대치(EV) 입력 필드 -->
+  <div>
+    <label class="block text-[9px] text-indigo-600 font-bold mb-1">수동 기대치(EV)</label>
+    <input type="number" id="edit-p-ev" step="0.01" class="w-full bg-white border border-indigo-200 rounded px-1.5 py-1 text-center font-bold text-indigo-600 focus:outline-none focus:border-indigo-500">
+  </div>
+</div>
 
               <button onclick="updateExistingStock()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs shadow-sm">소속 정보 변경 및 종목 업데이트 완료</button>
             </div>
@@ -770,6 +809,41 @@
 
         <button onclick="executeDelistingLiquidation()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-xs shadow-md transition-colors">🚨 즉시 전산 청산 및 상장 폐지 집행</button>
       </div>
+
+<!-- [신설 독립 서브탭 7] 메이저 토너먼트 최종 결산 패널 -->
+<div id="admin-panel-tournament" class="admin-sub-content hidden bg-white rounded-lg p-5 border border-slate-200 shadow-sm space-y-4">
+  <div class="border-b border-slate-200 pb-2">
+    <h3 class="font-extrabold text-sm text-indigo-600 flex items-center gap-1">🏆 메이저 토너먼트 최종 결산 정산소</h3>
+  </div>
+  <div class="bg-indigo-50 text-indigo-900 p-4 rounded-lg border border-indigo-200 text-xs leading-relaxed space-y-1">
+    <div>• 세계 3강(Top 3) 입성 구단 주주분들께 등수별 정산 배당금을 원클릭 일괄 지급합니다.</div>
+    <div>• 구단 주가 폭등과 동시에 소속 주전 선수 5인의 가치도 <strong>40% 비례 감쇄 연동</strong>되어 동반 폭등합니다.</div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+    <div>
+      <label class="block mb-1 text-slate-500 font-bold">결산 대상 대회</label>
+      <select id="tourney-type-select" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none font-bold">
+        <option value="masters">VCT 마스터스 (Masters)</option>
+        <option value="champions">VCT 챔피언스 (Champions)</option>
+      </select>
+    </div>
+    <div>
+      <label class="block mb-1 text-red-500 font-bold">🥇 1위 구단 (우승)</label>
+      <select id="tourney-rank-1" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none font-bold text-slate-800"></select>
+    </div>
+    <div>
+      <label class="block mb-1 text-indigo-500 font-bold">🥈 2위 구단 (준우승)</label>
+      <select id="tourney-rank-2" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none font-bold text-slate-800"></select>
+    </div>
+    <div>
+      <label class="block mb-1 text-amber-600 font-bold">🥉 3위 구단</label>
+      <select id="tourney-rank-3" class="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none font-bold text-slate-800"></select>
+    </div>
+  </div>
+  
+  <button onclick="executeTournamentSettle()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs shadow-md transition-all">🏆 메이저 토너먼트 정산 및 가치 연동 폭등 집행</button>
+</div>
 
     </section>
 
@@ -991,17 +1065,20 @@
       }
     });
 
-    let state = {
-      cash: 10000000,
-      portfolio: {}, 
-      teams: JSON.parse(JSON.stringify(initialTeams)),
-      players: JSON.parse(JSON.stringify(initialPlayers)),
-      tags: JSON.parse(JSON.stringify(initialTags)),
-      netWorthHistory: [10000000],
-      transactions: [],
-      newsFeed: [],
-      historyStack: [] 
-    };
+// 수정 후 [신규 누적 정산 변수 이식]
+let state = {
+  cash: 10000000,
+  portfolio: {}, 
+  teams: JSON.parse(JSON.stringify(initialTeams)),
+  players: JSON.parse(JSON.stringify(initialPlayers)),
+  tags: JSON.parse(JSON.stringify(initialTags)),
+  netWorthHistory: [10000000],
+  transactions: [],
+  newsFeed: [],
+  historyStack: [],
+  accumulatedDividends: 0, // 누적 배당금 수령 총액
+  realizedPnL: 0           // 누적 실현 손익 (Realized P&L)
+};
 
     let activeTab = 'exchange';
     let selectedStockId = 'PRX'; 
@@ -1045,7 +1122,15 @@
       document.getElementById('header-total').innerText = totalVal.toLocaleString() + '원';
       renderNewsFeed();
     }
-
+// [MTS 전용 시간 포맷터 - "월.일 시:분" 반환]
+function getFormattedTime() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${month}.${date} ${hours}:${minutes}`;
+}
     function calculateTotalAssets() {
       let stockValue = 0;
       for (let id in state.portfolio) {
@@ -1171,7 +1256,7 @@
       document.querySelectorAll('.admin-sub-content').forEach(el => el.classList.add('hidden'));
       document.getElementById('admin-panel-' + subTabId).classList.remove('hidden');
 
-      ['match', 'stocks', 'roster', 'season', 'system', 'delist'].forEach(t => {
+      ['match', 'stocks', 'roster', 'season', 'tournament', 'system', 'delist'].forEach(t => {
         const btn = document.getElementById('admin-subtab-' + t);
         if (!btn) return;
         if (t === subTabId) {
@@ -1191,13 +1276,17 @@
         initRosterManagerDropdown();
       } else if (subTabId === 'season') {
         renderSeasonEndTab(); 
+        populateTournamentDropdowns();
       } else if (subTabId === 'system') {
         renderAdminTags();
         populateTagEditDropdown();
         initNewsTargetDropdownRow();
       } else if (subTabId === 'delist') {
         initDelistDropdown();
-      }
+      }else if (subTabId === 'tournament') {
+    // 신설된 서브탭 진입 시 결산용 구단 드롭다운 동적 로드 트리거
+    populateTournamentDropdowns();
+  }
     }
 
     function switchAnalysisSection(secId) {
@@ -1925,6 +2014,12 @@
           showToast("보유하고 있는 주식 수량보다 주문량이 많습니다.","warn");
           return;
         }
+  // [신설 - 실현 손익 누적 가산]
+  const costBasis = qty * currentHolding.avgPrice;
+  const revenue = qty * stock.currentPrice;
+  const profitRealized = revenue - costBasis;
+  state.realizedPnL = (state.realizedPnL || 0) + profitRealized;
+
 
         state.cash += orderCost;
         state.portfolio[selectedStockId].qty -= qty;
@@ -1935,7 +2030,7 @@
       }
 
       const logEntry = {
-        time: new Date().toLocaleString(),
+        time: getFormattedTime(),
         name: stock.name,
         type: orderType === 'buy' ? '매수' : '매도',
         qty: qty,
@@ -1951,63 +2046,115 @@
       showToast("성공적으로 주문이 체결되었습니다.", orderType);
     }
 
-    function renderPortfolioTab() {
-      const tableBody = document.getElementById('portfolio-table-body');
-      tableBody.innerHTML = '';
+function renderPortfolioTab() {
+  const tableBody = document.getElementById('portfolio-table-body');
+  tableBody.innerHTML = '';
 
-      let totalStockVal = 0;
-      let totalPurchaseVal = 0;
+  let totalStockVal = 0;
+  let totalPurchaseVal = 0;
 
-      for (let id in state.portfolio) {
-        const item = state.portfolio[id];
-        if (item.qty <= 0) continue;
+  for (let id in state.portfolio) {
+    const item = state.portfolio[id];
+    if (item.qty <= 0) continue;
 
-        const isTeam = state.teams[id] ? true : false;
-        const stock = isTeam ? state.teams[id] : state.players[id];
-        if (!stock) continue;
+    const isTeam = state.teams[id] ? true : false;
+    const stock = isTeam ? state.teams[id] : state.players[id];
+    if (!stock) continue;
 
-        const currentVal = item.qty * stock.currentPrice;
-        const purchaseVal = item.qty * item.avgPrice;
-        const profitAmt = currentVal - purchaseVal;
-        const profitRatio = ((stock.currentPrice - item.avgPrice) / item.avgPrice * 100).toFixed(2);
+    const currentVal = item.qty * stock.currentPrice;
+    const purchaseVal = item.qty * item.avgPrice;
+    const profitAmt = currentVal - purchaseVal;
+    const profitRatio = ((stock.currentPrice - item.avgPrice) / item.avgPrice * 100).toFixed(2);
 
-        totalStockVal += currentVal;
-        totalPurchaseVal += purchaseVal;
+    totalStockVal += currentVal;
+    totalPurchaseVal += purchaseVal;
 
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-slate-50 text-xs text-slate-800';
-        
-        const badgeClass = isTeam ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200';
-        const badgeText = isTeam ? 'TEAM' : 'PLAY';
-        const profitColor = profitAmt >= 0 ? 'text-red-500' : 'text-blue-500';
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-slate-50 text-xs text-slate-800';
+    
+    const badgeClass = isTeam ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200';
+    const badgeText = isTeam ? 'TEAM' : 'PLAY';
+    
+    // MTS 상승/하락 전용 삼각 화살표 기호 지정
+    const profitSign = profitAmt >= 0 ? '▲' : '▼';
+    const profitColor = profitAmt >= 0 ? 'text-red-500 font-bold' : 'text-blue-500 font-bold';
 
-        row.innerHTML = `
-          <td class="p-3"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${badgeClass}">${badgeText}</span></td>
-          <td class="p-3 font-bold text-slate-900">${stock.name}</td>
-          <td class="p-3 text-right font-medium">${item.qty.toLocaleString()} 주</td>
-          <td class="p-3 text-right">${item.avgPrice.toLocaleString()} 원</td>
-          <td class="p-3 text-right font-bold">${stock.currentPrice.toLocaleString()} 원</td>
-          <td class="p-3 text-right font-bold text-indigo-600">${currentVal.toLocaleString()} 원</td>
-          <td class="p-3 text-right font-bold ${profitColor}">
-            ${profitAmt >= 0 ? '+' : ''}${profitAmt.toLocaleString()}원<br>
-            <span class="text-[10px] font-semibold">${profitRatio}%</span>
-          </td>
-        `;
-        tableBody.appendChild(row);
-      }
+    row.innerHTML = `
+      <td class="p-2.5"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${badgeClass}">${badgeText}</span></td>
+      <td class="p-2.5 font-bold text-slate-900">${stock.name}</td>
+      <td class="p-2.5 text-right font-medium">${item.qty.toLocaleString()} 주</td>
+      <td class="p-2.5 text-right">${item.avgPrice.toLocaleString()} 원</td>
+      <td class="p-2.5 text-right font-bold">${stock.currentPrice.toLocaleString()} 원</td>
+      <td class="p-2.5 text-right ${profitColor}">
+        ${profitSign} ${profitRatio}%<br>
+        <span class="text-[10px] text-slate-400 font-normal">(${profitAmt >= 0 ? '+' : ''}${profitAmt.toLocaleString()}원)</span>
+      </td>
+      <td class="p-2.5 text-center">
+        <button onclick="quickLiquidateStock('${id}')" class="px-2 py-1 text-[10px] bg-amber-500 hover:bg-amber-600 text-white rounded font-bold shadow-sm transition-colors">즉시 매도</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  }
 
-      const totalAssets = state.cash + totalStockVal;
-      document.getElementById('port-total-assets').innerText = totalAssets.toLocaleString() + '원';
-      document.getElementById('port-cash').innerText = state.cash.toLocaleString() + '원';
-      document.getElementById('port-stock-val').innerText = totalStockVal.toLocaleString() + '원';
+  const totalAssets = state.cash + totalStockVal;
+  document.getElementById('port-total-assets').innerText = totalAssets.toLocaleString() + '원';
+  document.getElementById('port-cash').innerText = state.cash.toLocaleString() + '원';
+  document.getElementById('port-stock-val').innerText = totalStockVal.toLocaleString() + '원';
 
-      const totalProfitRatio = totalPurchaseVal > 0 ? ((totalStockVal - totalPurchaseVal) / totalPurchaseVal * 100).toFixed(2) : '0.00';
-      const profitContainer = document.getElementById('port-total-profit');
-      profitContainer.innerText = `${totalProfitRatio}%`;
-      profitContainer.className = `text-2xl font-black mt-1 ${totalProfitRatio >= 0 ? 'text-red-500' : 'text-blue-500'}`;
+  // 1000만 원 대비 계좌 총수익률 연산식
+  const totalProfitRatio = (((totalAssets - 10000000) / 10000000) * 100).toFixed(2);
+  const profitContainer = document.getElementById('port-total-profit');
+  const profitSignGlobal = totalProfitRatio >= 0 ? '▲' : '▼';
+  const profitColorGlobal = totalProfitRatio >= 0 ? 'text-red-500' : 'text-blue-500';
+  profitContainer.innerText = `${profitSignGlobal} ${totalProfitRatio}%`;
+  profitContainer.className = `text-xl font-black ${profitColorGlobal}`;
 
-      renderTransactionLogTable();
-    }
+  // 실시간 정산 통계 수치 바인딩
+  document.getElementById('port-accumulated-dividends').innerText = (state.accumulatedDividends || 0).toLocaleString() + '원';
+  document.getElementById('port-realized-pnl').innerText = (state.realizedPnL || 0).toLocaleString() + '원';
+
+  renderTransactionLogTable();
+}
+
+// [신설 - 포트폴리오 탭 내부 즉시 전량 매도 연산 로직]
+function quickLiquidateStock(id) {
+  const item = state.portfolio[id];
+  if (!item || item.qty <= 0) return;
+
+  const stock = state.teams[id] || state.players[id];
+  if (!stock) return;
+
+  if (!confirm(`[${stock.name}] 보유 지분 ${item.qty}주를 정말 전량 시장가 즉시 매도하시겠습니까?`)) {
+    return;
+  }
+
+  saveSnapshot();
+
+  const orderCost = item.qty * stock.currentPrice;
+  const costBasis = item.qty * item.avgPrice;
+  const profitRealized = orderCost - costBasis;
+
+  // 누적 실현 손익 및 예수금 환급 적용
+  state.realizedPnL = (state.realizedPnL || 0) + profitRealized;
+  state.cash += orderCost;
+
+  state.transactions.unshift({
+    time: getFormattedTime(),
+    name: stock.name,
+    type: '퀵 매도',
+    qty: item.qty,
+    price: stock.currentPrice,
+    total: orderCost
+  });
+
+  delete state.portfolio[id];
+
+  saveNetWorthPoint();
+  saveState();
+  updateGlobalStatus();
+  renderPortfolioTab();
+  showToast(`[${stock.name}] 전량 즉시 매도 체결이 완료되었습니다.`, 'sell');
+}
 
     function renderTransactionLogTable() {
       const tbody = document.getElementById('transaction-log-tbody');
@@ -2405,9 +2552,11 @@
         privateTagField.classList.add('hidden'); 
         statsDiv.classList.remove('hidden');
 
-        document.getElementById('edit-p-acs').value = player.baseStats.acs;
-        document.getElementById('edit-p-kd').value = player.baseStats.kd;
-        document.getElementById('edit-p-kast').value = player.baseStats.kast;
+document.getElementById('edit-p-acs').value = player.baseStats.acs;
+document.getElementById('edit-p-kd').value = player.baseStats.kd;
+document.getElementById('edit-p-kast').value = player.baseStats.kast;
+// 기존 선수의 expectedValue 값을 불러와 수동 입력란에 적용
+document.getElementById('edit-p-ev').value = player.expectedValue;
       }
     }
 
@@ -2437,14 +2586,17 @@
         player.tagId = tagId;
         player.imageUrl = imageUrl;
 
-        if (player.baseStats && player.baseStats.acs !== 0) {
-          const acs = parseFloat(document.getElementById('edit-p-acs').value) || 200;
-          const kd = parseFloat(document.getElementById('edit-p-kd').value) || 1.0;
-          const kast = parseFloat(document.getElementById('edit-p-kast').value) || 70;
+// 수동 입력된 기대값을 변수로 취득하고 자동 연산 공식을 무력화합니다
+if (player.baseStats) {
+  const acs = parseFloat(document.getElementById('edit-p-acs').value) || 200;
+  const kd = parseFloat(document.getElementById('edit-p-kd').value) || 1.0;
+  const kast = parseFloat(document.getElementById('edit-p-kast').value) || 70;
+  // 수동 기대치 입력 필드값 취득 (없을 경우 기존 선수 기대값 유지)
+  const manualEv = parseFloat(document.getElementById('edit-p-ev').value) || player.expectedValue;
 
-          player.baseStats = { acs, kd, kast };
-          player.expectedValue = ((kd * 100) * 0.4) + (kast * 0.3) + ((acs * 0.5) * 0.3);
-        }
+  player.baseStats = { acs, kd, kast };
+  player.expectedValue = manualEv; // 수동 입력값 직접 대입
+}
       }
 
       saveState();
@@ -2773,7 +2925,7 @@
         delete state.portfolio[id];
 
         const logEntry = {
-          time: new Date().toLocaleString(),
+          time: getFormattedTime(),
           name: stock.name,
           type: type === 'retirement' ? '은퇴 청산' : '강등 청산',
           qty: held.qty,
@@ -2918,10 +3070,11 @@
       if (winTeamHolding.qty > 0) {
         const teamDividend = winTeamHolding.qty * 100;
         state.cash += teamDividend;
+        state.accumulatedDividends = (state.accumulatedDividends || 0) + teamDividend; // 추가
         totalDividendPaid += teamDividend;
 
         state.transactions.unshift({
-          time: new Date().toLocaleString(),
+          time: getFormattedTime(),
           name: wTeam.name,
           type: "구단 배당금",
           qty: winTeamHolding.qty,
@@ -2937,10 +3090,11 @@
         if (winPlayerHolding.qty > 0) {
           const playerDividend = winPlayerHolding.qty * 10;
           state.cash += playerDividend;
+          state.accumulatedDividends = (state.accumulatedDividends || 0) + playerDividend; // 추가
           totalDividendPaid += playerDividend;
 
           state.transactions.unshift({
-            time: new Date().toLocaleString(),
+            time: getFormattedTime(),
             name: pPlayer.name,
             type: "선수 배당금",
             qty: winPlayerHolding.qty,
@@ -3416,6 +3570,138 @@
         setTimeout(() => toast.remove(), 300);
       }, 2500);
     }
+
+    // 어드민 결산용 드롭다운에 구단 목록 주입
+function populateTournamentDropdowns() {
+  const r1 = document.getElementById('tourney-rank-1');
+  const r2 = document.getElementById('tourney-rank-2');
+  const r3 = document.getElementById('tourney-rank-3');
+  if (!r1 || !r2 || !r3) return;
+
+  r1.innerHTML = '<option value="">-- 구단 선택 --</option>';
+  r2.innerHTML = '<option value="">-- 구단 선택 --</option>';
+  r3.innerHTML = '<option value="">-- 구단 선택 --</option>';
+
+  for (let id in state.teams) {
+    const team = state.teams[id];
+    if (team.delisted) continue;
+    r1.add(new Option(team.name, id));
+    r2.add(new Option(team.name, id));
+    r3.add(new Option(team.name, id));
+  }
+}
+
+// [신설 - 메이저 토너먼트 정산 및 동반 폭등 집행 로직]
+function executeTournamentSettle() {
+  const r1 = document.getElementById('tourney-rank-1').value;
+  const r2 = document.getElementById('tourney-rank-2').value;
+  const r3 = document.getElementById('tourney-rank-3').value;
+  const tourney = document.getElementById('tourney-type-select').value;
+
+  if (!r1 || !r2 || !r3) {
+    showToast("1위, 2위, 3위 구단을 모두 선택하셔야 결산이 집행됩니다.", "warn");
+    return;
+  }
+  if (r1 === r2 || r1 === r3 || r2 === r3) {
+    showToast("순위 구단이 서로 중복 선택되었습니다.", "warn");
+    return;
+  }
+
+  const confirmText = tourney === 'masters' ? 'VCT 마스터스' : 'VCT 챔피언스';
+  if (!confirm(`정말로 이 선택에 근거해 [${confirmText}] 정산 및 주가 비례 폭등 전산을 영구 집행하시겠습니까?`)) {
+    return;
+  }
+
+  saveSnapshot();
+
+  // 차등 배당금 기획안 테이블 수치
+  const dividends = tourney === 'masters' ? [1000, 500, 250] : [3000, 1500, 750];
+  // 구단 주가 변동률 스펙
+  const teamRates = tourney === 'masters' ? [0.30, 0.15, 0.10] : [0.50, 0.25, 0.15];
+  // 주전 5인 선수 동반 상승률 (팀 상승률의 40% 감쇄 비율)
+  const playerRates = teamRates.map(r => r * 0.40);
+
+  const selectedRanks = [r1, r2, r3];
+  let totalDividendsDistributed = 0;
+
+  selectedRanks.forEach((teamId, idx) => {
+    const team = state.teams[teamId];
+    const dividendPerShare = dividends[idx];
+    const teamRate = teamRates[idx];
+    const playerRate = playerRates[idx];
+
+    // 1. 구단 주가 상승 적용
+    team.prevPrice = team.currentPrice;
+    const newTeamPrice = Math.round(team.currentPrice * (1 + teamRate));
+    team.currentPrice = newTeamPrice;
+    team.priceHistory.push(newTeamPrice);
+    team.rank = idx + 1; // 랭킹을 1, 2, 3위로 동기화 강제 지정
+
+    // 2. 구단 보유 배당금 지급
+    const teamHolding = state.portfolio[teamId] || { qty: 0 };
+    if (teamHolding.qty > 0) {
+      const teamPayout = teamHolding.qty * dividendPerShare;
+      state.cash += teamPayout;
+      state.accumulatedDividends = (state.accumulatedDividends || 0) + teamPayout;
+      totalDividendsDistributed += teamPayout;
+
+      state.transactions.unshift({
+        time: getFormattedTime(),
+        name: team.name,
+        type: `${confirmText} 구단 정산`,
+        qty: teamHolding.qty,
+        price: dividendPerShare,
+        total: teamPayout
+      });
+    }
+
+    // 3. 주전 5인 비례 동반 폭등
+    const targetTag = teamId + '_tag';
+    for (let pId in state.players) {
+      const player = state.players[pId];
+      if (player.tagId === targetTag && player.isActive && !player.delisted) {
+        player.prevPrice = player.currentPrice;
+        const newPlayerPrice = Math.round(player.currentPrice * (1 + playerRate));
+        player.currentPrice = newPlayerPrice;
+        player.priceHistory.push(newPlayerPrice);
+
+        // 우전 구단 소속 주전 선수 지주 배당 (구단 배당률의 10% 지급 적용)
+        const playerDividendPerShare = Math.round(dividendPerShare * 0.1);
+        const playerHolding = state.portfolio[pId] || { qty: 0 };
+        if (playerHolding.qty > 0) {
+          const playerPayout = playerHolding.qty * playerDividendPerShare;
+          state.cash += playerPayout;
+          state.accumulatedDividends = (state.accumulatedDividends || 0) + playerPayout;
+          totalDividendsDistributed += playerPayout;
+
+          state.transactions.unshift({
+            time: getFormattedTime(),
+            name: player.name,
+            type: `${confirmText} 주전 배당`,
+            qty: playerHolding.qty,
+            price: playerDividendPerShare,
+            total: playerPayout
+          });
+        }
+      }
+    }
+  });
+
+  saveNetWorthPoint();
+  saveState();
+
+  updateGlobalStatus();
+  renderStockList();
+  renderSelectedStock();
+  if (activeTab === 'portfolio') {
+    renderPortfolioTab();
+  }
+
+  showToast(`🏆 ${confirmText} 결산 완료! 정산 배당금: +${totalDividendsDistributed.toLocaleString()}원`, 'info');
+  renderSeasonEndTab(); 
+  populateTournamentDropdowns(); 
+}
+
   </script>
 </body>
 </html>
